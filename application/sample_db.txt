@@ -1,0 +1,101 @@
+CREATE TABLE tmp_client_regis (
+id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+type ENUM("ecbs","ecct","") DEFAULT "",
+added datetime null,
+
+idPasien INT(11) NULL,
+
+namaPasien varchar(100) NULL, 
+gender enum("M", "F") DEFAULT "M",
+tanggalLahirPasien date NULL, 
+tempatLahirPasien varchar(100) NULL, 
+alamatJalanPasien varchar(100) NULL, 
+alamatRtPasien varchar(100) NULL, 
+alamatRwPasien varchar(100) NULL, 
+
+alamatKodePosPasien varchar(100) NULL, 
+
+id_prov varchar(10) NULL,
+id_kabkot varchar(10) NULL,
+id_kec varchar(10) NULL,
+id_kel varchar(10) NULL,
+
+noIdentitasPasien varchar(100) NULL,
+noTelponPasien varchar(100) NULL,
+email varchar(100) NULL,
+
+note TEXT NULL,
+note2 TEXT NULL
+);
+
+
+added 
+c_status
+id_cln
+cus_cancer
+cus_name
+cus_gender
+cus_age
+cus_prov
+cus_phone
+cus_source
+cus_source_note
+adm_div
+adm_plat
+adm_id
+act_initiator
+act_date
+act_duration
+ask_type
+ask_note
+
+
+
+CREATE TABLE call_center (
+id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+added datetime null,
+c_status ENUM("kl","kb","ck","") DEFAULT "",
+id_cln INT(11) NULL,
+cus_cancer varchar(100) NULL, 
+cus_name varchar(100) NULL, 
+cus_gender ENUM("m","f","") DEFAULT "",
+cus_age INT(11) NULL,
+cus_prov INT(11) NULL,
+cus_phone varchar(100) NULL, 
+cus_source varchar(100) NULL, 
+cus_source_note TEXT NULL,
+adm_div ENUM("cc","mnt","") DEFAULT "",
+adm_plat varchar(100) NULL, 
+adm_id INT(11) NULL,
+act_initiator ENUM("cus","adm","") DEFAULT "",
+act_date date null,
+act_duration varchar(100) NULL, 
+ask_type varchar(100) NULL, 
+ask_note TEXT NULL
+);
+
+
+CREATE TABLE cus_service (
+id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+added datetime null,
+id_cln INT(11) NULL,
+cus_status ENUM("kl","kb","ck","") DEFAULT "",
+cus_cancer varchar(100) NULL, 
+cus_name varchar(100) NULL, 
+cus_gender ENUM("m","f","") DEFAULT "",
+cus_age INT(11) NULL,
+cus_prov INT(11) NULL,
+cus_phone varchar(100) NULL, 
+cus_source varchar(100) NULL, 
+cus_source_note TEXT NULL,
+adm_div ENUM("cc","mnt","") DEFAULT "",
+adm_plat varchar(100) NULL, 
+adm_id INT(11) NULL,
+act_initiator ENUM("cus","adm","") DEFAULT "",
+act_date date null,
+act_time date null,
+act_duration varchar(100) NULL, 
+ask_type varchar(100) NULL, 
+ask_note TEXT NULL
+);
+

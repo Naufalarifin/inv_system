@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<link rel="stylesheet" type="text/css" href="./jquery.datetimepicker.css"/>
+<script src="./jquery.js"></script>
+<script src="build/jquery.datetimepicker.full.js"></script>
+
+</head>
+<body>
+	
+	<h3>DateTimePickers selected by class</h3>
+	<input type="text" class="calendar" value="" id="some_class_1"/>
+	
+</body>
+
+
+<script>
+$('.calendar').datetimepicker({
+	timepicker:false,
+	format:'Y-m-d',
+	defaultTime:'00:00'
+});
+</script>
+
+</html>
