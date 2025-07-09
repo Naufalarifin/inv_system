@@ -4,21 +4,22 @@
             <thead>
                 <tr>
                     <th align="center" width="40">No</th>
-                    <th align="center">Jenis</th>
-                    <th align="center">Nama</th>
-                    <th align="center">Kode</th>
-                    <th align="center">Warna</th>
-                    <th align="center">All</th>
-                    <th align="center">XS</th>
-                    <th align="center">S</th>
-                    <th align="center">M</th>
-                    <th align="center">L</th>
-                    <th align="center">XL</th>
-                    <th align="center">2XL</th>
-                    <th align="center">3XL</th>
-                    <th align="center">Cus</th>
-                    <th align="center">Subtotal</th>
-                    <th align="center">%</th>
+                    <th align="center" width="70">Action ID</th>
+                    <th align="center" width="70">Device ID</th>
+                    <th align="center" width="60">Size</th>
+                    <th align="center" width="60">Color</th>
+                    <th align="center" width="90">Serial Number</th>
+                    <th align="center" width="60">QC Status</th>
+                    <th align="center" width="70">Inv In</th>
+                    <th align="center" width="70">Inv Move</th>
+                    <th align="center" width="70">Inv Out</th>
+                    <th align="center" width="70">Inv Release</th>
+                    <th align="center" width="70">Admin In</th>
+                    <th align="center" width="70">Admin Move</th>
+                    <th align="center" width="70">Admin Out</th>
+                    <th align="center" width="70">Admin Release</th>
+                    <th align="center" width="80">Location Move</th>
+                    <th align="center" width="80">Aksi</th>
                 </tr>
             </thead>
             <tbody>
