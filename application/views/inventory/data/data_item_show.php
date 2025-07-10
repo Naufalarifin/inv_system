@@ -26,8 +26,8 @@
                     <td align="center"><?php echo $no + ($data['page']['show'] * (isset($_GET['p']) ? (int)$_GET['p'] : 0)); ?></td>
                     <td align="center"><?php echo $row['id_act']; ?></td>
                     <td class="device-info">
-                        <div class="device-name">Device <?php echo $row['id_dvc']; ?></div>
-                        <div class="device-id">DVC<?php echo str_pad($row['id_dvc'], 3, '0', STR_PAD_LEFT); ?></div>
+                        <div class="device-name"> <?php echo $row['dvc_name']; ?></div>
+                        <div class="device-id"> <?php echo $row['dvc_code']; ?></div>
                     </td>
                     <td align="center">
                         <div class="size-color-container">

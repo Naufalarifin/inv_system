@@ -60,11 +60,7 @@ class Data_model extends CI_Model {
         if (isset($filter['sort']) && $filter['sort'] != "") {
             $sort = $filter['sort'];
         }
-        
-        // Ganti query yang lama
-        // $sql = "SELECT * FROM inv_act WHERE 1=1 ";
 
-        // Dengan query yang baru dengan JOIN
         $sql = "SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code 
                 FROM inv_act 
                 LEFT JOIN inv_dvc ON inv_act.id_dvc = inv_dvc.id_dvc 
@@ -83,11 +79,12 @@ class Data_model extends CI_Model {
         $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
         $main_query = $this->db->query($sql . $limit);
         
+        // Kirim hasil query ke view sebagai $query
+        $data = array();
         $data['query'] = $main_query;
         $data['page']['sum'] = $total_records;
         $data['page']['show'] = $show;
         $data['page']['first'] = $filter['first'];
-        
         return $data;
     }
 
