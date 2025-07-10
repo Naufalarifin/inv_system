@@ -2,31 +2,26 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Inventory_model extends CI_Model {
-
+    
     public function __construct() {
         parent::__construct();
         $this->load->model('config_model');
     }
 
-    /**
-     * Process inventory IN
-     */
+
     public function processInventoryIn($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         $qc_status = isset($data['qc_status']) ? trim($data['qc_status']) : '';
         
-        // Validate input
         $validation_result = $this->_validateSerialNumber($serial_number);
         if (!$validation_result['valid']) {
             return $this->_response(false, $validation_result['message']);
         }
         
-        // Check if serial number already exists
         if ($this->_isSerialNumberExists($serial_number)) {
             return $this->_response(false, 'Serial number sudah ada dalam database');
         }
         
-        // Parse serial number
         $parsed_data = $this->_parseSerialNumber($serial_number);
         
         // Get device info
@@ -129,6 +124,108 @@ class Inventory_model extends CI_Model {
     }
 
     /**
+     * Process inventory EDIT - METHOD BARU
+     */
+    public function processInventoryEdit($data) {
+        $id_act = isset($data['id_act']) ? trim($data['id_act']) : '';
+        $serial_number = isset($data['dvc_sn']) ? trim($data['dvc_sn']) : '';
+        $qc_status = isset($data['dvc_qc']) ? trim($data['dvc_qc']) : '';
+        $loc_move = isset($data['loc_move']) ? trim($data['loc_move']) : '';
+
+        // Validate ID
+        if (empty($id_act)) {
+            return $this->_response(false, 'ID tidak ditemukan');
+        }
+
+        // Get existing data
+        $existing_item = $this->_getInventoryById($id_act);
+        if (!$existing_item) {
+            return $this->_response(false, 'Data tidak ditemukan');
+        }
+
+        $update_data = array();
+
+        // Handle serial number update
+        if (!empty($serial_number) && $serial_number !== $existing_item->dvc_sn) {
+            // Validate serial number
+            $validation_result = $this->_validateSerialNumber($serial_number);
+            if (!$validation_result['valid']) {
+                return $this->_response(false, $validation_result['message']);
+            }
+
+            // Check if new serial number already exists (exclude current record)
+            if ($this->_isSerialNumberExistsForEdit($serial_number, $id_act)) {
+                return $this->_response(false, 'Serial number sudah ada dalam database');
+            }
+
+            // Parse serial number
+            $parsed_data = $this->_parseSerialNumber($serial_number);
+            
+            // Get device info
+            $device = $this->_getDeviceByCode($parsed_data['device_code']);
+            if (!$device) {
+                return $this->_response(false, 'Device tidak ditemukan dengan kode: ' . $parsed_data['device_code']);
+            }
+
+            // Update serial number, device ID, size, dan color
+            $update_data['dvc_sn'] = $serial_number;
+            $update_data['id_dvc'] = $device->id_dvc;
+            
+            if ($parsed_data['size'] !== null) {
+                $update_data['dvc_size'] = $parsed_data['size'];
+            }
+            if ($parsed_data['color'] !== null) {
+                $update_data['dvc_col'] = $parsed_data['color'];
+            }
+        }
+
+        // Handle QC status update
+        if ($qc_status !== '') {
+            $update_data['dvc_qc'] = $qc_status;
+        }
+
+        // Handle location move update
+        if ($loc_move !== '0' && $loc_move !== '') {
+            if (!$existing_item->inv_out) {
+                $update_data['loc_move'] = $loc_move;
+            } else {
+                if ($loc_move != $existing_item->loc_move) {
+                    return $this->_response(false, 'Location Move hanya bisa diubah jika belum keluar!');
+                }
+            }
+        }
+
+        // Check if there are changes
+        if (empty($update_data)) {
+            return $this->_response(false, 'Tidak ada data yang diubah');
+        }
+
+        // Update database
+        if ($this->db->where('id_act', $id_act)->update('inv_act', $update_data)) {
+            // Build success message with updated info
+            $updated_info = array();
+            if (isset($update_data['id_dvc'])) {
+                $updated_info[] = 'Device ID: ' . $update_data['id_dvc'];
+            }
+            if (isset($update_data['dvc_size'])) {
+                $updated_info[] = 'Size: ' . $update_data['dvc_size'];
+            }
+            if (isset($update_data['dvc_col'])) {
+                $updated_info[] = 'Color: ' . $update_data['dvc_col'];
+            }
+            
+            $message = 'Data berhasil diupdate';
+            if (!empty($updated_info)) {
+                $message .= ' (' . implode(', ', $updated_info) . ')';
+            }
+            
+            return $this->_response(true, $message);
+        } else {
+            return $this->_response(false, 'Gagal update data');
+        }
+    }
+
+    /**
      * Private helper methods
      */
     private function _validateSerialNumber($serial_number) {
@@ -149,31 +246,31 @@ class Inventory_model extends CI_Model {
     }
 
     private function _parseSerialNumber($serial_number) {
-        // Parse serial number components
-        $char_5 = substr($serial_number, 4, 1); // index 4 = karakter ke-5
-        $char_7 = substr($serial_number, 6, 1); // index 6 = karakter ke-7
-        $char_8 = substr($serial_number, 7, 1); // index 7 = karakter ke-8
+        $char_5 = substr($serial_number, 5, 1);
+        $char_7 = substr($serial_number, 7, 1);
+        $char_8 = substr($serial_number, 8, 1);
         
-        // Get device code from characters 5,7,8
         $device_code = $char_5 . $char_7 . $char_8;
         
-        // Determine size and color
         $size = null;
         $color = null;
         
         if ($char_5 === 'T') {
             $color = null;
+            if (strlen($serial_number) > 9) {
+                $size_char = substr($serial_number, 9, 1);
+                $size = $this->_getSizeFromChar($size_char);
+            }
+
         } elseif ($char_5 === 'S') {
-            // Get size from character 10 (index 9)
             if (strlen($serial_number) > 9) {
                 $size_char = substr($serial_number, 9, 1);
                 $size = $this->_getSizeFromChar($size_char);
             }
             
-            // Get color from characters 7,8 combined
             $combined_78 = intval($char_7 . $char_8);
             if ($combined_78 <= 50 && strlen($serial_number) > 11) {
-                $color_chars = substr($serial_number, 10, 2); // characters 11,12 (index 10,11)
+                $color_chars = substr($serial_number, 11, 2);
                 $color = $this->_getColorFromChars($color_chars);
             }
         }
@@ -235,6 +332,19 @@ class Inventory_model extends CI_Model {
         }
         
         return $response;
+    }
+
+
+    private function _getInventoryById($id_act) {
+        $query = $this->db->where('id_act', $id_act)->get('inv_act');
+        return $query->num_rows() > 0 ? $query->row() : null;
+    }
+
+    private function _isSerialNumberExistsForEdit($serial_number, $exclude_id_act) {
+        $query = $this->db->where('dvc_sn', $serial_number)
+                         ->where('id_act !=', $exclude_id_act)
+                         ->get('inv_act');
+        return $query->num_rows() > 0;
     }
 }
 ?>

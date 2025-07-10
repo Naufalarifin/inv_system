@@ -21,7 +21,7 @@
   $menu1_icon = array("ki-cube-2", "ki-book", "ki-book-open");
 
   $menu2_name[0] = array("All Item", "ECCT", "ECBS");
-  $menu2_link[0] = array("inventory/all_item", "inventory/ECCT", "inventory/ECBS");
+  $menu2_link[0] = array("inventory/all_item", "inventory/inv_ecct", "inventory/ECBS");
   $menu2_icon[0] = array("ki-technology-2", "ki-technology-1", "ki-technology-3");
 
   $menu2_name[1] = array("Rekap", "Statistik");
