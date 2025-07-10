@@ -1,30 +1,27 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-
 class Data_model extends CI_Model {
-
+    
     public function __construct() {
         parent::__construct();
         $this->load->database();
     }
+    
+    // ... existing methods remain the same ...
 
-    /**
-     * Get device calibration list
-     * @param int $limit - limit results
-     * @return array - with query and page data
-     */
-    public function getDeviceCalibrationList($limit = null) {
+    public function getDeviceCalibrationList($show = 20, $adddata = "", $sort = "") {
+        if ($show < 100 && isset($_GET['data_view']) && $_GET['data_view'] != "") {
+            $show = $_GET['data_view'];
+        }
+
+        $sort = "ORDER BY added DESC ";
         $this->load->model("sql_model");
-        
-        $show = $limit ?: 20;
         $filter = $this->sql_model->getFilterDeviceCalibrationList($show);
 
         if ($show >= 999999) {
             $filter['first'] = 0;
         }
 
-        $sort = "ORDER BY added DESC ";
-        if (isset($filter['sort']) && $filter['sort'] != "") {
+        if ($filter['sort'] != "") {
             $sort = $filter['sort'];
         }
 
@@ -38,36 +35,36 @@ class Data_model extends CI_Model {
         $sql .= " " . $filter['all'] . " ";
         $sql .= " " . $sort . " ";
 
-        $limit_sql = "LIMIT " . $filter['first'] . ", " . $show . " ";
-        $data['query'] = $this->db->query($sql . $limit_sql);
+        $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
+        $data['query'] = $this->db->query($sql . $limit);
         $data['page']['sum'] = $this->db->query($sql)->num_rows();
         $data['page']['show'] = $show;
         $data['page']['first'] = $filter['first'];
-        
+
         return $data;
     }
 
-    /**
-     * Get all items for inventory
-     * @param int $limit - limit results
-     * @return array - with query and page data
-     */
-    public function getAllItem($limit = null) {
+    public function getAllItem($show = 20, $adddata = "", $sort = "") {
+        if ($show < 100 && isset($_GET['data_view_item']) && $_GET['data_view_item'] != "") {
+            $show = $_GET['data_view_item'];
+        }
+
+        $sort = "ORDER BY id_act DESC ";
         $this->load->model("sql_model");
-        
-        $show = $limit ?: 20;
         $filter = $this->sql_model->getFilterItemList($show);
 
         if ($show >= 999999) {
             $filter['first'] = 0;
         }
 
-        $sort = "ORDER BY id_act DESC ";
         if (isset($filter['sort']) && $filter['sort'] != "") {
             $sort = $filter['sort'];
         }
         
-        // Query dengan JOIN untuk mendapatkan device name dan code
+        // Ganti query yang lama
+        // $sql = "SELECT * FROM inv_act WHERE 1=1 ";
+
+        // Dengan query yang baru dengan JOIN
         $sql = "SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code 
                 FROM inv_act 
                 LEFT JOIN inv_dvc ON inv_act.id_dvc = inv_dvc.id_dvc 
@@ -79,125 +76,19 @@ class Data_model extends CI_Model {
         
         $sql .= " " . $sort . " ";
 
-        $limit_sql = "LIMIT " . $filter['first'] . ", " . $show . " ";
-        $data['query'] = $this->db->query($sql . $limit_sql);
-        $data['page']['sum'] = $this->db->query($sql)->num_rows();
+        $count_sql = str_replace("SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code", "SELECT COUNT(*) as total", $sql);
+        $count_query = $this->db->query($count_sql);
+        $total_records = $count_query ? $count_query->row()->total : 0;
+
+        $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
+        $main_query = $this->db->query($sql . $limit);
+        
+        $data['query'] = $main_query;
+        $data['page']['sum'] = $total_records;
         $data['page']['show'] = $show;
         $data['page']['first'] = $filter['first'];
         
         return $data;
-    }
-
-    /**
-     * Get custom data
-     * @param string $col - column to select
-     * @param string $tab - table name
-     * @param string $key - key field
-     * @param string $val - key value
-     * @return mixed
-     */
-    public function getCustom($col, $tab, $key, $val) {
-        $sql = "SELECT " . $col . " ";
-        $sql .= "FROM " . $tab . " ";
-        $sql .= "WHERE " . $key . "='" . $val . "' ";
-        $query = $this->db->query($sql);
-        $data = $query->row_array();
-        if ($col == "*") {
-            return $data;
-        } else {
-            return $data[$col];
-        }
-    }
-
-    /**
-     * Get location data
-     * @return array
-     */
-    public function getLocations() {
-        $this->db->order_by('location_name', 'ASC');
-        $query = $this->db->get('location');
-        return $query->result_array();
-    }
-
-    /**
-     * Get device types
-     * @return array
-     */
-    public function getDeviceTypes() {
-        $this->db->distinct();
-        $this->db->select('dvc_type');
-        $this->db->where('dvc_type IS NOT NULL');
-        $this->db->where('dvc_type !=', '');
-        $this->db->order_by('dvc_type', 'ASC');
-        $query = $this->db->get('inv_dvc');
-        return $query->result_array();
-    }
-
-    /**
-     * Get devices by type
-     * @param string $type - device type
-     * @return array
-     */
-    public function getDevicesByType($type) {
-        $this->db->where('dvc_type', $type);
-        $this->db->order_by('dvc_name', 'ASC');
-        $query = $this->db->get('inv_dvc');
-        return $query->result_array();
-    }
-
-    /**
-     * Get device by ID
-     * @param int $id - device ID
-     * @return array
-     */
-    public function getDeviceById($id) {
-        $this->db->where('id_dvc', $id);
-        $query = $this->db->get('inv_dvc');
-        return $query->row_array();
-    }
-
-    /**
-     * Get device by serial number
-     * @param string $sn - serial number
-     * @return array
-     */
-    public function getDeviceBySN($sn) {
-        $this->db->where('dvc_sn', $sn);
-        $query = $this->db->get('inv_dvc');
-        return $query->row_array();
-    }
-
-    /**
-     * Get inventory activity by ID
-     * @param int $id - activity ID
-     * @return array
-     */
-    public function getInventoryActivityById($id) {
-        $this->db->select('ia.*, id.dvc_name, id.dvc_type, id.dvc_code, l.location_name');
-        $this->db->from('inv_act ia');
-        $this->db->join('inv_dvc id', 'ia.id_dvc = id.id_dvc', 'left');
-        $this->db->join('location l', 'ia.loc_move = l.id_location', 'left');
-        $this->db->where('ia.id_act', $id);
-        $query = $this->db->get();
-        return $query->row_array();
-    }
-
-    /**
-     * Get admin users
-     * @return array
-     */
-    public function getAdmins() {
-        $this->db->distinct();
-        $this->db->select('adm_in as admin');
-        $this->db->from('inv_act');
-        $this->db->where('adm_in IS NOT NULL');
-        $this->db->where('adm_in !=', '');
-        $this->db->union('SELECT adm_out as admin FROM inv_act WHERE adm_out IS NOT NULL AND adm_out != ""');
-        $this->db->union('SELECT adm_move as admin FROM inv_act WHERE adm_move IS NOT NULL AND adm_move != ""');
-        $this->db->union('SELECT adm_rls as admin FROM inv_act WHERE adm_rls IS NOT NULL AND adm_rls != ""');
-        $this->db->order_by('admin', 'ASC');
-        $query = $this->db->get();
-        return $query->result_array();
     }
 
     // METHOD untuk ECCT APP - DENGAN ATURAN inv_out KOSONG
@@ -311,6 +202,19 @@ class Data_model extends CI_Model {
         $data['page']['first'] = $filter['first'];
         
         return $data;
+    }
+
+    public function getCustom($col, $tab, $key, $val) {
+        $sql = "SELECT " . $col . " ";
+        $sql .= "FROM " . $tab . " ";
+        $sql .= "WHERE " . $key . "='" . $val . "' ";
+        $query = $this->db->query($sql);
+        $data = $query->row_array();
+        if ($col == "*") {
+            return $data;
+        } else {
+            return $data[$col];
+        }
     }
 }
 ?>

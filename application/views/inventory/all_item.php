@@ -329,8 +329,7 @@ function submitInput(type) {
             location: document.getElementById('move_location').value
         };
     }
-    
-    // Validation
+
     if (!data.serial_number) {
         alert('⚠️ Serial number harus diisi!');
         return;
@@ -340,14 +339,12 @@ function submitInput(type) {
         alert('⚠️ Lokasi harus dipilih!');
         return;
     }
-    
-    // Show loading
+
     const submitBtn = event.target;
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '⏳ Processing...';
     submitBtn.disabled = true;
     
-    // Send AJAX request
     fetch(url, {
         method: 'POST',
         headers: {
@@ -360,8 +357,8 @@ function submitInput(type) {
         if (result.success) {
             alert('✅ ' + result.message);
             closeInputModal();
-            showDataItem(); // Refresh data
-            // Clear form
+            showDataItem();
+
             if (type === 'in') {
                 document.getElementById('in_serial_number').value = '';
                 document.getElementById('in_qc_status').value = '0';
@@ -385,7 +382,6 @@ function submitInput(type) {
     });
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(event) {
     const dropdown = document.getElementById('input_dropdown');
     const button = event.target.closest('#input_btn');
@@ -394,19 +390,16 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Close modal when clicking overlay
 document.getElementById('modal_overlay').addEventListener('click', function(event) {
     if (event.target === this) {
         closeInputModal();
     }
 });
 
-// Auto load data saat halaman dimuat - ORIGINAL
 window.onload = function() {
     showDataItem();
 }
 
-// CSS untuk animasi loading - ORIGINAL
 const style = document.createElement('style');
 style.textContent = `
     @keyframes spin {

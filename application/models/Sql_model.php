@@ -6,19 +6,18 @@ class Sql_model extends CI_Model {
         $this->load->database();
     }
     
-    // Existing function for device calibration
+    // ... existing methods remain the same ...
+
     public function getFilterDeviceCalibrationList($show) {
         $filter = array();
         $filter['first'] = 0;
         $filter['all'] = "";
         $filter['sort'] = "";
         
-        // Handle pagination
         if (isset($_GET['p']) && $_GET['p'] > 1) {
             $filter['first'] = ($_GET['p'] - 1) * $show;
         }
         
-        // Handle search and filters
         if (isset($_GET['key']) && $_GET['key'] != "") {
             $filter['all'] .= " AND (kai.dvc_code LIKE '%" . $_GET['key'] . "%' OR kai.dvc_sn LIKE '%" . $_GET['key'] . "%')";
         }
@@ -38,7 +37,6 @@ class Sql_model extends CI_Model {
             $filter['all'] .= " AND ka.added <= '" . $_GET['date_last'] . "'";
         }
         
-        // Handle sorting
         if (isset($_GET['sort_lt']) && $_GET['sort_lt'] != "") {
             if ($_GET['sort_lt'] == 'asc') {
                 $filter['sort'] = "ORDER BY kai.dvc_rls ASC";
@@ -50,21 +48,17 @@ class Sql_model extends CI_Model {
         return $filter;
     }
 
-    // NEW: Function for item list filtering
-    // PERBAIKAN: Function for item list filtering
     public function getFilterItemList($show) {
         $filter = array();
         $filter['first'] = 0;
         $filter['all'] = "";
         $filter['sort'] = "";
         
-        // PERBAIKAN: Handle pagination dengan perhitungan yang benar
         if (isset($_GET['p']) && $_GET['p'] != "" && $_GET['p'] > 0) {
             $page = intval($_GET['p']);
-            $filter['first'] = ($page - 1) * $show;  // PERBAIKAN: Formula yang benar
+            $filter['first'] = ($page - 1) * $show;
         }
         
-        // Handle search and filters dengan validasi yang lebih baik
         if (isset($_GET['key_item']) && $_GET['key_item'] != "") {
             $key = $this->db->escape_str($_GET['key_item']);
             $filter['all'] .= " AND (inv_act.dvc_sn LIKE '%" . $key . "%' OR inv_act.id_act LIKE '%" . $key . "%')";
@@ -88,7 +82,61 @@ class Sql_model extends CI_Model {
             $filter['all'] .= " AND inv_act.loc_move = '" . $this->db->escape_str($_GET['loc_move']) . "'";
         }
         
-        // Handle sorting dengan validasi
+        if (isset($_GET['sort_by']) && $_GET['sort_by'] != "") {
+            switch ($_GET['sort_by']) {
+                case 'id_act_asc':
+                    $filter['sort'] = "ORDER BY inv_act.id_act ASC";
+                    break;
+                case 'id_act_desc':
+                    $filter['sort'] = "ORDER BY inv_act.id_act DESC";
+                    break;
+                case 'dvc_sn_asc':
+                    $filter['sort'] = "ORDER BY inv_act.dvc_sn ASC";
+                    break;
+                case 'dvc_sn_desc':
+                    $filter['sort'] = "ORDER BY inv_act.dvc_sn DESC";
+                    break;
+                default:
+                    $filter['sort'] = "ORDER BY inv_act.id_act DESC";
+                    break;
+            }
+        }
+        
+        return $filter;
+    }
+
+    // METHOD BARU untuk filter ECCT
+    public function getFilterEcctList($show) {
+        $filter = array();
+        $filter['first'] = 0;
+        $filter['all'] = "";
+        $filter['sort'] = "";
+        
+        if (isset($_GET['p']) && $_GET['p'] != "" && $_GET['p'] > 0) {
+            $page = intval($_GET['p']);
+            $filter['first'] = ($page - 1) * $show;
+        }
+        
+        if (isset($_GET['key_ecct']) && $_GET['key_ecct'] != "") {
+            $key = $this->db->escape_str($_GET['key_ecct']);
+            $filter['all'] .= " AND (inv_act.dvc_sn LIKE '%" . $key . "%' OR inv_act.id_act LIKE '%" . $key . "%')";
+        }
+        if (isset($_GET['dvc_size']) && $_GET['dvc_size'] != "") {
+            $filter['all'] .= " AND inv_act.dvc_size = '" . $this->db->escape_str($_GET['dvc_size']) . "'";
+        }
+        if (isset($_GET['dvc_col']) && $_GET['dvc_col'] != "") {
+            $filter['all'] .= " AND inv_act.dvc_col = '" . $this->db->escape_str($_GET['dvc_col']) . "'";
+        }
+        if (isset($_GET['dvc_qc']) && $_GET['dvc_qc'] != "") {
+            $filter['all'] .= " AND inv_act.dvc_qc = '" . $this->db->escape_str($_GET['dvc_qc']) . "'";
+        }
+        if (isset($_GET['date_from']) && $_GET['date_from'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_in) >= '" . $this->db->escape_str($_GET['date_from']) . "'";
+        }
+        if (isset($_GET['date_to']) && $_GET['date_to'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_in) <= '" . $this->db->escape_str($_GET['date_to']) . "'";
+        }
+        
         if (isset($_GET['sort_by']) && $_GET['sort_by'] != "") {
             switch ($_GET['sort_by']) {
                 case 'id_act_asc':
