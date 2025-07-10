@@ -5,19 +5,12 @@
                 <tr>
                     <th align="center" width="40">No</th>
                     <th align="center" width="70">Action ID</th>
-                    <th align="center" width="70">Device ID</th>
-                    <th align="center" width="60">Size</th>
-                    <th align="center" width="60">Color</th>
-                    <th align="center" width="90">Serial Number</th>
-                    <th align="center" width="60">QC Status</th>
-                    <th align="center" width="70">Inv In</th>
-                    <th align="center" width="70">Inv Move</th>
-                    <th align="center" width="70">Inv Out</th>
-                    <th align="center" width="70">Inv Release</th>
-                    <th align="center" width="70">Admin In</th>
-                    <th align="center" width="70">Admin Move</th>
-                    <th align="center" width="70">Admin Out</th>
-                    <th align="center" width="70">Admin Release</th>
+                    <th align="center" width="120">Device Info</th>
+                    <th align="center" width="90">Size/Color</th>
+                    <th align="center" width="100">Serial Number</th>
+                    <th align="center" width="80">QC Status</th>
+                    <th align="center" width="150">Inventory Timeline</th>
+                    <th align="center" width="120">Admin Timeline</th>
                     <th align="center" width="80">Location Move</th>
                     <th align="center" width="80">Aksi</th>
                 </tr>
@@ -32,22 +25,29 @@
                 <tr>
                     <td align="center"><?php echo $no + ($data['page']['show'] * (isset($_GET['p']) ? (int)$_GET['p'] : 0)); ?></td>
                     <td align="center"><?php echo $row['id_act']; ?></td>
-                    <td align="center"><?php echo $row['id_dvc']; ?></td>
-                    <td align="center">
-                        <?php if ($row['dvc_size'] == 'small') { ?>
-                            <span class="badge badge-sm badge-success badge-outline">S</span>
-                        <?php } elseif ($row['dvc_size'] == 'medium') { ?>
-                            <span class="badge badge-sm badge-warning badge-outline">M</span>
-                        <?php } elseif ($row['dvc_size'] == 'large') { ?>
-                            <span class="badge badge-sm badge-danger badge-outline">L</span>
-                        <?php } else { ?>
-                            <span class="badge badge-sm badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
-                        <?php } ?>
+                    <td class="device-info">
+                        <div class="device-name">Device <?php echo $row['id_dvc']; ?></div>
+                        <div class="device-id">DVC<?php echo str_pad($row['id_dvc'], 3, '0', STR_PAD_LEFT); ?></div>
                     </td>
                     <td align="center">
-                        <span class="badge badge-sm badge-light badge-outline" style="background-color: <?php echo $row['dvc_col']; ?>; color: <?php echo ($row['dvc_col'] == 'white' || $row['dvc_col'] == 'yellow') ? 'black' : 'white'; ?>;">
-                            <?php echo substr(ucfirst($row['dvc_col']), 0, 3); ?>
-                        </span>
+                        <div class="size-color-container">
+                            <div>
+                                <?php if ($row['dvc_size'] == 'small') { ?>
+                                    <span class="badge badge-sm badge-success badge-outline">S</span>
+                                <?php } elseif ($row['dvc_size'] == 'medium') { ?>
+                                    <span class="badge badge-sm badge-warning badge-outline">M</span>
+                                <?php } elseif ($row['dvc_size'] == 'large') { ?>
+                                    <span class="badge badge-sm badge-danger badge-outline">L</span>
+                                <?php } else { ?>
+                                    <span class="badge badge-sm badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
+                                <?php } ?>
+                            </div>
+                            <div>
+                                <span class="badge badge-sm badge-light badge-outline" style="background-color: <?php echo $row['dvc_col']; ?>; color: <?php echo ($row['dvc_col'] == 'white' || $row['dvc_col'] == 'yellow') ? 'black' : 'white'; ?>;">
+                                    <?php echo substr(ucfirst($row['dvc_col']), 0, 3); ?>
+                                </span>
+                            </div>
+                        </div>
                     </td>
                     <td align="center"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
@@ -59,14 +59,54 @@
                             <span class="badge badge-sm badge-warning badge-outline">Pend</span>
                         <?php } ?>
                     </td>
-                    <td align="center"><?php echo $row['inv_in'] ? date("d/m/y", strtotime($row['inv_in'])) : '-'; ?></td>
-                    <td align="center"><?php echo $row['inv_move'] ? date("d/m/y", strtotime($row['inv_move'])) : '-'; ?></td>
-                    <td align="center"><?php echo $row['inv_out'] ? date("d/m/y", strtotime($row['inv_out'])) : '-'; ?></td>
-                    <td align="center"><?php echo $row['inv_rls'] ? date("d/m/y", strtotime($row['inv_rls'])) : '-'; ?></td>
-                    <td align="center"><?php echo isset($row['adm_in']) ? (int) $row['adm_in'] : '-'; ?></td>
-                    <td align="center"><?php echo isset($row['adm_move']) ? (int) $row['adm_move'] : '-'; ?></td>
-                    <td align="center"><?php echo isset($row['adm_out']) ? (int) $row['adm_out'] : '-'; ?></td>
-                    <td align="center"><?php echo isset($row['adm_rls']) ? (int) $row['adm_rls'] : '-'; ?></td>
+                    <td>
+                        <div class="timeline-container">
+                            <?php if ($row['inv_in']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">In:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_in'])); ?>
+                                </div>
+                            <?php } ?>
+                            <?php if ($row['inv_move']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Move:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_move'])); ?>
+                                </div>
+                            <?php } ?>
+                            <?php if ($row['inv_out']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Out:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_out'])); ?>
+                                </div>
+                            <?php } ?>
+                            <?php if ($row['inv_rls']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Release:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_rls'])); ?>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="timeline-container">
+                            <?php if (isset($row['adm_in']) && $row['adm_in']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">In:</span> <?php echo (int) $row['adm_in']; ?>
+                                </div>
+                            <?php } ?>
+                            <?php if (isset($row['adm_move']) && $row['adm_move']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Move:</span> <?php echo (int) $row['adm_move']; ?>
+                                </div>
+                            <?php } ?>
+                            <?php if (isset($row['adm_out']) && $row['adm_out']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Out:</span> <?php echo (int) $row['adm_out']; ?>
+                                </div>
+                            <?php } ?>
+                            <?php if (isset($row['adm_rls']) && $row['adm_rls']) { ?>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Release:</span> <?php echo (int) $row['adm_rls']; ?>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    </td>
                     <td align="center">
                         <?php 
                         if ($row['loc_move'] == 1) {
@@ -94,7 +134,7 @@
                 } else {
                 ?>
                 <tr>
-                    <td align="center" colspan="17"><i>No Data Found</i></td>
+                    <td align="center" colspan="10"><i>No Data Found</i></td>
                 </tr>
                 <?php } ?>
             </tbody>
@@ -160,9 +200,15 @@
             <label style="display:block; margin-bottom:4px; font-weight:bold;">Location Move</label>
             <select id="edit_loc_move" class="select" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                 <option value="0">-</option>
-                <option value="1">WH A</option>
-                <option value="2">WH B</option>
-                <option value="3">Lab</option>
+                <option value="Lantai 2">🏢 Lantai 2</option>
+                <option value="Bang Toni">👨‍💼 Bang Toni</option>
+                <option value="Om Bob">👨‍💼 Om Bob</option>
+                <option value="Rekanan">🤝 Rekanan</option>
+                <option value="LN">🏭 LN</option>
+                <option value="ECBS">🏭 ECBS</option>
+                <option value="LN Office">🏢 LN Office</option>
+                <option value="Lantai 1">🏢 Lantai 1</option>
+                <option value="Unknow">❓ Unknown</option>
             </select>
         </div>
         
@@ -224,37 +270,3 @@ function submitEditItem() {
     closeEditModal();
 }
 </script>
-
-<style>
-.card-table {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    padding: 16px 8px;
-}
-
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-}
-
-.table-responsive table {
-    min-width: 900px;
-    width: 100%;
-    white-space: nowrap;
-}
-
-.table-responsive td, .table-responsive th {
-    padding: 8px 6px;
-    font-size: 12px;
-    text-align: center;
-}
-
-.badge-sm {
-    font-size: 10px;
-    padding: 2px 6px;
-}
-</style>
