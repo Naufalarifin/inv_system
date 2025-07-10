@@ -1,4 +1,5 @@
 <?php
+defined('BASEPATH') OR exit('No direct script access allowed');
 
 class config_model extends CI_Model {
 
@@ -33,3 +34,4 @@ class config_model extends CI_Model {
 
 	
 }
+?>

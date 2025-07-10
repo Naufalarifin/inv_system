@@ -28,9 +28,9 @@
   $menu2_link[1] = array("laporan/rekap", "laporan/statistik");
   $menu2_icon[1] = array("ki-chart-bar", "ki-chart-pie");
 
-  $menu2_name[2] = array("Log User", "Log Data");
-  $menu2_link[2] = array("history/log_user", "history/log_data");
-  $menu2_icon[2] = array("ki-user", "ki-database");
+  $menu2_name[2] = array("All History", "Move History", "In History", "Out History");
+  $menu2_link[2] = array("history/all_history", "history/move_history", "history/in_history", "history/out_history");
+  $menu2_icon[2] = array("ki-book-open", "ki-book-open", "ki-book-open", "ki-book-open");
   
 ?>
 
