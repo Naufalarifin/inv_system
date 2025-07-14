@@ -1,3 +1,5 @@
+
+
        <!-- Toolbar -->
        <div class="pb-5">
         <!-- Container -->
@@ -26,22 +28,20 @@
              }
            ?>
            <a class="text-gray-900 hover:text-primary" href="<?php echo $breadcrumb_link; ?>"><?php echo $breadcrumb_last; ?></a>
-           <a class="text-gray-700 hover:text-primary" href="<?php echo $config['base_url']; ?>history/all_history">History</a>
-           <span class="text-gray-400 text-sm">/</span>
-           <a class="text-gray-900 hover:text-primary" href="<?php echo $config['base_url']; ?>history/all_history">All History</a>
-
           </div>
          </div>
 
+
          <div class="flex items-center flex-wrap gap-1 lg:gap-5">
+          
+
           <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
            <div class="menu-item">
             <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'all_item') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/all_item">
-            <a class="menu-link" href="<?php echo $config['base_url']; ?>history/all_history">
              <span class="menu-icon">
               <i class="ki-filled ki-chart-simple"></i>
              </span>
-             <span class="menu-title">All History</span>
+             <span class="menu-title">All Item</span>
             </a>
            </div>
            <div class="menu-item">
@@ -61,7 +61,10 @@
             </a>
            </div>
           </div>
+
+
          </div>
+
 
         </div>
         <!-- End of Container -->
@@ -84,3 +87,4 @@
            </div>
           </div>
        </div>
+

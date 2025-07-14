@@ -114,7 +114,7 @@ class Inventory extends CI_Controller {
             case 'data_inv_ecct_osc_export':
                 $data['data'] = $this->data_model->getEcctOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_osc_export', $data);
-                break;               
+                break;
             // CASE BARU untuk ECBS APP
             case 'data_inv_ecbs_app_show':
                 $data['data'] = $this->data_model->getEcbsAppData(10);
