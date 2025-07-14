@@ -16,21 +16,17 @@
 
 <?php
   
-  $menu1_name = array("Inventory", "Report", "History");
-  $menu1_link = array("inventory", "report", "history");
-  $menu1_icon = array("ki-cube-2", "ki-book", "ki-book-open");
+  $menu1_name = array("Inventory", "Report");
+  $menu1_link = array("inventory", "report");
+  $menu1_icon = array("ki-cube-2", "ki-book");
 
   $menu2_name[0] = array("All Item", "ECCT", "ECBS");
-  $menu2_link[0] = array("inventory/all_item", "inventory/inv_ecct", "inventory/ECBS");
+  $menu2_link[0] = array("inventory/all_item", "inventory/inv_ecct", "inventory/inv_ecbs");
   $menu2_icon[0] = array("ki-technology-2", "ki-technology-1", "ki-technology-3");
 
   $menu2_name[1] = array("Rekap", "Statistik");
   $menu2_link[1] = array("laporan/rekap", "laporan/statistik");
-  $menu2_icon[1] = array("ki-chart-bar", "ki-chart-pie");
-
-  $menu2_name[2] = array("Log User", "Log Data");
-  $menu2_link[2] = array("history/log_user", "history/log_data");
-  $menu2_icon[2] = array("ki-user", "ki-database");
+  $menu2_icon[1] = array("ki-chart-bar", "ki-chart-pie"); 
   
 ?>
 
