@@ -307,7 +307,7 @@
                             <a href="<?php echo $config['base_url']; ?>inventory/inv_ecct" class="dropdown-link">ECCT</a>
                         </div>
                         <div class="dropdown-item">
-                            <a href="<?php echo $config['base_url']; ?>inventory/inv" class="dropdown-link">ECBS</a>
+                            <a href="<?php echo $config['base_url']; ?>inventory/inv_ecbs" class="dropdown-link">ECBS</a>
                         </div>
                     </div>
                 </div>
