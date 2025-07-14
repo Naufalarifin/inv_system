@@ -5,7 +5,6 @@
                 <tr>
                     <th align="center" width="40">No</th>
                     <th align="center" width="200">Nama Barang</th>
-                    <th align="center" width="100">Tipe</th>
                     <th align="center" width="100">Kode</th>
                     <th align="center" width="60">XS</th>
                     <th align="center" width="60">S</th>
@@ -38,9 +37,8 @@
                         $percentage = $grand_total > 0 ? round(($row['subtotal'] / $grand_total) * 100, 1) : 0;
                 ?>
                 <tr>
-                    <td align="center"><?php echo $no + $data['page']['first']; ?></td>
+                    <td align="center"><?php echo $no; ?></td>
                     <td align="left"><?php echo $row['dvc_name']; ?></td>
-                    <td align="center">-</td>
                     <td align="center"><?php echo $row['dvc_code']; ?></td>
                     <td align="center"><?php echo $row['size_xs']; ?></td>
                     <td align="center"><?php echo $row['size_s']; ?></td>
