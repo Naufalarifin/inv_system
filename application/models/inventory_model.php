@@ -24,13 +24,11 @@ class Inventory_model extends CI_Model {
         
         $parsed_data = $this->_parseSerialNumber($serial_number);
         
-        // Get device info
         $device = $this->_getDeviceByCode($parsed_data['device_code']);
         if (!$device) {
             return $this->_response(false, 'Device tidak ditemukan dengan kode: ' . $parsed_data['device_code']);
         }
         
-        // Insert new inventory record
         $insert_data = array(
             'id_act' => $this->_generateNewActId(),
             'id_dvc' => $device->id_dvc,
@@ -56,9 +54,6 @@ class Inventory_model extends CI_Model {
         }
     }
 
-    /**
-     * Process inventory OUT
-     */
     public function processInventoryOut($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         
@@ -200,7 +195,6 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Tidak ada data yang diubah');
         }
 
-        // Update database
         if ($this->db->where('id_act', $id_act)->update('inv_act', $update_data)) {
             // Build success message with updated info
             $updated_info = array();
@@ -231,10 +225,6 @@ class Inventory_model extends CI_Model {
     private function _validateSerialNumber($serial_number) {
         if (empty($serial_number)) {
             return array('valid' => false, 'message' => 'Serial number tidak boleh kosong');
-        }
-        
-        if (strlen($serial_number) < 11) {
-            return array('valid' => false, 'message' => 'Serial number tidak valid (minimal 11 karakter)');
         }
         
         return array('valid' => true, 'message' => 'Valid');

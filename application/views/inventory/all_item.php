@@ -124,8 +124,8 @@
     </div>
     <div class="modal-body m_foot">
         <div class="flex gap-4" style="float: right;">
-            <button class="btn btn-light" data-modal-dismiss="true">Cancel</button>
-            <button class="btn btn-primary" data-modal-dismiss="true" onclick="showDataItem();" style="float:right;">Submit</button>
+            <button class="btn btn-light" data-modal-dismiss>Cancel</button>
+            <button class="btn btn-primary" data-modal-dismiss onclick="showDataItem();" style="float:right;">Submit</button>
         </div>
     </div>
 </div>
