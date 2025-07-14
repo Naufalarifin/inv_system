@@ -97,7 +97,7 @@ class Inventory extends CI_Controller {
                 break;
             // CASE BARU untuk ECCT APP
             case 'data_inv_ecct_app_show':
-                $data['data'] = $this->data_model->getEcctAppData(10);
+                $data['data'] = $this->data_model->getEcctAppData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_app_show', $data);
                 break;
 
@@ -107,7 +107,7 @@ class Inventory extends CI_Controller {
                 break;
             // CASE BARU untuk ECCT OSC
             case 'data_inv_ecct_osc_show':
-                $data['data'] = $this->data_model->getEcctOscData(10);
+                $data['data'] = $this->data_model->getEcctOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_osc_show', $data);
                 break;
 
@@ -132,6 +132,11 @@ class Inventory extends CI_Controller {
             case 'data_inv_ecbs_osc_export':
                 $data['data'] = $this->data_model->getEcbsOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecbs_osc_export', $data);
+                break;
+            // ENDPOINT BARU: all_item khusus ECCT
+            case 'data_item_ecct_only':
+                $data['data'] = $this->data_model->getAllItemEcctOnly(999999);
+                $this->load->view('inventory/data/data_item_show', $data);
                 break;
             default:
                 show_404();

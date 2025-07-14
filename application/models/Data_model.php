@@ -88,6 +88,50 @@ class Data_model extends CI_Model {
         return $data;
     }
 
+    // Ambil semua item, hanya yang dvc_tech = 'ecct'
+    public function getAllItemEcctOnly($show = 20, $adddata = "", $sort = "") {
+        if ($show < 100 && isset($_GET['data_view_item']) && $_GET['data_view_item'] != "") {
+            $show = $_GET['data_view_item'];
+        }
+
+        $sort = "ORDER BY id_act DESC ";
+        $this->load->model("sql_model");
+        $filter = $this->sql_model->getFilterItemList($show);
+
+        if ($show >= 999999) {
+            $filter['first'] = 0;
+        }
+
+        if (isset($filter['sort']) && $filter['sort'] != "") {
+            $sort = $filter['sort'];
+        }
+
+        $sql = "SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code, inv_dvc.dvc_tech "+
+               "FROM inv_act "+
+               "LEFT JOIN inv_dvc ON inv_act.id_dvc = inv_dvc.id_dvc "+
+               "WHERE inv_dvc.dvc_tech = 'ecct' ";
+
+        if (isset($filter['all'])) {
+            $sql .= " " . $filter['all'] . " ";
+        }
+
+        $sql .= " " . $sort . " ";
+
+        $count_sql = str_replace("SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code, inv_dvc.dvc_tech", "SELECT COUNT(*) as total", $sql);
+        $count_query = $this->db->query($count_sql);
+        $total_records = $count_query ? $count_query->row()->total : 0;
+
+        $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
+        $main_query = $this->db->query($sql . $limit);
+
+        $data = array();
+        $data['query'] = $main_query;
+        $data['page']['sum'] = $total_records;
+        $data['page']['show'] = $show;
+        $data['page']['first'] = $filter['first'];
+        return $data;
+    }
+
     // METHOD untuk ECCT APP - DENGAN ATURAN inv_out KOSONG
     public function getEcctAppData($show = 20, $adddata = "", $sort = "") {
         if ($show < 100 && isset($_GET['data_view_ecct']) && $_GET['data_view_ecct'] != "") {

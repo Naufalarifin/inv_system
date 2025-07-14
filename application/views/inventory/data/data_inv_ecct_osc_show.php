@@ -19,7 +19,7 @@
                         $no++;
                 ?>
                 <tr>
-                    <td align="center"><?php echo $no + $data['page']['first']; ?></td>
+                    <td align="center"><?php echo $no; ?></td>
                     <td align="left"><?php echo $row['dvc_name']; ?></td>
                     <td align="center"><?php echo $row['dvc_code']; ?></td>
                     <td align="center"><strong><?php echo $row['total_count']; ?></strong></td>
