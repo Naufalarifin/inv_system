@@ -162,9 +162,8 @@
         <span class="form-hint">QC Status</span>
         <select class="select" id="dvc_qc">
           <option value="">All</option>
-          <option value="0">Pending</option>
-          <option value="1">Passed</option>
-          <option value="2">Failed</option>
+          <option value="0">LN</option>
+          <option value="1">DN</option>
         </select>
       </div>
       <div class="form-group">
@@ -218,7 +217,6 @@
   </div>
 </div>
 
-<!-- Modal Input In -->
 <div id="modal_input_in" class="modal-container" style="display:none;">
   <div class="modal-header">
     <h3 class="modal-title">Input In - Barang Masuk</h3>
@@ -233,9 +231,8 @@
     <div class="form-group">
       <label>QC Status *</label>
       <select id="in_qc_status" class="select">
-        <option value="0">🟡 Pending</option>
-        <option value="1">✅ Passed</option>
-        <option value="2">❌ Failed</option>
+        <option value="0">LN</option>
+        <option value="1">DN</option>
       </select>
     </div>
   </div>
@@ -476,17 +473,51 @@ function openInputModal(type) {
   if(type === 'move') document.getElementById('modal_input_move').style.display = 'block';
 }
 
+// --- Tambahan untuk close dropdown input jika klik di luar ---
+document.addEventListener('mousedown', function(event) {
+  const dropdown = document.getElementById('input_dropdown');
+  const inputBtn = document.getElementById('input_btn');
+  if (dropdown && inputBtn && dropdown.style.display === 'block') {
+    if (!dropdown.contains(event.target) && !inputBtn.contains(event.target)) {
+      dropdown.style.display = 'none';
+    }
+  }
+});
+
+// --- Tambahan untuk close modal input jika klik di luar modal (overlay) ---
+document.getElementById('modal_overlay').addEventListener('mousedown', function(event) {
+  // Cek jika salah satu modal input sedang terbuka
+  const modals = ['modal_input_in', 'modal_input_out', 'modal_input_move'];
+  for (let i = 0; i < modals.length; i++) {
+    const modal = document.getElementById(modals[i]);
+    if (modal && modal.style.display === 'block') {
+      // Pastikan klik di overlay, bukan di modal
+      if (event.target === this) {
+        closeInputModal();
+      }
+    }
+  }
+});
+
+// --- Reset input serial number setiap modal input tertutup ---
 function closeInputModal() {
   document.getElementById('modal_overlay').style.display = 'none';
   document.getElementById('modal_input_in').style.display = 'none';
   document.getElementById('modal_input_out').style.display = 'none';
   document.getElementById('modal_input_move').style.display = 'none';
+  // Reset input serial number
+  var inSerial = document.getElementById('in_serial_number');
+  if (inSerial) inSerial.value = '';
+  var outSerial = document.getElementById('out_serial_number');
+  if (outSerial) outSerial.value = '';
+  var moveSerial = document.getElementById('move_serial_number');
+  if (moveSerial) moveSerial.value = '';
 }
 
+// --- Reset input serial number juga setelah submitInput berhasil ---
 function submitInput(type) {
   let data = {};
   let url = "<?php echo $config['url_menu']; ?>input_process";
-  
   if (type === 'in') {
     data = {
       type: 'in',
@@ -505,17 +536,14 @@ function submitInput(type) {
       location: document.getElementById('move_location').value
     };
   }
-  
   if (!data.serial_number) {
     alert('⚠️ Serial number harus diisi!');
     return;
   }
-  
   if (type === 'move' && !data.location) {
     alert('⚠️ Lokasi harus dipilih!');
     return;
   }
-  
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -528,6 +556,13 @@ function submitInput(type) {
       closeInputModal();
       showDataAllItem();
     }
+    // Reset input serial number meskipun gagal
+    var inSerial = document.getElementById('in_serial_number');
+    if (inSerial) inSerial.value = '';
+    var outSerial = document.getElementById('out_serial_number');
+    if (outSerial) outSerial.value = '';
+    var moveSerial = document.getElementById('move_serial_number');
+    if (moveSerial) moveSerial.value = '';
   })
   .catch(err => alert('Gagal memproses data!'));
 }

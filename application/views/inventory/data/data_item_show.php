@@ -4,14 +4,13 @@
             <thead>
                 <tr class="text-xs">
                     <th align="center" width="30">No</th>
-                    <th align="center" width="50">Action ID</th>
                     <th align="center" width="100">Device Info</th>
                     <th align="center" width="70">Size/Color</th>
                     <th align="center" width="80">Serial Number</th>
                     <th align="center" width="60">QC Status</th>
-                    <th align="center" width="120">Inventory Timeline</th>
-                    <th align="center" width="100">Admin Timeline</th>
-                    <th align="center" width="70">Location Move</th>
+                    <th align="center" width="80">In</th>
+                    <th align="center" width="80">Out</th>
+                    <th align="center" width="80">Move</th>
                     <th align="center" width="60">Aksi</th>
                 </tr>
             </thead>
@@ -23,90 +22,68 @@
                         $no++;
                 ?>
                 <tr>
-                    <td align="center" class="text-xs"><?php echo $no + ($data['page']['show'] * (isset($_GET['p']) ? (int)$_GET['p'] : 0)); ?></td>
-                    <td align="center" class="text-xs"><?php echo $row['id_act']; ?></td>
-                    <td class="text-xs">
-                        <div class="font-medium"><?php echo $row['dvc_name']; ?></div>
-                        <div class="text-gray-500"><?php echo $row['dvc_code']; ?></div>
+                    <td align="center" class="text-xs"><?php echo $no; ?></td>
+                    <td align="center" class="text-xs">
+                        <span data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo htmlspecialchars($row['dvc_name']); ?>">
+                            <?php echo $row['dvc_code']; ?>
+                        </span>
                     </td>
                     <td align="center">
                         <div class="text-xs">
-                            <?php if ($row['dvc_size'] == 'small') { ?>
-                                <span class="badge badge-xs badge-success badge-outline">S</span>
-                            <?php } elseif ($row['dvc_size'] == 'medium') { ?>
-                                <span class="badge badge-xs badge-warning badge-outline">M</span>
-                            <?php } elseif ($row['dvc_size'] == 'large') { ?>
-                                <span class="badge badge-xs badge-danger badge-outline">L</span>
-                            <?php } else { ?>
-                                <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
+                            <?php if (!empty($row['dvc_size'])) { ?>
+                                <?php if ($row['dvc_size'] == 'small') { ?>
+                                    <span class="badge badge-xs badge-success badge-outline">S</span>
+                                <?php } elseif ($row['dvc_size'] == 'medium') { ?>
+                                    <span class="badge badge-xs badge-warning badge-outline">M</span>
+                                <?php } elseif ($row['dvc_size'] == 'large') { ?>
+                                    <span class="badge badge-xs badge-danger badge-outline">L</span>
+                                <?php } else { ?>
+                                    <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
+                                <?php } ?>
                             <?php } ?>
-                            <span class="badge badge-xs badge-light badge-outline" style="background-color: <?php echo $row['dvc_col']; ?>; color: <?php echo ($row['dvc_col'] == 'white' || $row['dvc_col'] == 'yellow') ? 'black' : 'white'; ?>;">
-                                <?php echo substr(ucfirst($row['dvc_col']), 0, 3); ?>
-                            </span>
+                            <?php if (!empty($row['dvc_col'])) { ?>
+                                <span class="badge badge-xs badge-light badge-outline" style="background-color: <?php echo $row['dvc_col']; ?>; color: <?php echo ($row['dvc_col'] == 'white' || $row['dvc_col'] == 'yellow') ? 'black' : 'white'; ?>;">
+                                    <?php echo substr(ucfirst($row['dvc_col']), 0, 3); ?>
+                                </span>
+                            <?php } ?>
                         </div>
                     </td>
                     <td align="center" class="text-xs"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
-                        <?php if ($row['dvc_qc'] == '1') { ?>
-                            <span class="badge badge-xs badge-success badge-outline">Passed</span>
-                        <?php } elseif ($row['dvc_qc'] == '2') { ?>
-                            <span class="badge badge-xs badge-danger badge-outline">Failed</span>
-                        <?php } else { ?>
-                            <span class="badge badge-xs badge-warning badge-outline">Pending</span>
+                        <?php if ($row['dvc_qc'] == '0') { ?>
+                            <span class="badge badge-xs badge-success badge-outline">LN</span>
                         <?php } ?>
                     </td>
-                    <td>
-                        <div class="text-xs">
-                            <?php if ($row['inv_in']) { ?>
-                                <div><span class="font-medium">In:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_in'])); ?></div>
-                            <?php } ?>
-                            <?php if ($row['inv_move']) { ?>
-                                <div><span class="font-medium">Move:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_move'])); ?></div>
-                            <?php } ?>
-                            <?php if ($row['inv_out']) { ?>
-                                <div><span class="font-medium">Out:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_out'])); ?></div>
-                            <?php } ?>
-                            <?php if ($row['inv_rls']) { ?>
-                                <div><span class="font-medium">Release:</span> <?php echo date("d/m/y H:i", strtotime($row['inv_rls'])); ?></div>
-                            <?php } ?>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="text-xs">
-                            <?php if (isset($row['adm_in']) && $row['adm_in']) { ?>
-                                <div><span class="font-medium">In:</span> <?php echo (int) $row['adm_in']; ?></div>
-                            <?php } ?>
-                            <?php if (isset($row['adm_move']) && $row['adm_move']) { ?>
-                                <div><span class="font-medium">Move:</span> <?php echo (int) $row['adm_move']; ?></div>
-                            <?php } ?>
-                            <?php if (isset($row['adm_out']) && $row['adm_out']) { ?>
-                                <div><span class="font-medium">Out:</span> <?php echo (int) $row['adm_out']; ?></div>
-                            <?php } ?>
-                            <?php if (isset($row['adm_rls']) && $row['adm_rls']) { ?>
-                                <div><span class="font-medium">Release:</span> <?php echo (int) $row['adm_rls']; ?></div>
-                            <?php } ?>
-                        </div>
+                    <td align="center">
+                        <?php if ($row['inv_in']) { ?>
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_in']); ?>">
+                                <?php echo date("d/m/y H:i", strtotime($row['inv_in'])); ?>
+                            </span>
+                        <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
-                        <?php 
-                        if ($row['loc_move'] == 1) {
-                            echo '<span class="badge badge-xs badge-primary badge-outline">Warehouse A</span>';
-                        } elseif ($row['loc_move'] == 2) {
-                            echo '<span class="badge badge-xs badge-info badge-outline">Warehouse B</span>';
-                        } elseif ($row['loc_move'] == 3) {
-                            echo '<span class="badge badge-xs badge-success badge-outline">Lab</span>';
-                        } else {
-                            echo '<span class="badge badge-xs badge-light badge-outline">' . $row['loc_move'] . '</span>';
-                        }
-                        ?>
+                        <?php if ($row['inv_out']) { ?>
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_out']); ?>">
+                                <?php echo date("d/m/y H:i", strtotime($row['inv_out'])); ?>
+                            </span>
+                        <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
-                        <button class="btn btn-xs btn-warning" title="Edit" onclick="openEditModal('<?php echo $row['id_act']; ?>', '<?php echo htmlspecialchars($row['dvc_sn'], ENT_QUOTES); ?>', '<?php echo $row['dvc_qc']; ?>', '<?php echo htmlspecialchars($row['loc_move'], ENT_QUOTES); ?>')">
-                            ✏️
-                        </button>
-                        <button class="btn btn-xs btn-danger" title="Hapus" onclick="confirmDelete('<?php echo $row['id_act']; ?>')">
-                            🗑️
-                        </button>
+                        <?php if ($row['inv_move']) { ?>
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_move']); ?>, Lokasi: <?php echo htmlspecialchars($row['loc_move']); ?>">
+                                <?php echo date("d/m/y H:i", strtotime($row['inv_move'])); ?>
+                            </span>
+                        <?php } else { echo '-'; } ?>
+                    </td>
+                    <td align="center">
+                        <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
+                            <button class="btn btn-xs btn-warning" title="Edit" onclick="openEditModal('<?php echo $row['id_act']; ?>', '<?php echo htmlspecialchars($row['dvc_sn'], ENT_QUOTES); ?>', '<?php echo $row['dvc_qc']; ?>', '<?php echo htmlspecialchars($row['loc_move'], ENT_QUOTES); ?>')">
+                                ✏️
+                            </button>
+                            <button class="btn btn-xs btn-danger" title="Hapus" onclick="confirmDelete('<?php echo $row['id_act']; ?>')">
+                                🗑️
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 <?php 
@@ -114,7 +91,7 @@
                 } else {
                 ?>
                 <tr>
-                    <td align="center" colspan="10" class="text-xs"><i>No Data Found</i></td>
+                    <td align="center" colspan="9" class="text-xs"><i>No Data Found</i></td>
                 </tr>
                 <?php } ?>
             </tbody>
@@ -170,9 +147,8 @@
         <div style="margin-bottom:10px;">
             <label style="display:block; margin-bottom:4px; font-weight:bold; font-size:12px;">QC Status</label>
             <select id="edit_dvc_qc" class="select" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
-                <option value="0">Pending</option>
-                <option value="1">Passed</option>
-                <option value="2">Failed</option>
+                <option value="0">LN</option>
+                <option value="1">DN</option>
             </select>
         </div>
         

@@ -68,11 +68,17 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Item sudah dalam status OUT');
         }
         
-        // Update inventory record
+        $now = date('Y-m-d H:i:s');
         $update_data = array(
-            'inv_out' => date('Y-m-d H:i:s'),
+            'inv_out' => $now,
             'adm_out' => $this->_getAdminId()
         );
+        // Aturan baru: jika inv_move masih kosong/null/00.00.00, update inv_move dan loc_move
+        if (empty($inventory_item->inv_move) || $inventory_item->inv_move == '0000-00-00 00:00:00') {
+            $update_data['inv_move'] = $now;
+            $update_data['adm_move'] = $this->_getAdminId();
+            $update_data['loc_move'] = 'Lantai 1';
+        }
         
         if ($this->db->where('dvc_sn', $serial_number)->update('inv_act', $update_data)) {
             return $this->_response(true, 'Data berhasil di-update untuk OUT: ' . $serial_number);
