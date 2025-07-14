@@ -46,6 +46,15 @@ class Inventory extends CI_Controller {
         $this->load_bot($data);
     }
 
+    public function inv_ecbs() {
+        $data['onload'] = "showDataEcbs();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory ECBS";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/inv_ecbs', $data);
+        $this->load_bot($data);
+    }
+
     public function input_process() {
         $this->_handle_json_request(function() {
             $input_data = $this->_get_json_input();
@@ -108,6 +117,25 @@ class Inventory extends CI_Controller {
             case 'data_inv_ecct_osc_export':
                 $data['data'] = $this->data_model->getEcctOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_osc_export', $data);
+                break;
+                
+            // CASE BARU untuk ECBS APP
+            case 'data_inv_ecbs_app_show':
+                $data['data'] = $this->data_model->getEcbsAppData(10);
+                $this->load->view('inventory/data/data_inv_ecbs_app_show', $data);
+                break;
+            case 'data_inv_ecbs_app_export':
+                $data['data'] = $this->data_model->getEcbsAppData(999999);
+                $this->load->view('inventory/data/data_inv_ecbs_app_export', $data);
+                break;
+            // CASE BARU untuk ECBS OSC
+            case 'data_inv_ecbs_osc_show':
+                $data['data'] = $this->data_model->getEcbsOscData(10);
+                $this->load->view('inventory/data/data_inv_ecbs_osc_show', $data);
+                break;
+            case 'data_inv_ecbs_osc_export':
+                $data['data'] = $this->data_model->getEcbsOscData(999999);
+                $this->load->view('inventory/data/data_inv_ecbs_osc_export', $data);
                 break;
                 
             default:

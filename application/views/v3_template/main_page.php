@@ -8,7 +8,7 @@ if($sum%$show==0){ $last-=1; }
 if(!isset($func_show)){$func_show="showData";}
 ?>
 
-<?php if($sum>$show){ ?>
+<!-- <?php if($sum>$show){ ?>
 
 <div class="col-md-12" style="padding:20px 20px 10px 20px;border-top:1px solid #EEE;">
 
@@ -64,11 +64,11 @@ if(!isset($func_show)){$func_show="showData";}
 <a class="btn btn-light btn-sm" onclick="<?php echo $func_show."('".($_GET['p']+1)."');"; ?>" role="button" style="float:right;"><b>></b></a>
 <?php } ?>
 </div>
-
+ -->
 
 
 <div style="width:100%;text-align: center;padding-top:0px;height:10px;vertical-align: middle;float:left;margin-bottom: 30px;font-size:14px;">
-  <?php echo "Data <b>".((($_GET['p']-1)*$show)+1). "</b> - <b>".min(($_GET['p']*$show),$sum)."</b> / <b>".$sum."</b> Total Data";?>
+  <!-- <?php echo "Data <b>".((($_GET['p']-1)*$show)+1). "</b> - <b>".min(($_GET['p']*$show),$sum)."</b> / <b>".$sum."</b> Total Data";?> -->
   <?php echo $l_time!="" ? (" | Loadtime : <b>".$l_time."s</b>") : "";?>
 </div>
 
