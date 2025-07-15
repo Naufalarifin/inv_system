@@ -42,3 +42,10 @@
     </div>
 </div>
 
+<style>
+.table.table-border.text-xs td, .table.table-border.text-xs th {
+    font-size: 10px !important;
+    padding: 4px 6px !important;
+}
+</style>
+
