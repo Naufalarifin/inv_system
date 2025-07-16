@@ -19,12 +19,12 @@
                         $no++;
                 ?>
                 <tr>
-                    <td align="center"><?php echo $no + ($data['page']['show'] * (isset($_GET['p']) ? (int)$_GET['p'] : 0)); ?></td>
+                    <td align="left"><?php echo $no; ?></td>
                     <td align="left"><?php echo $row['dvc_name']; ?></td>
-                    <td align="center"><?php echo $row['dvc_code']; ?></td>
-                    <td align="center"><strong><?php echo $row['total_count']; ?></strong></td>
-                    <td align="center"><?php echo $row['dvc_tech']; ?></td>
-                    <td align="center"><?php echo $row['dvc_type']; ?></td>
+                    <td align="left"><?php echo $row['dvc_code']; ?></td>
+                    <td align="left"><strong><?php echo $row['total_count']; ?></strong></td>
+                    <td align="left"><?php echo $row['dvc_tech']; ?></td>
+                    <td align="left"><?php echo $row['dvc_type']; ?></td>
                 </tr>
                 <?php 
                     }
@@ -41,35 +41,6 @@
         </div>
     </div>
 </div>
-<!-- Pagination -->
-<?php if ($data['page']['sum'] > $data['page']['show']) { ?>
-<div class="card-footer justify-center">
-    <div class="pagination">
-        <?php
-        $total_pages = ceil($data['page']['sum'] / $data['page']['show']);
-        $current_page = isset($_GET['p']) ? (int)$_GET['p'] : 0;
-        // Previous button
-        if ($current_page > 0) {
-            echo '<a href="javascript:showDataEcbs(' . ($current_page - 1) . ')" class="btn btn-sm btn-light">Previous</a>';
-        }
-        // Page numbers
-        $start_page = max(0, $current_page - 2);
-        $end_page = min($total_pages - 1, $current_page + 2);
-        for ($i = $start_page; $i <= $end_page; $i++) {
-            if ($i == $current_page) {
-                echo '<span class="btn btn-sm btn-primary">' . ($i + 1) . '</span>';
-            } else {
-                echo '<a href="javascript:showDataEcbs(' . $i . ')" class="btn btn-sm btn-light">' . ($i + 1) . '</a>';
-            }
-        }
-        // Next button
-        if ($current_page < $total_pages - 1) {
-            echo '<a href="javascript:showDataEcbs(' . ($current_page + 1) . ')" class="btn btn-sm btn-light">Next</a>';
-        }
-        ?>
-    </div>
-</div>
-<?php } ?>
 <style>
 .card-table {
     max-width: 900px;

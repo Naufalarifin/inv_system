@@ -266,7 +266,7 @@ class Inventory_model extends CI_Model {
             
             $combined_78 = intval($char_7 . $char_8);
             if ($combined_78 <= 50 && strlen($serial_number) > 11) {
-                $color_chars = substr($serial_number, 11, 2);
+                $color_chars = substr($serial_number, 10, 2);
                 $color = $this->_getColorFromChars($color_chars);
             }
         }
