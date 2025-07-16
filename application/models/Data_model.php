@@ -5,8 +5,6 @@ class Data_model extends CI_Model {
         $this->load->database();
     }
 
-    // ... existing methods remain the same ...
-
     public function getDeviceCalibrationList($show = 20, $adddata = "", $sort = "") {
         if ($show < 100 && isset($_GET['data_view']) && $_GET['data_view'] != "") {
             $show = $_GET['data_view'];
@@ -182,22 +180,22 @@ class Data_model extends CI_Model {
         if ($show >= 999999) {
             $filter['first'] = 0;
         }
-        // Get devices dengan dvc_tech = 'ecct' dan dvc_type = 'OSC' SAJA
+        // Get devices dengan dvc_tech = 'ecct' SAJA (tanpa filter dvc_type)
         // DENGAN KONDISI inv_out KOSONG
-        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_tech, dvc.dvc_type, ";
-        $sql .= "(SELECT COUNT(*) FROM inv_act
-                    WHERE id_dvc = dvc.id_dvc
-                    AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')
-                ) as total_count ";
-        $sql .= "FROM inv_dvc dvc ";
-        $sql .= "WHERE LOWER(dvc.dvc_tech) = 'ecct' AND UPPER(dvc.dvc_type) = 'OSC' AND dvc.status = 0 ";
+        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_tech, dvc.dvc_type,
+                    (SELECT COUNT(*) FROM inv_act WHERE id_dvc = dvc.id_dvc AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00') AND dvc_qc = '0') as ln_count,
+                    (SELECT COUNT(*) FROM inv_act WHERE id_dvc = dvc.id_dvc AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00') AND dvc_qc = '1') as dn_count
+                FROM inv_dvc dvc
+                WHERE LOWER(dvc.dvc_tech) = 'ecct' AND dvc.status = 0 "; // Removed UPPER(dvc.dvc_type) = 'OSC'
                 if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
                 $sql .= " " . $sort . " ";
-        $count_sql = "SELECT COUNT(*) as total FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = 'ecct' AND UPPER(dvc.dvc_type) = 'OSC'";
+        // Count total records for pagination, based on the main inv_dvc query
+        $count_sql = "SELECT COUNT(*) as total FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = 'ecct' AND dvc.status = 0"; // Removed UPPER(dvc.dvc_type) = 'OSC'
         $count_query = $this->db->query($count_sql);
         $total_records = $count_query ? $count_query->row()->total : 0;
+
         $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
         $main_query = $this->db->query($sql . $limit);
 
@@ -309,13 +307,11 @@ class Data_model extends CI_Model {
         }
         // Get devices dengan dvc_tech = 'ecbs' dan dvc_type = 'OSC' SAJA
         // DENGAN KONDISI inv_out KOSONG
-        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_tech, dvc.dvc_type, ";
-        $sql .= "(SELECT COUNT(*) FROM inv_act
-                    WHERE id_dvc = dvc.id_dvc
-                    AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')
-                ) as total_count ";
-        $sql .= "FROM inv_dvc dvc ";
-        $sql .= "WHERE LOWER(dvc.dvc_tech) = 'ecbs' AND UPPER(dvc.dvc_type) = 'OSC' ";
+        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_tech, dvc.dvc_type,
+                    (SELECT COUNT(*) FROM inv_act WHERE id_dvc = dvc.id_dvc AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00') AND dvc_qc = '0') as ln_count,
+                    (SELECT COUNT(*) FROM inv_act WHERE id_dvc = dvc.id_dvc AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00') AND dvc_qc = '1') as dn_count
+                FROM inv_dvc dvc
+                WHERE LOWER(dvc.dvc_tech) = 'ecbs' AND UPPER(dvc.dvc_type) = 'OSC' ";
                 if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }

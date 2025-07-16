@@ -35,6 +35,15 @@ class Inventory extends CI_Controller {
         $this->load_bot($data);
     }
 
+    public function massive_input() {
+        $data['onload'] = ""; // No specific onload function needed for data display
+        $data = $this->load_top($data);
+        $data['title_page'] = "Massive Inventory Input";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/massive_input', $data); // Load the new massive_input view
+        $this->load_bot($data);
+    }
+
     public function inv_ecct() {
         $data['onload'] = "showDataEcct();";
         $data = $this->load_top($data);
@@ -183,32 +192,32 @@ class Inventory extends CI_Controller {
         $this->load_model->load_bot_v3($data, $view);
     }
 
-    public function input_edit_process() {
-        $this->_handle_json_request(function() {
-            $input_data = $this->_get_json_input();
-            if (!$input_data) {
-                return $this->_json_response(false, 'Invalid JSON input');
-            }
-            return $this->inventory_model->processInventoryEdit($input_data);
-        });
-    }
+    // public function input_edit_process() {
+    //     $this->_handle_json_request(function() {
+    //         $input_data = $this->_get_json_input();
+    //         if (!$input_data) {
+    //             return $this->_json_response(false, 'Invalid JSON input');
+    //         }
+    //         return $this->inventory_model->processInventoryEdit($input_data);
+    //     });
+    // }
 
-    public function input_delete_process() {
-        $json = file_get_contents('php://input');
-        $data = json_decode($json, true);
-        $response = array('success' => false, 'message' => '');
-        if (!isset($data['id_act'])) {
-            $response['message'] = 'ID tidak ditemukan';
-            $this->_output_json($response);
-            return;
-        }
-        $id_act = $data['id_act'];
-        if ($this->db->where('id_act', $id_act)->delete('inv_act')) {
-            $response['success'] = true;
-            $response['message'] = 'Data berhasil dihapus';
-        } else {
-            $response['message'] = 'Gagal menghapus data';
-        }
-        $this->_output_json($response);
-    }
+    // public function input_delete_process() {
+    //     $json = file_get_contents('php://input');
+    //     $data = json_decode($json, true);
+    //     $response = array('success' => false, 'message' => '');
+    //     if (!isset($data['id_act'])) {
+    //         $response['message'] = 'ID tidak ditemukan';
+    //         $this->_output_json($response);
+    //         return;
+    //     }
+    //     $id_act = $data['id_act'];
+    //     if ($this->db->where('id_act', $id_act)->delete('inv_act')) {
+    //         $response['success'] = true;
+    //         $response['message'] = 'Data berhasil dihapus';
+    //     } else {
+    //         $response['message'] = 'Gagal menghapus data';
+    //     }
+    //     $this->_output_json($response);
+    // }
 }
