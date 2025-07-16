@@ -1,14 +1,12 @@
-
-
-       <!-- Toolbar -->
-       <div class="pb-5">
+<!-- Toolbar -->
+<div class="pb-5">
         <!-- Container -->
         <div class="container-fixed flex items-center justify-between flex-wrap gap-3">
-         <div class="flex items-center flex-wrap gap-1 lg:gap-5">
+         <div class="flex flex-col gap-2">
           <h1 class="font-medium text-base text-gray-900" style="font-size:26px;">
            <?php echo ucwords($title_page); ?>
           </h1>
-          <div class="flex items-center flex-wrap gap-1 text-sm" style="vertical-align: bottom;margin-top:10px;">
+          <div class="flex items-center flex-wrap gap-1 text-sm">
            <a class="text-gray-700 hover:text-primary" href="<?php echo $config['base_url']; ?>">Home</a>
            <span class="text-gray-400 text-sm">/</span>
            <a class="text-gray-700 hover:text-primary" href="<?php echo $config['base_url']; ?>inventory">Inventory</a>
@@ -24,6 +22,9 @@
                } elseif ($config['hal_sub'] == 'inv_ecbs') {
                  $breadcrumb_last = 'ECBS';
                  $breadcrumb_link = $config['base_url'] . 'inventory/inv';
+               } elseif ($config['hal_sub'] == 'massive_input') {
+                $breadcrumb_last = 'MassiveInput';
+                $breadcrumb_link = $config['base_url'] . 'inventory/massive_input';
                }
              }
            ?>
@@ -31,10 +32,7 @@
           </div>
          </div>
 
-
          <div class="flex items-center flex-wrap gap-1 lg:gap-5">
-          
-
           <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
            <div class="menu-item">
             <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'all_item') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/all_item">
@@ -60,11 +58,16 @@
              <span class="menu-title">ECBS</span>
             </a>
            </div>
+           <div class="menu-item">
+            <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'massive_input') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/massive_input">
+             <span class="menu-icon">
+              <i class="ki-filled ki-tablet-book"></i>
+             </span>
+             <span class="menu-title">Massive Input</span>
+            </a>
+           </div>
           </div>
-
-
          </div>
-
 
         </div>
         <!-- End of Container -->
@@ -87,4 +90,3 @@
            </div>
           </div>
        </div>
-

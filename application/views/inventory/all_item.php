@@ -1,4 +1,4 @@
-<!-- Container -->
+<!-- Container
 <div class="container-fixed">
 <div class="card min-w-full">
     <div class="card-header">
@@ -144,7 +144,7 @@
             <div style="margin-bottom: 20px;">
                 <label style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">Serial Number *</label>
                 <input type="text" id="in_serial_number" placeholder="Contoh: ABC12D34E567890" style="width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#1677ff'" onblur="this.style.borderColor='#ddd'" />
-                <small style="color: #666; font-size: 12px;">Minimal 15 karakter untuk parsing otomatis</small>
+                <small style="color: #666; font-size: 12px;">Minimal 11 karakter untuk parsing otomatis</small>
             </div>
             <div style="margin-bottom: 20px;">
                 <label style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">QC Status *</label>
@@ -408,4 +408,4 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-</script>
+</script> -->

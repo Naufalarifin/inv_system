@@ -303,9 +303,7 @@ function renderToolbar() {
     toolbar += '<button id="btn_app" class="btn btn-sm ' + (currentEcctType === 'app' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcctType(\'app\')">APP</button>';
     toolbar += '<button id="btn_osc" class="btn btn-sm ' + (currentEcctType === 'osc' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcctType(\'osc\')">OSC</button>';
     toolbar += '</div>';
-    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_ecct" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataEcct();}" />';
-    toolbar += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_ecct\')">Filter</span>';
-    toolbar += '<span class="btn btn-primary btn-sm" onclick="showDataEcct();">Search</span>';
+    // Hapus input search, tombol filter, dan tombol search pada ECCT
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcct(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
     toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
@@ -395,16 +393,16 @@ function showDataEcct(page = 1) {
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
 
   var val = "?";
-  const fields = ["key_ecct", "dvc_name_ecct", "dvc_code_ecct", "data_view_ecct"];
-
-  fields.forEach(field => {
-    var element = document.getElementById(field);
-    if (element) {
-      var fieldName = field.replace('_ecct', '');
-      if (fieldName === 'key') fieldName = 'key_ecct';
-      val += "&" + fieldName + "=" + encodeURIComponent(element.value);
-    }
-  });
+  // Hapus fields filter dan search ECCT
+  // const fields = ["key_ecct", "dvc_name_ecct", "dvc_code_ecct", "data_view_ecct"];
+  // fields.forEach(field => {
+  //   var element = document.getElementById(field);
+  //   if (element) {
+  //     var fieldName = field.replace('_ecct', '');
+  //     if (fieldName === 'key') fieldName = 'key_ecct';
+  //     val += "&" + fieldName + "=" + encodeURIComponent(element.value);
+  //   }
+  // });
 
   val += "&type=" + currentEcctType;
 
@@ -488,27 +486,37 @@ function submitInput(type) {
   let data = {};
   let url = "<?php echo $config['url_menu']; ?>input_process";
 
+  let serialNumber = '';
   if (type === 'in') {
+    serialNumber = document.getElementById('in_serial_number').value.trim();
     data = {
       type: 'in',
-      serial_number: document.getElementById('in_serial_number').value.trim(),
+      serial_number: serialNumber,
       qc_status: document.getElementById('in_qc_status').value
     };
   } else if (type === 'out') {
+    serialNumber = document.getElementById('out_serial_number').value.trim();
     data = {
       type: 'out',
-      serial_number: document.getElementById('out_serial_number').value.trim()
+      serial_number: serialNumber
     };
   } else if (type === 'move') {
+    serialNumber = document.getElementById('move_serial_number').value.trim();
     data = {
       type: 'move',
-      serial_number: document.getElementById('move_serial_number').value.trim(),
+      serial_number: serialNumber,
       location: document.getElementById('move_location').value
     };
   }
 
-  if (!data.serial_number) {
+  if (!serialNumber) {
     alert('⚠️ Serial number harus diisi!');
+    return;
+  }
+
+  // Validasi karakter ke-6 harus 'T'
+  if (serialNumber.length < 6 || serialNumber.charAt(5).toUpperCase() !== 'T') {
+    alert('masukan ecct!');
     return;
   }
 
@@ -535,9 +543,8 @@ function submitInput(type) {
       }
     }
   })
-  .catch(err => {
-    console.error('Error:', err);
-    alert('Gagal memproses data!');
+  .catch(error => {
+        alert('❌ Error: ' + error.message);
   });
 }
 
