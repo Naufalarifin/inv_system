@@ -31,7 +31,7 @@ if(isset($data['data']) && !empty($data['data'])) {
             <thead>
                 <tr>
                     <th align="center" width="40">No</th>
-                    <th align="center" width="200">Nama Barang</th>
+                    <th align="center" width="60">Nama Barang</th>
                     <th align="center" width="100">Kode</th>
                     <th align="center" width="60">XS</th>
                     <th align="center" width="60">S</th>

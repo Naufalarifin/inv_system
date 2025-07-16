@@ -1,4 +1,3 @@
-<!-- Container
 <div class="container-fixed">
 <div class="card min-w-full">
     <div class="card-header">
@@ -9,7 +8,6 @@
                 <span class="btn btn-light btn-sm" data-modal-toggle="#modal_filter_item">Filter</span>
                 <span class="btn btn-primary btn-sm" onclick="showDataItem();" id="btn_search_item">Search</span>
                 
-                <!-- Tombol Input dengan dropdown -->
                 <div style="position: relative; display: inline-block; margin-left: 5px;">
                     <button class="btn btn-sm" style="background: #28a745; color: white;" onclick="toggleInputDropdown()" id="input_btn" type="button">Input ▼</button>
                     <div id="input_dropdown" style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 120px; z-index: 1000; margin-top: 2px;">
@@ -408,4 +406,4 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-</script> -->
+</script>

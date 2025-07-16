@@ -127,7 +127,7 @@ class Inventory extends CI_Controller {
                 break;
             // CASE BARU untuk ECBS APP
             case 'data_inv_ecbs_app_show':
-                $data['data'] = $this->data_model->getEcbsAppData(10);
+                $data['data'] = $this->data_model->getEcbsAppData(999999);
                 $this->load->view('inventory/data/data_inv_ecbs_app_show', $data);
                 break;
             case 'data_inv_ecbs_app_export':
@@ -136,7 +136,7 @@ class Inventory extends CI_Controller {
                 break;
             // CASE BARU untuk ECBS OSC
             case 'data_inv_ecbs_osc_show':
-                $data['data'] = $this->data_model->getEcbsOscData(10);
+                $data['data'] = $this->data_model->getEcbsOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecbs_osc_show', $data);
                 break;
             case 'data_inv_ecbs_osc_export':

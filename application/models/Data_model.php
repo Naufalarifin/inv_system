@@ -210,8 +210,7 @@ class Data_model extends CI_Model {
     // METHOD untuk ECBS APP - DENGAN ATURAN inv_out KOSONG
     public function getEcbsAppData($show = 20, $adddata = "", $sort = "") {
         // Tampilkan semua data dalam satu halaman
-        // $show = 1000; // Ini dikomentari agar bisa diatur dari parameter atau GET
-        if ($show < 100 && isset($_GET['data_view_ecbs']) && $_GET['data_view_ecbs'] != "") {
+            if ($show < 100 && isset($_GET['data_view_ecbs']) && $_GET['data_view_ecbs'] != "") {
             $show = $_GET['data_view_ecbs'];
         }
         $sort = "ORDER BY dvc.dvc_name ASC ";
@@ -224,49 +223,66 @@ class Data_model extends CI_Model {
         $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code ";
         $sql .= "FROM inv_dvc dvc ";
         $sql .= "WHERE LOWER(dvc.dvc_tech) = 'ecbs' AND UPPER(dvc.dvc_type) = 'APP' ";
-                if (isset($filter['all'])) {
+        if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
-                $sql .= " " . $sort . " ";
+        $sql .= " " . $sort . " ";
         $count_sql = str_replace("SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code", "SELECT COUNT(*) as total", $sql);
         $count_query = $this->db->query($count_sql);
         $total_records = $count_query ? $count_query->row()->total : 0;
         $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
         $devices_query = $this->db->query($sql . $limit);
 
-        // Untuk setiap device, hitung jumlah per ukuran DENGAN KONDISI inv_out KOSONG
+        // Untuk setiap device, ambil semua warna unik dari inv_act yang belum keluar
         $result_data = array();
         if ($devices_query && $devices_query->num_rows() > 0) {
             foreach ($devices_query->result_array() as $device) {
-                $device_data = $device;
-
-                // Ambil warna (dvc_col) dari salah satu item yang belum keluar
-                $warna_sql = "SELECT dvc_col FROM inv_act
-                                     WHERE id_dvc = ?
-                                     AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')
-                                     LIMIT 1";
+                // Ambil semua warna unik
+                $warna_sql = "SELECT DISTINCT dvc_col FROM inv_act
+                              WHERE id_dvc = ?
+                              AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')";
                 $warna_query = $this->db->query($warna_sql, array($device['id_dvc']));
-                $device_data['warna'] = $warna_query && $warna_query->num_rows() > 0 ? $warna_query->row()->dvc_col : '-';
+                $warna_list = $warna_query && $warna_query->num_rows() > 0 ? $warna_query->result_array() : [['dvc_col' => '-']];
 
-                // Hitung jumlah per ukuran dengan kondisi inv_out kosong
-                $sizes = array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'Cus');
-                $total = 0;
+                foreach ($warna_list as $warna_row) {
+                    $warna = $warna_row['dvc_col'] ? $warna_row['dvc_col'] : '-';
+                    // Mapping warna ke format CSS-friendly dan konsisten
+                    $warna_map = [
+                        'Dark Gray' => 'Dark Grey',
+                        'Black' => 'Black',
+                        'Grey' => 'Grey',
+                        'Blue Navy' => 'Navy',
+                        'Army' => 'Army',
+                        'Maroon' => 'Maroon',
+                        'Custom' => 'Custom',
+                        '-' => 'none'
+                    ];
+                    // Pastikan semua abu-abu jadi "Grey" (bukan "Gray")
+                    if ($warna === 'Dark Gray') $warna = 'Dark Grey';
+                    if ($warna === 'Gray') $warna = 'Grey';
+                    $warna_css = isset($warna_map[$warna]) ? $warna_map[$warna] : strtolower(str_replace(' ', '_', $warna));
 
-                foreach ($sizes as $size) {
-                    // Query dengan kondisi inv_out kosong/null
-                    $count_sql = "SELECT COUNT(*) as count FROM inv_act
+                    $device_data = $device;
+                    $device_data['warna'] = $warna;
+                    $device_data['warna_css'] = $warna_css;
+
+                    // Hitung jumlah per ukuran untuk warna ini
+                    $sizes = array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'Cus');
+                    $total = 0;
+                    foreach ($sizes as $size) {
+                        $count_sql = "SELECT COUNT(*) as count FROM inv_act
                                      WHERE id_dvc = ?
                                      AND dvc_size = ?
+                                     AND dvc_col = ?
                                      AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')";
-                    $count_query = $this->db->query($count_sql, array($device['id_dvc'], $size));
-                    $count = $count_query ? $count_query->row()->count : 0;
-
-                    $device_data['size_' . strtolower($size)] = $count;
-                    $total += $count;
+                        $count_query = $this->db->query($count_sql, array($device['id_dvc'], $size, $warna));
+                        $count = $count_query ? $count_query->row()->count : 0;
+                        $device_data['size_' . strtolower($size)] = $count;
+                        $total += $count;
+                    }
+                    $device_data['subtotal'] = $total;
+                    $result_data[] = $device_data;
                 }
-
-                $device_data['subtotal'] = $total;
-                $result_data[] = $device_data;
             }
         }
 
