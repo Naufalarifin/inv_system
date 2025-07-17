@@ -106,6 +106,41 @@ class Data_model extends CI_Model {
         return $data;
     }
 
+    // Ambil semua item, hanya yang dvc_tech = 'ecbs'
+    public function getAllItemEcbsOnly($show = 20, $adddata = "", $sort = "") {
+        if ($show < 100 && isset($_GET['data_view_item']) && $_GET['data_view_item'] != "") {
+            $show = $_GET['data_view_item'];
+        }
+        $sort = "ORDER BY id_act DESC ";
+        $this->load->model("sql_model");
+        $filter = $this->sql_model->getFilterItemList($show);
+        if ($show >= 999999) {
+            $filter['first'] = 0;
+        }
+        if (isset($filter['sort']) && $filter['sort'] != "") {
+            $sort = $filter['sort'];
+        }
+        // Pastikan hanya data dengan dvc_tech = 'ecbs' yang diambil
+        $sql = "SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code, inv_dvc.dvc_tech, inv_act.dvc_col as warna ".
+                "FROM inv_act ".
+                "INNER JOIN inv_dvc ON inv_act.id_dvc = inv_dvc.id_dvc AND inv_dvc.dvc_tech = 'ecbs' ";
+        if (isset($filter['all'])) {
+            $sql .= " " . $filter['all'] . " ";
+        }
+        $sql .= " " . $sort . " ";
+        $count_sql = str_replace("SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code, inv_dvc.dvc_tech", "SELECT COUNT(*) as total", $sql);
+        $count_query = $this->db->query($count_sql);
+        $total_records = $count_query ? $count_query->row()->total : 0;
+        $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
+        $main_query = $this->db->query($sql . $limit);
+        $data = array();
+        $data['query'] = $main_query;
+        $data['page']['sum'] = $total_records;
+        $data['page']['show'] = $show;
+        $data['page']['first'] = $filter['first'];
+        return $data;
+    }
+
     // METHOD untuk ECCT APP - DENGAN ATURAN inv_out KOSONG
     public function getEcctAppData($show = 20, $adddata = "", $sort = "") {
         // Tampilkan semua data dalam satu halaman
@@ -234,6 +269,22 @@ class Data_model extends CI_Model {
         $devices_query = $this->db->query($sql . $limit);
 
         // Untuk setiap device, ambil semua warna unik dari inv_act yang belum keluar
+        // Mapping warna DB ke nama view agar sinkron dengan $voh_colors
+        $warna_map = [
+            'Blue Navy' => 'Navy',
+            'Navy' => 'Navy',
+            'Maroon' => 'Maroon',
+            'Army' => 'Army',
+            'Green Army' => 'Army',
+            'Black' => 'Black',
+            'Grey' => 'Grey',
+            'Gray' => 'Grey',
+            'Dark Gray' => 'Grey',
+            'Dark Grey' => 'Grey',
+            'Custom' => 'Custom',
+            '-' => 'Custom',
+            '' => 'Custom',
+        ];
         $result_data = array();
         if ($devices_query && $devices_query->num_rows() > 0) {
             foreach ($devices_query->result_array() as $device) {
@@ -245,26 +296,10 @@ class Data_model extends CI_Model {
                 $warna_list = $warna_query && $warna_query->num_rows() > 0 ? $warna_query->result_array() : [['dvc_col' => '-']];
 
                 foreach ($warna_list as $warna_row) {
-                    $warna = $warna_row['dvc_col'] ? $warna_row['dvc_col'] : '-';
-                    // Mapping warna ke format CSS-friendly dan konsisten
-                    $warna_map = [
-                        'Dark Gray' => 'Dark Grey',
-                        'Black' => 'Black',
-                        'Grey' => 'Grey',
-                        'Blue Navy' => 'Navy',
-                        'Army' => 'Army',
-                        'Maroon' => 'Maroon',
-                        'Custom' => 'Custom',
-                        '-' => 'none'
-                    ];
-                    // Pastikan semua abu-abu jadi "Grey" (bukan "Gray")
-                    if ($warna === 'Dark Gray') $warna = 'Dark Grey';
-                    if ($warna === 'Gray') $warna = 'Grey';
-                    $warna_css = isset($warna_map[$warna]) ? $warna_map[$warna] : strtolower(str_replace(' ', '_', $warna));
-
+                    $warna_raw = $warna_row['dvc_col'] ? $warna_row['dvc_col'] : '-';
+                    $warna = isset($warna_map[$warna_raw]) ? $warna_map[$warna_raw] : $warna_raw;
                     $device_data = $device;
                     $device_data['warna'] = $warna;
-                    $device_data['warna_css'] = $warna_css;
 
                     // Hitung jumlah per ukuran untuk warna ini
                     $sizes = array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'Cus');
@@ -275,7 +310,7 @@ class Data_model extends CI_Model {
                                      AND dvc_size = ?
                                      AND dvc_col = ?
                                      AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')";
-                        $count_query = $this->db->query($count_sql, array($device['id_dvc'], $size, $warna));
+                        $count_query = $this->db->query($count_sql, array($device['id_dvc'], $size, $warna_raw));
                         $count = $count_query ? $count_query->row()->count : 0;
                         $device_data['size_' . strtolower($size)] = $count;
                         $total += $count;
