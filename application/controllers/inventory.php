@@ -17,15 +17,6 @@ class Inventory extends CI_Controller {
         redirect($config['base_url'] . 'inventory/all_item');
     }
 
-    public function inv() {
-        $data['onload'] = "showData();";
-        $data = $this->load_top($data);
-        $data['title_page'] = "Inventory";
-        $this->load->view('inventory/banner', $data);
-        $this->load->view('inventory/inv', $data);
-        $this->load_bot($data);
-    }
-
     public function all_item() {
         $data['onload'] = "showDataItem();";
         $data = $this->load_top($data);
@@ -97,15 +88,6 @@ class Inventory extends CI_Controller {
                     $data['data'] = $this->data_model->getAllItem(10);
                 }
                 $this->load->view('inventory/data/data_item_show', $data);
-                break;
-            case 'data_item_show_ecbs':
-                // Untuk ECBS - sama seperti data_item_show tapi dengan context ECBS
-                if (isset($_GET['context']) && $_GET['context'] === 'inv_ecbs') {
-                    $data['data'] = $this->data_model->getAllItemEcbsOnly(10);
-                } else {
-                    $data['data'] = $this->data_model->getAllItem(10);
-                }
-                $this->load->view('inventory/data/data_item_show_ecbs', $data);
                 break;
             case 'data_item_export':
                 // Cek apakah permintaan datang dari konteks inv_ecct untuk export

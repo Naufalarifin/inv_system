@@ -43,25 +43,7 @@
 .modal-body {
     padding: 20px;
 }
-.modal-footer {
-    padding: 20px;
-    border-top: 1px solid #e5e5e5;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    background: #f8f9fa;
-    border-radius: 0 0 8px 8px;
-}
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-}
-.btn-close:hover {
-    color: #000;
-}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -84,10 +66,8 @@
   </div>
 </div>
 
-<!-- Modal Overlay -->
 <div id="modal_overlay" class="modal-overlay"></div>
 
-<!-- Modal Filter ECCT -->
 <div id="modal_filter_ecct" class="modal-container">
   <div class="modal-header">
     <h3 class="modal-title">ECCT Data Filter</h3>
@@ -433,7 +413,6 @@ function showDataAllItem(page = 1) {
     }
   });
 
-  // Tambahkan parameter 'context' untuk memberi tahu controller bahwa ini adalah permintaan dari inv_ecct
   val += "&context=inv_ecct";
 
   if (page === 'export') {
@@ -463,7 +442,6 @@ function loadData(link) {
   }
 }
 
-// PERBAIKAN UTAMA: Fungsi untuk menangani pagination berdasarkan table yang aktif
 function handlePagination(page) {
   if (currentTable === 'allitem') {
     showDataAllItem(page);
@@ -472,7 +450,6 @@ function handlePagination(page) {
   }
 }
 
-// PERBAIKAN UTAMA: Fungsi untuk mendapatkan fungsi table yang aktif
 function getCurrentTableFunction() {
   if (currentTable === 'allitem') {
     return 'showDataAllItem';
