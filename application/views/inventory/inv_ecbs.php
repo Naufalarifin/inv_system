@@ -74,7 +74,7 @@
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="btn-group ml-2">
-          <button id="btn_ecbs" class="btn btn-sm btn-primary" onclick="switchTable('ecbs')">ECBS</button>
+                      <button id="btn_ecbs" class="btn btn-sm btn-primary" onclick="switchTable('ecbs')">ECBS</button>
           <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">All Item</button>
         </div>
       </div>
@@ -152,8 +152,8 @@
           <option value="Black">Black</option>
           <option value="Grey">Grey</option>
           <option value="Blue Navy">Blue Navy</option>
-          <option value="Army">Army</option>
-          <option value="Maroon">Maroon</option>
+          <option value="Green Army">Green Army</option>
+          <option value="Red Maroon">Red Maroon</option>
           <option value="Custom">Custom</option>
           <option value="-">-</option>
         </select>
@@ -303,9 +303,7 @@ function renderToolbar() {
     toolbar += '<button id="btn_app" class="btn btn-sm ' + (currentEcbsType === 'app' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'app\')">APP</button>';
     toolbar += '<button id="btn_osc" class="btn btn-sm ' + (currentEcbsType === 'osc' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'osc\')">OSC</button>';
     toolbar += '</div>';
-    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_ecbs" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataEcbs();}" />';
-    toolbar += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_ecbs\')">Filter</span>';
-    toolbar += '<span class="btn btn-primary btn-sm" onclick="showDataEcbs();">Search</span>';
+    // Hapus input search, tombol filter, dan tombol search pada ECBS
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcbs(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
     toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
@@ -395,16 +393,16 @@ function showDataEcbs(page = 1) {
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
 
   var val = "?";
-  const fields = ["key_ecbs", "dvc_name_ecbs", "dvc_code_ecbs", "data_view_ecbs"];
-
-  fields.forEach(field => {
-    var element = document.getElementById(field);
-    if (element) {
-      var fieldName = field.replace('_ecbs', '');
-      if (fieldName === 'key') fieldName = 'key_ecbs';
-      val += "&" + fieldName + "=" + encodeURIComponent(element.value);
-    }
-  });
+  // Hapus fields filter dan search ECBS
+  // const fields = ["key_ecbs", "dvc_name_ecbs", "dvc_code_ecbs", "data_view_ecbs"];
+  // fields.forEach(field => {
+  //   var element = document.getElementById(field);
+  //   if (element) {
+  //     var fieldName = field.replace('_ecbs', '');
+  //     if (fieldName === 'key') fieldName = 'key_ecbs';
+  //     val += "&" + fieldName + "=" + encodeURIComponent(element.value);
+  //   }
+  // });
 
   val += "&type=" + currentEcbsType;
 
@@ -435,8 +433,8 @@ function showDataAllItem(page = 1) {
     }
   });
 
-  // Tambahkan parameter 'context' untuk memberi tahu controller bahwa ini adalah permintaan dari inv_ecct
-  val += "&context=inv_ecct";
+  // Tambahkan parameter 'context' untuk memberi tahu controller bahwa ini adalah permintaan dari inv_ecbs
+  val += "&context=inv_ecbs";
 
   if (page === 'export') {
     var link = "<?php echo $config['url_menu']; ?>data/data_item_export" + val;
@@ -445,7 +443,7 @@ function showDataAllItem(page = 1) {
   }
 
   val += "&p=" + page;
-  var link = "<?php echo $config['url_menu']; ?>data/data_item_show" + val;
+  var link = "<?php echo $config['url_menu']; ?>data/data_item_show_ecbs" + val;
 
   loadData(link);
 }
@@ -488,31 +486,37 @@ function submitInput(type) {
   let data = {};
   let url = "<?php echo $config['url_menu']; ?>input_process";
 
-  let sn = '';
+  let serialNumber = '';
   if (type === 'in') {
-    sn = document.getElementById('in_serial_number').value.trim();
+    serialNumber = document.getElementById('in_serial_number').value.trim();
     data = {
       type: 'in',
-      serial_number: sn,
+      serial_number: serialNumber,
       qc_status: document.getElementById('in_qc_status').value
     };
   } else if (type === 'out') {
-    sn = document.getElementById('out_serial_number').value.trim();
+    serialNumber = document.getElementById('out_serial_number').value.trim();
     data = {
       type: 'out',
-      serial_number: sn
+      serial_number: serialNumber
     };
   } else if (type === 'move') {
-    sn = document.getElementById('move_serial_number').value.trim();
+    serialNumber = document.getElementById('move_serial_number').value.trim();
     data = {
       type: 'move',
-      serial_number: sn,
+      serial_number: serialNumber,
       location: document.getElementById('move_location').value
     };
   }
 
-  if (!data.serial_number) {
+  if (!serialNumber) {
     alert('⚠️ Serial number harus diisi!');
+    return;
+  }
+
+  // Validasi karakter ke-6 harus 'S'
+  if (serialNumber.length < 6 || serialNumber.charAt(5).toUpperCase() !== 'S') {
+    alert('masukan ecbs!');
     return;
   }
 
@@ -539,34 +543,8 @@ function submitInput(type) {
       }
     }
   })
-  .catch(err => {
-    console.error('Error:', err);
-    alert('Gagal memproses data!');
-  });
-}
-
-// Fungsi untuk validasi real-time SN ECBS hanya untuk input IN
-function validateSnEcbsIn() {
-  const input = document.getElementById('in_serial_number');
-  const btn = document.querySelector('.btn-primary[onclick="submitInput(\'in\')"]'); // Select the button with onclick="submitInput('in')"
-  if (!input || !btn) return;
-  input.addEventListener('input', function() {
-    const sn = input.value.trim();
-    if (sn.length === 15) {
-      const char6 = sn.charAt(5).toUpperCase();
-      if (char6 === 'T') {
-        alert('MASUKAN SN UNTUK ECBS');
-        btn.disabled = true;
-        return;
-      }
-      if (char6 === 'S') {
-        btn.disabled = false;
-        return;
-      }
-      btn.disabled = true;
-    } else {
-      btn.disabled = true;
-    }
+  .catch(error => {
+        alert('❌ Error: ' + error.message);
   });
 }
 
@@ -574,7 +552,5 @@ function validateSnEcbsIn() {
 window.onload = function() {
   renderToolbar();
   showDataEcbs(); // Default ke tabel ECBS saat halaman dimuat
-  // Validasi real-time hanya untuk input IN
-  validateSnEcbsIn();
 }
 </script>

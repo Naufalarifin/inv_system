@@ -82,6 +82,15 @@ class Inventory extends CI_Controller {
                 }
                 $this->load->view('inventory/data/data_item_show', $data);
                 break;
+            case 'data_item_show_ecbs':
+                // Untuk ECBS - sama seperti data_item_show tapi dengan context ECBS
+                if (isset($_GET['context']) && $_GET['context'] === 'inv_ecbs') {
+                    $data['data'] = $this->data_model->getAllItemEcbsOnly(10);
+                } else {
+                    $data['data'] = $this->data_model->getAllItem(10);
+                }
+                $this->load->view('inventory/data/data_item_show_ecbs', $data);
+                break;
             case 'data_item_export':
                 if (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {
                     $data['data'] = $this->data_model->getAllItemEcctOnly(999999);

@@ -30,6 +30,9 @@ if(!isset($func_show)){
     if(strpos($current_url, 'inv_ecct') !== false) {
       // Jika di halaman inv_ecct, cek table yang aktif via JavaScript
       $func_show = 'getCurrentTableFunction()';
+    } else if(strpos($current_url, 'inv_ecbs') !== false) {
+      // Jika di halaman inv_ecbs, cek table yang aktif via JavaScript
+      $func_show = 'getCurrentTableFunction()';
     } else if(strpos($current_url, 'all_item') !== false) {
       $func_show = 'showDataAllItem';
     } else {

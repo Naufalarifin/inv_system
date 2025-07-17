@@ -1,17 +1,17 @@
 <div class="card-table">
     <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 font-medium text-sm">
+        <table class="table table-border align-middle text-gray-700 text-xs">
             <thead>
                 <tr class="text-xs">
                     <th align="center" width="30">No</th>
                     <th align="center" width="100">Device Info</th>
-                    <th align="center" width="70">Size/Color</th>
+                    <th align="center" width="70">Size</th>
+                    <th align="center" width="70">Warna</th>
                     <th align="center" width="80">Serial Number</th>
                     <th align="center" width="60">QC Status</th>
                     <th align="center" width="80">In</th>
                     <th align="center" width="80">Out</th>
                     <th align="center" width="80">Move</th>
-                    <th align="center" width="60">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -19,6 +19,8 @@
                 $no = isset($data['page']['first']) ? $data['page']['first'] : 0;
                 if($data['query'] && $data['query']->num_rows() > 0) {
                     foreach ($data['query']->result_array() as $key => $row) {
+                        // Tampilkan hanya jika karakter ke-6 dvc_sn adalah 'S'
+                        if (strlen($row['dvc_sn']) < 6 || strtoupper($row['dvc_sn'][5]) !== 'S') continue;
                         $no++;
                 ?>
                 <tr>
@@ -30,24 +32,48 @@
                     </td>
                     <td align="center">
                         <div class="text-xs">
-                            <?php
-                            $col = $row['dvc_col'];
-                            $warna_kotak = [
-                                'Dark Grey' => '#555',
-                                'Black' => '#222',
-                                'Grey' => '#bbb',
-                                'Navy' => '#223A5E',
-                                'Army' => '#4B5320',
-                                'Maroon' => '#800000',
-                            ];
-                            if ($col === 'custom') {
-                                echo '<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;font-size:11px;font-weight:bold;color:#333;border-radius:3px;border:1px solid #ccc;vertical-align:middle;">CUSTOM</span>';
-                            } else {
-                                $bg = isset($warna_kotak[$col]) ? $warna_kotak[$col] : '#eee';
-                                echo '<span style="display:inline-block;width:16px;height:16px;background-color:' . $bg . ';border-radius:3px;margin-left:2px;vertical-align:middle;border:1px solid #ccc;"></span>';
-                            }
-                            ?>
+                            <?php if (!empty($row['dvc_size'])) { ?>
+                                <?php if ($row['dvc_size'] == 'small') { ?>
+                                    <span class="badge badge-xs badge-success badge-outline">S</span>
+                                <?php } elseif ($row['dvc_size'] == 'medium') { ?>
+                                    <span class="badge badge-xs badge-warning badge-outline">M</span>
+                                <?php } elseif ($row['dvc_size'] == 'large') { ?>
+                                    <span class="badge badge-xs badge-danger badge-outline">L</span>
+                                <?php } else { ?>
+                                    <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
+                                <?php } ?>
+                            <?php } ?>
+
                         </div>
+                    </td>
+                    <td align="left">
+                            <?php
+                        $color_map = [
+                            'Dark Gray' => '#555555',
+                            'dark grey' => '#555555',
+                            'Black' => '#000000',
+                            'Grey' => '#888888',
+                            'Blue Navy' => '#001f5b',
+                            'Navy' => '#001f5b',
+                            'Army' => '#4b5320',
+                            'Maroon' => '#800000',
+                            'Custom' => '#ffffff',
+                            'none' => '#fff',
+                            '-' => '#fff'
+                        ];
+                        ?>
+                        <?php
+                        $warna = trim($row['warna']);
+                        if (strtolower($warna) === 'custom') {
+                            echo '<span style="font-size:12px;">CUSTOM</span>';
+                        } elseif (!empty($warna) && $warna != '-') {
+                            $warna_css = isset($color_map[$warna]) ? $color_map[$warna] : '#fff';
+                            echo '<span style="display:inline-block;width:16px;height:16px;background:'.$warna_css.';border-radius:3px;vertical-align:middle;border:1px solid #ccc;"></span>';
+                            echo '<span class="text-xs" style="margin-left:4px;display:inline-block;text-align:left;min-width:50px;vertical-align:middle;">'.htmlspecialchars($row['warna']).'</span>';
+                        } else {
+                            echo '-';
+                        }
+                        ?>
                     </td>
                     <td align="center" class="text-xs"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
@@ -76,16 +102,6 @@
                             </span>
                         <?php } else { echo '-'; } ?>
                     </td>
-                    <td align="center">
-                        <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
-                            <button class="btn btn-xs btn-warning" title="Edit" onclick="openEditModal('<?php echo $row['id_act']; ?>', '<?php echo htmlspecialchars($row['dvc_sn'], ENT_QUOTES); ?>', '<?php echo $row['dvc_qc']; ?>', '<?php echo htmlspecialchars($row['loc_move'], ENT_QUOTES); ?>')">
-                                ✏️
-                            </button>
-                            <button class="btn btn-xs btn-danger" title="Hapus" onclick="confirmDelete('<?php echo $row['id_act']; ?>')">
-                                🗑️
-                            </button>
-                        </div>
-                    </td>
                 </tr>
                 <?php
                     }
@@ -99,108 +115,3 @@
         </table>
     </div>
 </div>
-
-<!-- Modal Edit Data Item -->
-<div id="modal_edit_item" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:8px; max-width:350px; width:90%; margin:auto; padding:20px; position:relative; top:10vh;">
-        <h3 style="margin-bottom:15px; font-size:16px;">Edit Data Item</h3>
-        <input type="hidden" id="edit_id_act">
-
-        <div style="margin-bottom:10px;">
-            <label style="display:block; margin-bottom:4px; font-weight:bold; font-size:12px;">Serial Number</label>
-            <input type="text" id="edit_dvc_sn" class="input" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
-        </div>
-
-        <div style="margin-bottom:10px;">
-            <label style="display:block; margin-bottom:4px; font-weight:bold; font-size:12px;">QC Status</label>
-            <select id="edit_dvc_qc" class="select" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
-                <option value="0">LN</option>
-                <option value="1">DN</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom:15px;">
-            <label style="display:block; margin-bottom:4px; font-weight:bold; font-size:12px;">Location Move</label>
-            <select id="edit_loc_move" class="select" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
-                <option value="0">-</option>
-                <option value="Lantai 2">🏢 Lantai 2</option>
-                <option value="Bang Toni">👨‍💼 Bang Toni</option>
-                <option value="Om Bob">👨‍💼 Om Bob</option>
-                <option value="Rekanan">🤝 Rekanan</option>
-                <option value="LN">🏭 LN</option>
-                <option value="ECBS">🏭 ECBS</option>
-                <option value="LN Office">🏢 LN Office</option>
-                <option value="Lantai 1">🏢 Lantai 1</option>
-                <option value="Unknown">❓ Unknown</option>
-            </select>
-        </div>
-
-        <div style="text-align:right; margin-top:15px;">
-            <button class="btn btn-xs btn-light" onclick="closeEditModal()" style="margin-right:6px; padding:6px 12px; font-size:12px;">Batal</button>
-            <button class="btn btn-xs btn-primary" onclick="submitEditItem()" style="padding:6px 12px; font-size:12px;">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<!-- JavaScript -->
-<script>
-function openEditModal(id_act, dvc_sn, dvc_qc, loc_move) {
-    document.getElementById('edit_id_act').value = id_act;
-    document.getElementById('edit_dvc_sn').value = dvc_sn || '';
-    document.getElementById('edit_dvc_qc').value = dvc_qc || '0';
-    document.getElementById('edit_loc_move').value = loc_move || '0';
-    document.getElementById('modal_edit_item').style.display = 'flex';
-}
-
-function closeEditModal() {
-    document.getElementById('modal_edit_item').style.display = 'none';
-}
-
-function confirmDelete(id_act) {
-    if(confirm('Yakin ingin menghapus data ini?')) {
-        fetch('<?php echo $config['base_url']; ?>inventory/input_delete_process', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_act: id_act })
-        })
-        .then(res => res.json())
-        .then(result => {
-            alert(result.message);
-            if(result.success) window.location.reload();
-        })
-        .catch(err => alert('Gagal menghapus data!'));
-    }
-}
-
-function submitEditItem() {
-    const id_act = document.getElementById('edit_id_act').value;
-    const dvc_sn = document.getElementById('edit_dvc_sn').value.trim();
-    const dvc_qc = document.getElementById('edit_dvc_qc').value;
-    const loc_move = document.getElementById('edit_loc_move').value.trim();
-
-    fetch('<?php echo $config['base_url']; ?>inventory/input_edit_process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_act, dvc_sn, dvc_qc, loc_move })
-    })
-    .then(res => res.json())
-    .then(result => {
-        alert(result.message);
-        if(result.success) window.location.reload();
-    })
-    .catch(err => alert('Gagal update data!'));
-
-    closeEditModal();
-}
-</script>
-
-<style>
-.table.table-border.text-xs td, .table.table-border.text-xs th {
-    font-size: 10px !important;
-    padding: 4px 6px !important;
-}
-.table.table-border tfoot tr td {
-    font-size: 12px !important;
-    padding: 6px 8px !important;
-}
-</style>
