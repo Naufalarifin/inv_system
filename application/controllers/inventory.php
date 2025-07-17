@@ -2,8 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Inventory extends CI_Controller {
-
-    public function index() {
+    public function __construct() {
         parent::__construct();
         $this->load->database();
         $this->load->model(['data_model', 'config_model', 'inventory_model']);
@@ -11,8 +10,11 @@ class Inventory extends CI_Controller {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
         }
+    }
+
+    public function index() {
         $config = $this->config_model->getConfig();
-        redirect($config['base_url'] . 'inventory/inv_ecct');
+        redirect($config['base_url'] . 'inventory/all_item');
     }
 
     public function all_item() {
@@ -25,11 +27,11 @@ class Inventory extends CI_Controller {
     }
 
     public function massive_input() {
-        $data['onload'] = "";
+        $data['onload'] = ""; // No specific onload function needed for data display
         $data = $this->load_top($data);
         $data['title_page'] = "Massive Inventory Input";
         $this->load->view('inventory/banner', $data);
-        $this->load->view('inventory/massive_input', $data);
+        $this->load->view('inventory/massive_input', $data); // Load the new massive_input view
         $this->load_bot($data);
     }
 
@@ -74,7 +76,12 @@ class Inventory extends CI_Controller {
     public function data($type = "", $input = "") {
         $data = $this->load_top("", "no_view");
         switch ($type) {
+            case 'dvc_cal_show':
+                $data['data'] = $this->data_model->getDeviceCalibrationList(10);
+                $this->load->view('inventory/data/dvc_cal_show', $data);
+                break;
             case 'data_item_show':
+                // Cek apakah permintaan datang dari konteks inv_ecct
                 if (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {
                     $data['data'] = $this->data_model->getAllItemEcctOnly(10);
                 } else {
@@ -82,16 +89,8 @@ class Inventory extends CI_Controller {
                 }
                 $this->load->view('inventory/data/data_item_show', $data);
                 break;
-            case 'data_item_show_ecbs':
-                // Untuk ECBS - sama seperti data_item_show tapi dengan context ECBS
-                if (isset($_GET['context']) && $_GET['context'] === 'inv_ecbs') {
-                    $data['data'] = $this->data_model->getAllItemEcbsOnly(10);
-                } else {
-                    $data['data'] = $this->data_model->getAllItem(10);
-                }
-                $this->load->view('inventory/data/data_item_show_ecbs', $data);
-                break;
             case 'data_item_export':
+                // Cek apakah permintaan datang dari konteks inv_ecct untuk export
                 if (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {
                     $data['data'] = $this->data_model->getAllItemEcctOnly(999999);
                 } else {
@@ -99,7 +98,7 @@ class Inventory extends CI_Controller {
                 }
                 $this->load->view('inventory/data/data_item_export', $data);
                 break;
-
+            // CASE BARU untuk ECCT APP
             case 'data_inv_ecct_app_show':
                 $data['data'] = $this->data_model->getEcctAppData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_app_show', $data);
@@ -108,7 +107,7 @@ class Inventory extends CI_Controller {
                 $data['data'] = $this->data_model->getEcctAppData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_app_export', $data);
                 break;
-
+            // CASE BARU untuk ECCT OSC
             case 'data_inv_ecct_osc_show':
                 $data['data'] = $this->data_model->getEcctOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_osc_show', $data);
@@ -117,7 +116,7 @@ class Inventory extends CI_Controller {
                 $data['data'] = $this->data_model->getEcctOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecct_osc_export', $data);
                 break;
-
+            // CASE BARU untuk ECBS APP
             case 'data_inv_ecbs_app_show':
                 $data['data'] = $this->data_model->getEcbsAppData(999999);
                 $this->load->view('inventory/data/data_inv_ecbs_app_show', $data);
@@ -126,7 +125,7 @@ class Inventory extends CI_Controller {
                 $data['data'] = $this->data_model->getEcbsAppData(999999);
                 $this->load->view('inventory/data/data_inv_ecbs_app_export', $data);
                 break;
-
+            // CASE BARU untuk ECBS OSC
             case 'data_inv_ecbs_osc_show':
                 $data['data'] = $this->data_model->getEcbsOscData(999999);
                 $this->load->view('inventory/data/data_inv_ecbs_osc_show', $data);
