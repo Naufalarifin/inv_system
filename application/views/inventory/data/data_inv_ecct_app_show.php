@@ -104,7 +104,6 @@ if(isset($data['data']) && !empty($data['data'])) {
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_3xl'] / $grand_total) * 100, 1) : 0; ?>%</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_all'] / $grand_total) * 100, 1) : 0; ?>%</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_cus'] / $grand_total) * 100, 1) : 0; ?>%</td>
-                    <!-- Sel Subtotal dan Persentase dihapus dari baris ini karena sudah di-rowspan dari baris atas -->
                 </tr>
             </tfoot>
         </table>
@@ -118,9 +117,8 @@ if(isset($data['data']) && !empty($data['data'])) {
     font-size: 10px !important;
     padding: 4px 6px !important;
 }
-/* Tambahan styling untuk tabel total/persentase */
 .table.table-border tfoot tr td {
-    font-size: 12px !important; /* Menyesuaikan ukuran font agar lebih terbaca */
+    font-size: 12px !important; 
     padding: 6px 8px !important;
 }
 </style>
