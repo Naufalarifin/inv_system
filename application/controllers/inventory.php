@@ -89,6 +89,11 @@ class Inventory extends CI_Controller {
                 }
                 $this->load->view('inventory/data/data_item_show', $data);
                 break;
+            case 'data_item_show_ecbs':
+                // Ambil semua item, hanya yang dvc_tech = 'ecbs'
+                $data['data'] = $this->data_model->getAllItemEcbsOnly(10);
+                $this->load->view('inventory/data/data_item_show', $data);
+                break;
             case 'data_item_export':
                 // Cek apakah permintaan datang dari konteks inv_ecct untuk export
                 if (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {

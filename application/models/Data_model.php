@@ -120,10 +120,10 @@ class Data_model extends CI_Model {
         if (isset($filter['sort']) && $filter['sort'] != "") {
             $sort = $filter['sort'];
         }
-        // Pastikan hanya data dengan dvc_tech = 'ecbs' yang diambil
+        // Pastikan hanya data dengan dvc_tech = 'ecbs' yang diambil dan status=0
         $sql = "SELECT inv_act.*, inv_dvc.dvc_name, inv_dvc.dvc_code, inv_dvc.dvc_tech, inv_act.dvc_col as warna ".
                 "FROM inv_act ".
-                "INNER JOIN inv_dvc ON inv_act.id_dvc = inv_dvc.id_dvc AND inv_dvc.dvc_tech = 'ecbs' ";
+                "INNER JOIN inv_dvc ON inv_act.id_dvc = inv_dvc.id_dvc AND inv_dvc.dvc_tech = 'ecbs' AND inv_dvc.status = 0 ";
         if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
@@ -257,7 +257,7 @@ class Data_model extends CI_Model {
         // Get devices dengan dvc_tech = 'ecbs' dan dvc_type = 'APP' SAJA
         $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code ";
         $sql .= "FROM inv_dvc dvc ";
-        $sql .= "WHERE LOWER(dvc.dvc_tech) = 'ecbs' AND UPPER(dvc.dvc_type) = 'APP' ";
+        $sql .= "WHERE LOWER(dvc.dvc_tech) = 'ecbs' AND UPPER(dvc.dvc_type) = 'APP' AND dvc.status = 0 ";
         if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
@@ -271,16 +271,16 @@ class Data_model extends CI_Model {
         // Untuk setiap device, ambil semua warna unik dari inv_act yang belum keluar
         // Mapping warna DB ke nama view agar sinkron dengan $voh_colors
         $warna_map = [
-            'Blue Navy' => 'Navy',
+            'Black' => 'Black',
             'Navy' => 'Navy',
+            'Blue Navy' => 'Navy',
             'Maroon' => 'Maroon',
             'Army' => 'Army',
             'Green Army' => 'Army',
-            'Black' => 'Black',
-            'Grey' => 'Grey',
-            'Gray' => 'Grey',
-            'Dark Gray' => 'Grey',
-            'Dark Grey' => 'Grey',
+            'Dark Gray' => 'Dark Gray',
+            'Dark Grey' => 'Dark Gray',
+            'Gray' => 'Gray',
+            'Grey' => 'Gray',
             'Custom' => 'Custom',
             '-' => 'Custom',
             '' => 'Custom',

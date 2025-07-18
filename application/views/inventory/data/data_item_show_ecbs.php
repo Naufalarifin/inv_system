@@ -108,7 +108,7 @@
                 } else {
                 ?>
                 <tr>
-                    <td align="center" colspan="9" class="text-xs"><i>No Data Found</i></td>
+                    <td align="center" colspan="8" class="text-xs"><i>No Data Found</i></td>
                 </tr>
                 <?php } ?>
             </tbody>

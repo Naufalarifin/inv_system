@@ -21,12 +21,12 @@ $column_totals = array(
 
 // Daftar warna untuk 7 baris VOH (tetap hardcoded untuk tampilan)
 $voh_colors = array(
+    array('name' => 'Black', 'hex' => '#000000'),
     array('name' => 'Navy', 'hex' => '#001f5b'),
     array('name' => 'Maroon', 'hex' => '#800000'),
     array('name' => 'Army', 'hex' => '#4b5320'),
-    array('name' => 'Black', 'hex' => '#000000'),
-    array('name' => 'Grey', 'hex' => '#808080'),
-    array('name' => 'Blue Navy', 'hex' => '#000080'),
+    array('name' => 'Dark Gray', 'hex' => '#A9A9A9'), // hex #A9A9A9 untuk dark gray
+    array('name' => 'Gray', 'hex' => '#808080'),
     array('name' => 'Custom', 'hex' => '#ffffff'),
 );
 
@@ -127,6 +127,7 @@ foreach ($model_data as $item) {
                     // Gabungkan data non-VOH yang sama (dvc_name & dvc_code)
                     $other_items_agg = array();
                     foreach ($model_data as $item) {
+                        if (isset($item['status']) && $item['status'] != 0) continue;
                         if (stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0) continue;
                         $key = strtolower(trim($item['dvc_name'])) . '|' . strtolower(trim($item['dvc_code']));
                         if (!isset($other_items_agg[$key])) {
