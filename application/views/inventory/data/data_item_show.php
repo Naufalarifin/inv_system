@@ -6,6 +6,13 @@
                     <th align="center" width="30">No</th>
                     <th align="center" width="100">Device Info</th>
                     <th align="center" width="70">Size</th>
+                    <?php 
+                    // Tampilkan kolom warna hanya untuk ECBS
+                    $showColorColumn = (isset($data['tech']) && $data['tech'] === 'ecbs');
+                    
+                    if ($showColorColumn) { ?>
+                        <th align="center" width="120">Warna</th>
+                    <?php } ?>
                     <th align="center" width="80">Serial Number</th>
                     <th align="center" width="60">QC Status</th>
                     <th align="center" width="80">In</th>
@@ -19,6 +26,10 @@
                 if($data['query'] && $data['query']->num_rows() > 0) {
                     foreach ($data['query']->result_array() as $key => $row) {
                         $no++;
+                        // Check if this device has color info (6th character of serial number is 'S')
+                        $hasColor = (strlen($row['dvc_sn']) >= 6 && strtoupper($row['dvc_sn'][5]) === 'S');
+                        // Hanya tampilkan warna jika jenis ECBS dan device memiliki info warna
+                        $displayColor = $showColorColumn && $hasColor;
                 ?>
                 <tr>
                     <td align="center" class="text-xs"><?php echo $no; ?></td>
@@ -40,9 +51,40 @@
                                     <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
                                 <?php } ?>
                             <?php } ?>
-
                         </div>
                     </td>
+                    <?php if ($showColorColumn) { ?>
+                    <td align="left" style="padding: 4px 8px;">
+                        <?php if ($displayColor && isset($row['warna'])) { ?>
+                            <?php
+                            $color_map = [
+                                'Dark Gray' => '#555555',
+                                'dark grey' => '#555555',
+                                'Black' => '#000000',
+                                'Grey' => '#888888',
+                                'Blue Navy' => '#001f5b',
+                                'Navy' => '#001f5b',
+                                'Army' => '#4b5320',
+                                'Maroon' => '#800000',
+                                'Red Maroon' => '#800000',
+                                'Custom' => '#ffffff',
+                                'none' => '#fff',
+                                '-' => '#fff'
+                            ];
+                            $warna = trim($row['warna']);
+                            if (strtolower($warna) === 'custom') {
+                                echo '<span style="font-size:12px;">CUSTOM</span>';
+                            } elseif (!empty($warna) && $warna != '-') {
+                                $warna_css = isset($color_map[$warna]) ? $color_map[$warna] : '#fff';
+                                echo '<div style="display:flex;align-items:center;gap:6px;">';
+                                echo '<span style="display:inline-block;width:18px;height:18px;background:'.$warna_css.';border-radius:3px;border:1px solid #ccc;flex-shrink:0;"></span>';
+                                echo '<span class="text-xs" style="white-space:nowrap;">'.htmlspecialchars($row['warna']).'</span>';
+                                echo '</div>';
+                            }
+                            ?>
+                        <?php } ?>
+                    </td>
+                    <?php } ?>
                     <td align="center" class="text-xs"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
                         <?php if ($row['dvc_qc'] == '0') { ?>
@@ -76,7 +118,7 @@
                 } else {
                 ?>
                 <tr>
-                    <td align="center" colspan="8" class="text-xs"><i>No Data Found</i></td>
+                    <td align="center" colspan="<?php echo $showColorColumn ? '9' : '8'; ?>" class="text-xs"><i>No Data Found</i></td>
                 </tr>
                 <?php } ?>
             </tbody>
