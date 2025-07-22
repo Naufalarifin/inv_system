@@ -6,7 +6,6 @@
                     <th align="center" width="30">No</th>
                     <th align="center" width="100">Device Info</th>
                     <th align="center" width="70">Size</th>
-                    <th align="center" width="70">Warna</th>
                     <th align="center" width="80">Serial Number</th>
                     <th align="center" width="60">QC Status</th>
                     <th align="center" width="80">In</th>
