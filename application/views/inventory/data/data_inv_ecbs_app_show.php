@@ -1,10 +1,4 @@
 <?php
-// --- DEBUGGING START ---
-// Aktifkan error reporting untuk melihat error langsung di browser (HANYA UNTUK DEBUGGING, JANGAN DI PRODUKSI)
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
-
-// --- DEBUGGING END ---
 
 $grand_total = 0;
 $column_totals = array(
@@ -127,7 +121,6 @@ foreach ($model_data as $item) {
                     // Gabungkan data non-VOH yang sama (dvc_name & dvc_code)
                     $other_items_agg = array();
                     foreach ($model_data as $item) {
-                        if (isset($item['status']) && $item['status'] != 0) continue;
                         if (stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0) continue;
                         $key = strtolower(trim($item['dvc_name'])) . '|' . strtolower(trim($item['dvc_code']));
                         if (!isset($other_items_agg[$key])) {
@@ -154,7 +147,11 @@ foreach ($model_data as $item) {
                         <span style="font-size:11px;margin-left:4px;"></span>
                     </td>
                     <?php foreach ($sizes as $sz) { ?>
-                        <td align="center"><?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; ?></td>
+                        <td align="center">
+                            <?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; 
+                            ?>
+                            <br>
+                        </td>
                     <?php } ?>
                     <td align="center"><strong><?php echo $subtotal; ?></strong></td>
                     <td align="center"><?php echo $percentage; ?>%</td>

@@ -35,6 +35,28 @@ class Data_model extends CI_Model {
         return $data;
     }
 
+    
+    public function getAllItemFull() {
+        $sql = "SELECT * ";
+        $sql.= "FROM inv_dvc ";
+        $sql.= "WHERE dvc_tech='ecct' && status='0' ";
+        $query = $this->db->query($sql);
+        return $query;
+
+    }
+
+    public function getStockDvc($id_dvc,$dvc_size,$dvc_col,$dvc_qc) {
+
+        $sql = "SELECT count(id_act) AS stock_qty ";
+        $sql.= "FROM inv_act ";
+        $sql.= "WHERE id_dvc=? && dvc_size=? && dvc_col=? && dvc_qc=? ";
+        $query = $this->db->query($sql, array($id_dvc,$dvc_size,$dvc_col,$dvc_qc) );
+        $row = $query->row_array();
+
+        return $row['stock_qty'];
+
+    }
+
     public function getAllItem($show = 20, $adddata = "", $sort = "") {
         if ($show < 100 && isset($_GET['data_view_item']) && $_GET['data_view_item'] != "") {
             $show = $_GET['data_view_item'];
@@ -105,6 +127,7 @@ class Data_model extends CI_Model {
         $data['page']['first'] = $filter['first'];
         return $data;
     }
+
 
     // Ambil semua item, hanya yang dvc_tech = 'ecbs'
     public function getAllItemEcbsOnly($show = 20, $adddata = "", $sort = "") {

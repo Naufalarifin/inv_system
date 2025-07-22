@@ -1,68 +1,122 @@
-<div class="card-table">
-    <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 font-medium text-sm">
-            <thead>
-                <tr>
-                    <th align="center" width="40">No</th>
-                    <th align="center" width="250">Nama Barang</th>
-                    <th align="center" width="120">Kode</th>
-                    <th align="center" width="80">Jumlah*</th>
-                    <th align="center" width="80">Tech</th>
-                    <th align="center" width="80">Type</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $no = 0;
-                if($data['query'] && $data['query']->num_rows() > 0) {
-                    foreach ($data['query']->result_array() as $row) {
-                        $no++;
-                ?>
-                <tr>
-                    <td align="left"><?php echo $no; ?></td>
-                    <td align="left"><?php echo $row['dvc_name']; ?></td>
-                    <td align="left"><?php echo $row['dvc_code']; ?></td>
-                    <td align="left"><strong><?php echo $row['total_count']; ?></strong></td>
-                    <td align="left"><?php echo $row['dvc_tech']; ?></td>
-                    <td align="left"><?php echo $row['dvc_type']; ?></td>
-                </tr>
-                <?php 
-                    }
-                } else {
-                ?>
-                <tr>
-                    <td align="center" colspan="6"><i>No ECBS OSC Data Found</i></td>
-                </tr>
-                <?php } ?>
-            </tbody>
-        </table>
-        <div style="padding: 10px; font-size: 11px; color: #666;">
-            <strong>*Keterangan:</strong> Jumlah hanya menghitung item yang belum keluar (inv_out masih kosong)
-        </div>
-    </div>
-</div>
+<?php
+$oscillators = [];
+$accessories = [];
+
+// Jika ada kode accessories khusus ECBS, masukkan di sini. Jika tidak, biarkan kosong.
+$accessories_codes = [];
+
+if($data['query'] && $data['query']->num_rows() > 0) {
+    foreach ($data['query']->result_array() as $row) {
+        if (in_array($row['dvc_code'], $accessories_codes)) {
+            $accessories[] = $row;
+        }
+        else if (isset($row['dvc_type']) && strtolower($row['dvc_type']) === 'osc') {
+            $oscillators[] = $row;
+        }
+    }
+}
+
+function renderOscTableSection($title, $items) {
+    $grouped_items = [];
+    foreach ($items as $item) {
+        $code = $item['dvc_code'];
+        if (!isset($grouped_items[$code])) {
+            $grouped_items[$code] = [
+                'dvc_code' => $code,
+                'dvc_name' => $item['dvc_name'],
+                'ln_count' => 0,
+                'dn_count' => 0
+            ];
+        }
+        $grouped_items[$code]['ln_count'] += $item['ln_count'];
+        $grouped_items[$code]['dn_count'] += $item['dn_count'];
+    }
+
+    $section_ln_total = 0;
+    $section_dn_total = 0;
+    $section_subtotal_total = 0;
+
+    foreach ($grouped_items as $item) {
+        $section_ln_total += $item['ln_count'];
+        $section_dn_total += $item['dn_count'];
+        $section_subtotal_total += ($item['ln_count'] + $item['dn_count']);
+    }
+
+    echo '<div class="card-table mb-4">';
+    echo '    <div class="table-responsive">';
+    echo '        <table class="table table-border align-middle text-gray-700 font-medium text-sm">';
+    echo '            <thead>';
+    echo '                <tr>';
+    echo '                    <th align="center" width="40">NO</th>';
+    echo '                    <th align="center" width="200">' . $title . '</th>';
+    echo '                    <th align="center" width="100">KODE</th>';
+    echo '                    <th align="center" width="60">LN</th>';
+    echo '                    <th align="center" width="60">DN</th>';
+    echo '                    <th align="center" width="80">Subtotal</th>';
+    echo '                    <th align="center" width="60">%</th>';
+    echo '                    <th align="center" width="60">INV</th>';
+    echo '                </tr>';
+    echo '            </thead>';
+    echo '            <tbody>';
+    if (!empty($grouped_items)) {
+        $no = 0;
+        foreach ($grouped_items as $row) {
+            $no++;
+            $row_subtotal = $row['ln_count'] + $row['dn_count'];
+            $row_percentage = $section_subtotal_total > 0 ? round(($row_subtotal / $section_subtotal_total) * 100, 1) : 0;
+            echo '                <tr>';
+            echo '                    <td align="center">' . $no . '</td>';
+            echo '                    <td align="left">' . $row['dvc_name'] . '</td>';
+            echo '                    <td align="center">' . $row['dvc_code'] . '</td>';
+            echo '                    <td align="center">' . $row['ln_count'] . '</td>';
+            echo '                    <td align="center">' . $row['dn_count'] . '</td>';
+            echo '                    <td align="center"><strong>' . $row_subtotal . '</strong></td>';
+            echo '                    <td align="center">' . $row_percentage . '%</td>';
+            echo '                    <td align="center">' . $row_subtotal . '</td>';
+            echo '                </tr>';
+        }
+    } else {
+        echo '                <tr>';
+        echo '                    <td align="center" colspan="8"><i>No Data Found</i></td>';
+        echo '                </tr>';
+    }
+    echo '            </tbody>';
+    echo '            <tfoot>';
+    echo '                <tr'; 
+    echo '                    <td align="center" colspan="3"></td>';
+    echo '                    <td align="center">' . $section_ln_total . '</td>';
+    echo '                    <td align="center">' . $section_dn_total . '</td>';
+    echo '                    <td align="center" rowspan="2" style="vertical-align: middle;"><strong>' . $section_subtotal_total . '</strong></td>'; 
+    echo '                    <td align="center" rowspan="2" style="vertical-align: middle;"><strong>100%</strong></td>';
+    echo '                    <td align="center" rowspan="2" style="vertical-align: middle;"><strong>' . $section_subtotal_total . '</strong></td>';
+    echo '                </tr>';
+    echo '                <tr>';
+    echo '                    <td align="center" colspan="3">PERSENTASE</td>';
+    echo '                    <td align="center">' . ($section_subtotal_total > 0 ? round(($section_ln_total / $section_subtotal_total) * 100, 1) : 0) . '%</td>';
+    echo '                    <td align="center">' . ($section_subtotal_total > 0 ? round(($section_dn_total / $section_subtotal_total) * 100, 1) : 0) . '%</td>';
+    echo '                </tr>';
+    echo '            </tfoot>';
+    echo '        </table>';
+    echo '        <div style="padding: 10px; font-size: 11px; color: #666;">';
+    echo '            <strong>*Keterangan:</strong> Jumlah hanya menghitung item yang belum keluar (inv_out masih kosong)';
+    echo '        </div>';
+    echo '    </div>';
+    echo '</div>';
+}
+
+renderOscTableSection('JENIS OSCILLATOR', $oscillators);
+echo '<div style="margin-top: 20px;"></div>';
+renderOscTableSection('JENIS ACCESORIES', $accessories);
+?>
+
 <style>
-.card-table {
-    max-width: 900px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    padding: 16px 8px;
+.table.table-border.text-xs td, .table.table-border.text-xs th {
+  font-size: 10px !important;
+  padding: 4px 6px !important;
 }
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
+.table.table-border tfoot tr td {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
 }
-.table-responsive table {
-    min-width: 700px;
-    width: 100%;
-    white-space: nowrap;
-}
-.table-responsive td, .table-responsive th {
-    padding: 8px 6px;
-    font-size: 12px;
-    text-align: center;
-}
+
 </style> 

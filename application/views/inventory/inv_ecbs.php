@@ -74,8 +74,8 @@
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="btn-group ml-2">
-                      <button id="btn_ecbs" class="btn btn-sm btn-primary" onclick="switchTable('ecbs')">ECBS</button>
-          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">All Item</button>
+          <button id="btn_ecbs" class="btn btn-sm btn-primary" onclick="switchTable('ecbs')">Stock</button>
+          <button id="btn_activity" class="btn btn-sm btn-light" onclick="switchTable('activity')">Activity</button>
         </div>
       </div>
       <div id="toolbar_right" class="flex items-center gap-2"></div>
@@ -86,40 +86,6 @@
 
 <!-- Modal Overlay -->
 <div id="modal_overlay" class="modal-overlay"></div>
-
-<!-- Modal Filter ECBS -->
-<div id="modal_filter_ecbs" class="modal-container">
-  <div class="modal-header">
-    <h3 class="modal-title">ECBS Data Filter</h3>
-    <button class="btn-close" onclick="closeModal('modal_filter_ecbs')">&times;</button>
-  </div>
-  <div class="modal-body">
-    <div class="grid lg:grid-cols-3">
-      <div class="form-group">
-        <span class="form-hint">Device Name</span>
-        <input class="input" type="text" value="" id="dvc_name_ecbs" placeholder="Device name..." />
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Device Code</span>
-        <input class="input" type="text" value="" id="dvc_code_ecbs" placeholder="Device code..." />
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Data View</span>
-        <select class="select" id="data_view_ecbs">
-          <option value="5">5</option>
-          <option value="10" selected="selected">10</option>
-          <option value="15">15</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-light" onclick="closeModal('modal_filter_ecbs')">Cancel</button>
-    <button class="btn btn-primary" onclick="showDataEcbs(); closeModal('modal_filter_ecbs');">Submit</button>
-  </div>
-</div>
 
 <!-- Modal Filter All Item -->
 <div id="modal_filter_item" class="modal-container">
@@ -213,7 +179,7 @@
   </div>
   <div class="modal-footer">
     <button class="btn btn-light" onclick="closeModal('modal_filter_item')">Cancel</button>
-    <button class="btn btn-primary" onclick="showDataAllItem(); closeModal('modal_filter_item');">Submit</button>
+    <button class="btn btn-primary" onclick="showDataActivity(); closeModal('modal_filter_item');">Submit</button>
   </div>
 </div>
 
@@ -280,7 +246,6 @@
 </div>
 
 <script type="text/javascript">
-// Perbaikan untuk JavaScript di inv_ecct.php
 var currentTable = 'ecbs';
 var currentEcbsType = 'app';
 
@@ -290,10 +255,10 @@ function switchTable(type) {
   if (type === 'ecbs') {
     showDataEcbs();
   } else {
-    showDataAllItem();
+    showDataActivity();
   }
   document.getElementById('btn_ecbs').className = 'btn btn-sm ' + (currentTable === 'ecbs' ? 'btn-primary' : 'btn-light');
-  document.getElementById('btn_allitem').className = 'btn btn-sm ' + (currentTable === 'allitem' ? 'btn-primary' : 'btn-light');
+  document.getElementById('btn_activity').className = 'btn btn-sm ' + (currentTable === 'activity' ? 'btn-primary' : 'btn-light');
 }
 
 function renderToolbar() {
@@ -303,14 +268,18 @@ function renderToolbar() {
     toolbar += '<button id="btn_app" class="btn btn-sm ' + (currentEcbsType === 'app' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'app\')">APP</button>';
     toolbar += '<button id="btn_osc" class="btn btn-sm ' + (currentEcbsType === 'osc' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'osc\')">OSC</button>';
     toolbar += '</div>';
-    // Hapus input search, tombol filter, dan tombol search pada ECBS
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcbs(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
-    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
-    toolbar += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>';
-    toolbar += '<span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>';
-    toolbar += '<button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal(\'modal_input_all\')">Input</button>';
-    toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataAllItem(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
+    toolbar += `
+    <button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal('modal_input_all')" id="input_btn" type="button">Input</button>  
+    <div class="input-group input-sm" style="float: right; display: flex; align-items: center; gap: 5px;">
+        <input class="input input-sm" placeholder="Search" type="text" id="key_activity" style="" onkeyup="if(event.key === 'Enter'){showDataActivity();}" />
+        <span class="btn btn-light btn-sm" onclick="openModal('modal_filter_item')">Filter</span>
+        <span class="btn btn-primary btn-sm" onclick="showDataActivity();">Search</span>
+        
+        <a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataActivity('export');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
+      </div>
+    `;
   }
   document.getElementById('toolbar_right').innerHTML = toolbar;
 }
@@ -419,12 +388,12 @@ function showDataEcbs(page = 1) {
 }
 
 // PERBAIKAN UTAMA: Fungsi showDataAllItem dengan parameter page yang benar
-function showDataAllItem(page = 1) {
+function showDataActivity(page = 1) {
   var loading = '<div style="text-align: center; padding: 40px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px;">Loading data...</p></div>';
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
 
   var val = "?";
-  const fields = ["key_item", "dvc_size", "dvc_col", "dvc_qc", "date_from", "date_to", "loc_move", "sort_by", "data_view_item"];
+  const fields = ["key_activity", "dvc_size", "dvc_col", "dvc_qc", "date_from", "date_to", "loc_move", "sort_by", "data_view_item"];
 
   fields.forEach(field => {
     var element = document.getElementById(field);
@@ -465,8 +434,8 @@ function loadData(link) {
 
 // PERBAIKAN UTAMA: Fungsi untuk menangani pagination berdasarkan table yang aktif
 function handlePagination(page) {
-  if (currentTable === 'allitem') {
-    showDataAllItem(page);
+  if (currentTable === 'activity') {
+    showDataActivity(page);
   } else if (currentTable === 'ecbs') {
     showDataEcbs(page);
   }
@@ -474,12 +443,12 @@ function handlePagination(page) {
 
 // PERBAIKAN UTAMA: Fungsi untuk mendapatkan fungsi table yang aktif
 function getCurrentTableFunction() {
-  if (currentTable === 'allitem') {
-    return 'showDataAllItem';
+  if (currentTable === 'activity') {
+    return 'showDataActivity';
   } else if (currentTable === 'ecbs') {
     return 'showDataEcbs';
   }
-  return 'showDataItem';
+  return 'showDataActivity';
 }
 
 function submitInput(type) {
@@ -536,8 +505,8 @@ function submitInput(type) {
     if (result.success) {
       closeModal('modal_input_all');
       // Refresh tabel yang aktif setelah input berhasil
-      if (currentTable === 'allitem') {
-        showDataAllItem();
+      if (currentTable === 'activity') {
+        showDataActivity();
       } else if (currentTable === 'ecbs') {
         showDataEcbs();
       }

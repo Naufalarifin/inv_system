@@ -56,8 +56,8 @@
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="btn-group ml-2">
-          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">ECCT</button>
-          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">All Item</button>
+          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stock</button>
+          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Inventory</button>
         </div>
       </div>
       <div id="toolbar_right" class="flex items-center gap-2"></div>
