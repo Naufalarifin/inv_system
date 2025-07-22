@@ -1,5 +1,4 @@
 <?php
-// Perbaikan untuk main_page.php - bagian deteksi fungsi pagination
 if (!isset($_GET['p']) || !is_numeric($_GET['p']) || $_GET['p'] < 1) {
     $_GET['p'] = 1;
 }

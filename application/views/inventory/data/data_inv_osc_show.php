@@ -1,11 +1,15 @@
 <?php
 $oscillators = [];
 $accessories = [];
-
 $accessories_codes = ['EFD', 'SC2', 'SC3'];
 
 if($data['query'] && $data['query']->num_rows() > 0) {
     foreach ($data['query']->result_array() as $row) {
+        // Jika ECBS (hanya ada total_count), mapping ke struktur ECCT agar bisa diproses
+        if (isset($row['total_count'])) {
+            $row['ln_count'] = $row['total_count'];
+            $row['dn_count'] = 0;
+        }
         if (in_array($row['dvc_code'], $accessories_codes)) {
             $accessories[] = $row;
         }
@@ -14,7 +18,6 @@ if($data['query'] && $data['query']->num_rows() > 0) {
         }
     }
 }
-
 
 function renderOscTableSection($title, $items) {
     $grouped_items = [];
@@ -28,8 +31,8 @@ function renderOscTableSection($title, $items) {
                 'dn_count' => 0
             ];
         }
-        $grouped_items[$code]['ln_count'] += $item['ln_count'];
-        $grouped_items[$code]['dn_count'] += $item['dn_count'];
+        $grouped_items[$code]['ln_count'] += isset($item['ln_count']) ? $item['ln_count'] : 0;
+        $grouped_items[$code]['dn_count'] += isset($item['dn_count']) ? $item['dn_count'] : 0;
     }
 
     $section_ln_total = 0;
@@ -53,7 +56,8 @@ function renderOscTableSection($title, $items) {
     echo '                    <th align="center" width="60">LN</th>';
     echo '                    <th align="center" width="60">DN</th>';
     echo '                    <th align="center" width="80">Subtotal</th>';
-    echo '                    <th align="center" width="60">%</th>';
+    echo '                    <th align="center" width="60">%';
+    echo '                    </th>';
     echo '                    <th align="center" width="60">INV</th>';
     echo '                </tr>';
     echo '            </thead>';
@@ -119,4 +123,4 @@ renderOscTableSection('JENIS ACCESORIES', $accessories);
     padding: 6px 8px !important;
 }
 
-</style>
+</style> 

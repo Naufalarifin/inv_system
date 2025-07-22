@@ -1,5 +1,4 @@
 <?php
-
 $grand_total = 0;
 $column_totals = array(
     'size_xs' => 0,
@@ -13,6 +12,7 @@ $column_totals = array(
     'size_cus' => 0,
 );
 
+
 // Daftar warna untuk 7 baris VOH (tetap hardcoded untuk tampilan)
 $voh_colors = array(
     array('name' => 'Black', 'hex' => '#000000'),
@@ -25,8 +25,6 @@ $voh_colors = array(
 );
 
 $sizes = array('size_xs','size_s','size_m','size_l','size_xl','size_xxl','size_3xl','size_all','size_cus');
-
-// Ambil data dari model
 $model_data = isset($data['data']) && is_array($data['data']) ? $data['data'] : array();
 
 // Hitung grand_total dan column_totals
@@ -37,8 +35,20 @@ foreach ($model_data as $item) {
     }
 }
 
-?>
+// Cek apakah data ECBS (ada field warna)
+$is_ecbs = isset($model_data[0]['warna']);
 
+// Daftar warna untuk 7 baris VOH (khusus ECBS)
+$voh_colors = array(
+    array('name' => 'Navy', 'hex' => '#001f5b'),
+    array('name' => 'Maroon', 'hex' => '#800000'),
+    array('name' => 'Army', 'hex' => '#4b5320'),
+    array('name' => 'Black', 'hex' => '#000000'),
+    array('name' => 'Grey', 'hex' => '#808080'),
+    array('name' => 'Blue Navy', 'hex' => '#000080'),
+    array('name' => 'Custom', 'hex' => '#ffffff'),
+);
+?>
 <div class="card-table">
     <div class="table-responsive">
         <table class="table table-border align-middle text-gray-700 font-medium text-sm">
@@ -47,6 +57,7 @@ foreach ($model_data as $item) {
                     <th align="center" width="40">No</th>
                     <th align="center" width="60">Nama Barang</th>
                     <th align="center" width="100">Kode</th>
+                    <?php if($is_ecbs): ?><th align="center" width="60">Warna</th><?php endif; ?>
                     <th align="center" width="60">XS</th>
                     <th align="center" width="60">S</th>
                     <th align="center" width="60">M</th>
@@ -63,43 +74,45 @@ foreach ($model_data as $item) {
             <tbody>
                 <?php
                 $row_display_no = 1;
-                // 1. Tampilkan 7 baris VOH sesuai $voh_colors
-                $voh_rows_to_display = array();
-                foreach ($voh_colors as $color_info) {
-                    $found_voh_item = null;
-                    foreach ($model_data as $item) {
-                        if ((stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0)
-                            && strtolower(trim($item['warna'])) === strtolower(trim($color_info['name']))) {
-                            $found_voh_item = $item;
-                            break;
+                if($is_ecbs) {
+                    // --- ECBS MODE: Tampilkan 7 baris VOH sesuai $voh_colors ---
+                    $voh_rows_to_display = array();
+                    foreach ($voh_colors as $color_info) {
+                        $found_voh_item = null;
+                        foreach ($model_data as $item) {
+                            if ((stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0)
+                                && strtolower(trim($item['warna'])) === strtolower(trim($color_info['name']))) {
+                                $found_voh_item = $item;
+                                break;
+                            }
                         }
+                        if (!$found_voh_item) {
+                            $found_voh_item = array(
+                                'dvc_name' => 'Vest Outer Hoodie Element',
+                                'dvc_code' => 'VOH',
+                                'warna' => $color_info['name'],
+                                'subtotal' => 0,
+                                'size_xs' => 0, 'size_s' => 0, 'size_m' => 0, 'size_l' => 0,
+                                'size_xl' => 0, 'size_xxl' => 0, 'size_3xl' => 0, 'size_all' => 0, 'size_cus' => 0,
+                            );
+                        }
+                        $voh_rows_to_display[] = array('color_info' => $color_info, 'data' => $found_voh_item);
                     }
-                    if (!$found_voh_item) {
-                        $found_voh_item = array(
-                            'dvc_name' => 'Vest Outer Hoodie Element',
-                            'dvc_code' => 'VOH',
-                            'warna' => $color_info['name'],
-                            'subtotal' => 0,
-                            'size_xs' => 0, 'size_s' => 0, 'size_m' => 0, 'size_l' => 0,
-                            'size_xl' => 0, 'size_xxl' => 0, 'size_3xl' => 0, 'size_all' => 0, 'size_cus' => 0,
-                        );
-                    }
-                    $voh_rows_to_display[] = array('color_info' => $color_info, 'data' => $found_voh_item);
-                }
-                $voh_count = count($voh_rows_to_display);
-                if ($voh_count > 0) {
-                    foreach ($voh_rows_to_display as $idx => $item) {
-                        $color_info = $item['color_info'];
-                        $row_data = $item['data'];
-                        $subtotal = isset($row_data['subtotal']) ? (int)$row_data['subtotal'] : 0;
+                    $voh_count = count($voh_rows_to_display);
+                    if ($voh_count > 0) {
+                        foreach ($voh_rows_to_display as $idx => $item) {
+                            $color_info = $item['color_info'];
+                            $row_data = $item['data'];
+                            $subtotal = isset($row_data['subtotal']) ? (int)$row_data['subtotal'] : 0;
                 ?>
                 <tr>
                     <?php if ($idx == 0) { ?>
                         <td align="center" rowspan="<?php echo $voh_count; ?>"><?php echo $row_display_no; ?></td>
                         <td align="left" rowspan="<?php echo $voh_count; ?>">Vest Outer Hoodie Element</td>
                     <?php } ?>
+                    <td align="left"><?php echo htmlspecialchars($row_data['dvc_code']); ?></td>
                     <td align="left">
-                        <?php echo htmlspecialchars($row_data['dvc_code']); ?><br>
+                        <?php echo htmlspecialchars($row_data['warna']); ?><br>
                         <?php if (strtolower($color_info['name']) === 'custom') { ?>
                             <span style="font-size:12px;font-weight:bold;">CUSTOM</span>
                         <?php } else { ?>
@@ -113,39 +126,33 @@ foreach ($model_data as $item) {
                     <td align="center"><?php echo $grand_total > 0 ? round(($subtotal / $grand_total) * 100, 1) : 0; ?>%</td>
                 </tr>
                 <?php
-                    }
-                    $row_display_no++;
-                }
-                // 2. Tampilkan barang lain berdasarkan data database yang sudah diagregasi
-                if (!empty($model_data)) {
-                    // Gabungkan data non-VOH yang sama (dvc_name & dvc_code)
-                    $other_items_agg = array();
-                    foreach ($model_data as $item) {
-                        if (stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0) continue;
-                        $key = strtolower(trim($item['dvc_name'])) . '|' . strtolower(trim($item['dvc_code']));
-                        if (!isset($other_items_agg[$key])) {
-                            $other_items_agg[$key] = $item;
-                        } else {
-                            // Agregasi size dan subtotal
-                            foreach ($sizes as $sz) {
-                                $other_items_agg[$key][$sz] += isset($item[$sz]) ? (int)$item[$sz] : 0;
-                            }
-                            $other_items_agg[$key]['subtotal'] += isset($item['subtotal']) ? (int)$item['subtotal'] : 0;
                         }
+                        $row_display_no++;
                     }
-                    foreach ($other_items_agg as $item) {
-                        $subtotal = isset($item['subtotal']) ? (int)$item['subtotal'] : 0;
-                        $percentage = $grand_total > 0 ? round(($subtotal / $grand_total) * 100, 1) : 0;
+                    // --- Barang lain (non-VOH), agregasi per nama/kode ---
+                    if (!empty($model_data)) {
+                        $other_items_agg = array();
+                        foreach ($model_data as $item) {
+                            if (stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0) continue;
+                            $key = strtolower(trim($item['dvc_name'])) . '|' . strtolower(trim($item['dvc_code'])) . '|' . strtolower(trim($item['warna']));
+                            if (!isset($other_items_agg[$key])) {
+                                $other_items_agg[$key] = $item;
+                            } else {
+                                foreach ($sizes as $sz) {
+                                    $other_items_agg[$key][$sz] += isset($item[$sz]) ? (int)$item[$sz] : 0;
+                                }
+                                $other_items_agg[$key]['subtotal'] += isset($item['subtotal']) ? (int)$item['subtotal'] : 0;
+                            }
+                        }
+                        foreach ($other_items_agg as $item) {
+                            $subtotal = isset($item['subtotal']) ? (int)$item['subtotal'] : 0;
+                            $percentage = $grand_total > 0 ? round(($subtotal / $grand_total) * 100, 1) : 0;
                 ?>
                 <tr>
                     <td align="center"><?php echo $row_display_no++; ?></td>
                     <td align="left"><?php echo htmlspecialchars($item['dvc_name']); ?></td>
-                    <td align="left">
-                        <?php echo htmlspecialchars($item['dvc_code']); ?>
-                        <br>
-                        <span style="display:inline-block;width:16px;height:16px;background:#000;border-radius:3px;margin-top:4px;vertical-align:middle;border:1px solid #ccc;"></span>
-                        <span style="font-size:11px;margin-left:4px;"></span>
-                    </td>
+                    <td align="left"><?php echo htmlspecialchars($item['dvc_code']); ?></td>
+                    <td align="left"><?php echo htmlspecialchars($item['warna']); ?></td>
                     <?php foreach ($sizes as $sz) { ?>
                         <td align="center">
                             <?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; 
@@ -157,18 +164,46 @@ foreach ($model_data as $item) {
                     <td align="center"><?php echo $percentage; ?>%</td>
                 </tr>
                 <?php
+                        }
                     }
-                }
-                if ($row_display_no == 1) { // Jika hanya header VOH yang ditampilkan atau tidak ada data sama sekali
+                    if ($row_display_no == 1) {
                 ?>
                 <tr>
-                    <td align="center" colspan="14"><i>No ECBS APP Data Found</i></td>
+                    <td align="center" colspan="15"><i>No ECBS APP Data Found</i></td>
                 </tr>
+                <?php } ?>
+                <?php
+                } else {
+                    // --- ECCT MODE ---
+                    $no = 0;
+                    if(isset($model_data) && !empty($model_data)) {
+                        foreach ($model_data as $row) {
+                            $no++;
+                            $percentage = $grand_total > 0 ? round(($row['subtotal'] / $grand_total) * 100, 1) : 0;
+                ?>
+                <tr>
+                    <td align="center"><?php echo $no; ?></td>
+                    <td align="left"><?php echo $row['dvc_name']; ?></td>
+                    <td align="center"><?php echo $row['dvc_code']; ?></td>
+                    <?php foreach ($sizes as $sz) { ?>
+                        <td align="center"><?php echo $row[$sz]; ?></td>
+                    <?php } ?>
+                    <td align="center"><strong><?php echo $row['subtotal']; ?></strong></td>
+                    <td align="center"><?php echo $percentage; ?>%</td>
+                </tr>
+                <?php
+                        }
+                    } else {
+                ?>
+                <tr>
+                    <td align="center" colspan="14"><i>No ECCT APP Data Found</i></td>
+                </tr>
+                <?php } ?>
                 <?php } ?>
             </tbody>
             <tfoot>
                 <tr style="background-color: #00bfff; color: white; font-weight: bold;">
-                    <td align="center" colspan="3">TOTAL</td>
+                    <td align="center" colspan="<?php echo $is_ecbs ? 4 : 3; ?>">TOTAL</td>
                     <td align="center"><?php echo $column_totals['size_xs']; ?></td>
                     <td align="center"><?php echo $column_totals['size_s']; ?></td>
                     <td align="center"><?php echo $column_totals['size_m']; ?></td>
@@ -182,7 +217,7 @@ foreach ($model_data as $item) {
                     <td align="center" rowspan="2" style="vertical-align: middle;"><strong>100%</strong></td>
                 </tr>
                 <tr style="background-color: #00bfff; color: white; font-weight: bold;">
-                    <td align="center" colspan="3">PERSENTASE</td>
+                    <td align="center" colspan="<?php echo $is_ecbs ? 4 : 3; ?>">PERSENTASE</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_xs'] / $grand_total) * 100, 1) : 0; ?>%</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_s'] / $grand_total) * 100, 1) : 0; ?>%</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_m'] / $grand_total) * 100, 1) : 0; ?>%</td>
@@ -200,3 +235,13 @@ foreach ($model_data as $item) {
         </div>
     </div>
 </div>
+<style>
+.table.table-border.text-xs td, .table.table-border.text-xs th {
+    font-size: 10px !important;
+    padding: 4px 6px !important;
+}
+.table.table-border tfoot tr td {
+    font-size: 12px !important; 
+    padding: 6px 8px !important;
+}
+</style> 
