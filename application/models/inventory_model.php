@@ -11,9 +11,8 @@ class Inventory_model extends CI_Model {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         $qc_status = isset($data['qc_status']) ? trim($data['qc_status']) : '';
 
-        // Validate serial number format and basic existence
         $validation_result = $this->_validateSerialNumber($serial_number);
-        if (!$validation_result['success']) { // Changed from 'valid' to 'success' for consistency with _response
+        if (!$validation_result['success']) { 
             return $this->_response(false, $validation_result['message']);
         }
 
@@ -21,9 +20,8 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Serial number sudah ada dalam database');
         }
 
-        // Parse serial number and get detailed info
         $parsed_data = $this->_parseSerialNumber($serial_number);
-        if (!$parsed_data['valid']) { // Check the 'valid' key from _parseSerialNumber's return
+        if (!$parsed_data['valid']) { 
             return $this->_response(false, $parsed_data['message']);
         }
 
@@ -59,14 +57,11 @@ class Inventory_model extends CI_Model {
 
     public function processInventoryOut($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
-
-        // Validate serial number exists
         $inventory_item = $this->_getInventoryBySerial($serial_number);
         if (!$inventory_item) {
             return $this->_response(false, 'Serial number tidak ditemukan: ' . $serial_number);
         }
 
-        // Check if already out
         if ($inventory_item->inv_out !== null && $inventory_item->inv_out !== '0000-00-00 00:00:00') {
             return $this->_response(false, 'Item sudah dalam status OUT');
         }
@@ -76,7 +71,7 @@ class Inventory_model extends CI_Model {
             'inv_out' => $now,
             'adm_out' => $this->_getAdminId()
         );
-        // Aturan baru: jika inv_move masih kosong/null/00.00.00, update inv_move dan loc_move
+
         if (empty($inventory_item->inv_move) || $inventory_item->inv_move == '0000-00-00 00:00:00') {
             $update_data['inv_move'] = $now;
             $update_data['adm_move'] = $this->_getAdminId();
@@ -97,23 +92,19 @@ class Inventory_model extends CI_Model {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         $location = isset($data['location']) ? trim($data['location']) : '';
 
-        // Validate inputs
         if (empty($location)) {
             return $this->_response(false, 'Lokasi tujuan tidak boleh kosong');
         }
 
-        // Validate serial number exists
         $inventory_item = $this->_getInventoryBySerial($serial_number);
         if (!$inventory_item) {
             return $this->_response(false, 'Serial number tidak ditemukan: ' . $serial_number);
         }
 
-        // Check if already out
         if ($inventory_item->inv_out !== null && $inventory_item->inv_out !== '0000-00-00 00:00:00') {
             return $this->_response(false, 'Item sudah dalam status OUT, tidak bisa dipindah');
         }
 
-        // Update inventory record
         $update_data = array(
             'inv_move' => date('Y-m-d H:i:s'),
             'adm_move' => $this->_getAdminId(),
@@ -244,18 +235,17 @@ class Inventory_model extends CI_Model {
     }
 
     private function _parseSerialNumber($serial_number) {
-        // Validasi: serial number harus 15 karakter
+
         if (strlen($serial_number) !== 15) {
             return ['valid' => false, 'message' => 'Serial number harus 15 karakter'];
         }
 
-        // Ambil tahun, bulan, tanggal produksi
-        $yy = substr($serial_number, 0, 2); // 2 digit tahun
-        $mm = strtoupper(substr($serial_number, 2, 1)); // 1 digit bulan
-        $dd = substr($serial_number, 3, 2); // 2 digit tanggal
+        $yy = substr($serial_number, 0, 2); 
+        $mm = strtoupper(substr($serial_number, 2, 1)); 
+        $dd = substr($serial_number, 3, 2); 
+
         $flag = strtoupper(substr($serial_number, 6, 1)); // 1 digit flag N/R
 
-        // Mapping bulan
         $bulan_map = [
             '1' => 1, '2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6,
             '7' => 7, '8' => 8, '9' => 9, '0' => 10, 'A' => 11, 'B' => 12
@@ -269,12 +259,10 @@ class Inventory_model extends CI_Model {
         $bulan_now = $now['mon'];
         $tanggal_now = $now['mday'];
 
-        // Validasi tahun
         if ($tahun > $tahun_now) {
             return ['valid' => false, 'message' => 'Tahun produksi serial number tidak boleh melebihi tahun sekarang'];
         }
 
-        // Validasi bulan
         if ($bulan < 1 || $bulan > 12) {
             return ['valid' => false, 'message' => 'Bulan produksi serial number tidak valid!'];
         }
@@ -282,7 +270,6 @@ class Inventory_model extends CI_Model {
             return ['valid' => false, 'message' => 'Bulan produksi serial number tidak boleh melebihi bulan sekarang!'];
         }
 
-        // Validasi tanggal
         $max_tanggal = cal_days_in_month(CAL_GREGORIAN, $bulan, $tahun);
         if ($tanggal < 1 || $tanggal > $max_tanggal) {
             return ['valid' => false, 'message' => 'Tanggal produksi serial number tidak valid!'];
@@ -291,12 +278,10 @@ class Inventory_model extends CI_Model {
             return ['valid' => false, 'message' => 'Tanggal produksi serial number tidak boleh melebihi tanggal hari ini!'];
         }
 
-        // Validasi flag N/R
         if ($flag !== 'N' && $flag !== 'R') {
             return ['valid' => false, 'message' => 'Karakter ke-7 serial number harus N (New) atau R (Refurbish)!'];
         }
 
-        // --- LANJUTKAN LOGIC LAMA UNTUK PARSING DEVICE_CODE, SIZE, COLOR ---
         $char_5 = substr($serial_number, 5, 1);
         $char_7 = substr($serial_number, 7, 1);
         $char_8 = substr($serial_number, 8, 1);
@@ -306,7 +291,7 @@ class Inventory_model extends CI_Model {
         $color = null;
 
         if ($char_5 === 'T') {
-            $color = null;
+            $color = 'Dark Grey';
             if (strlen($serial_number) > 9) {
                 $size_char = substr($serial_number, 9, 1);
                 $size = $this->_getSizeFromChar($size_char);

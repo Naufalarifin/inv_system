@@ -50,58 +50,23 @@
 }
 </style>
 
-<!-- Container -->
 <div class="container-fixed">
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="btn-group ml-2">
-          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stock</button>
-          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Inventory</button>
+          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stcok</button>
+          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Activity</button>
         </div>
       </div>
-      <div id="toolbar_right" class="flex items-center gap-2"></div>
+      <div id="toolbar_right" class="flex items-center gap-2"> </div>
     </div>
     <div id="show_data"></div>
   </div>
 </div>
 
-<div id="modal_overlay" class="modal-overlay"></div>
+<div id="modal_overlay" class="modal-overlay"> </div>
 
-<div id="modal_filter_ecct" class="modal-container">
-  <div class="modal-header">
-    <h3 class="modal-title">ECCT Data Filter</h3>
-    <button class="btn-close" onclick="closeModal('modal_filter_ecct')">&times;</button>
-  </div>
-  <div class="modal-body">
-    <div class="grid lg:grid-cols-3">
-      <div class="form-group">
-        <span class="form-hint">Device Name</span>
-        <input class="input" type="text" value="" id="dvc_name_ecct" placeholder="Device name..." />
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Device Code</span>
-        <input class="input" type="text" value="" id="dvc_code_ecct" placeholder="Device code..." />
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Data View</span>
-        <select class="select" id="data_view_ecct">
-          <option value="5">5</option>
-          <option value="10" selected="selected">10</option>
-          <option value="15">15</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-light" onclick="closeModal('modal_filter_ecct')">Cancel</button>
-    <button class="btn btn-primary" onclick="showDataEcct(); closeModal('modal_filter_ecct');">Submit</button>
-  </div>
-</div>
-
-<!-- Modal Filter All Item -->
 <div id="modal_filter_item" class="modal-container">
   <div class="modal-header">
     <h3 class="modal-title">Data Filter</h3>
@@ -191,20 +156,19 @@
       </div>
     </div>
   </div>
-  <div class="modal-footer">
+  <div class="modal-footer" style="padding: 14px 14px;">
     <button class="btn btn-light" onclick="closeModal('modal_filter_item')">Cancel</button>
     <button class="btn btn-primary" onclick="showDataAllItem(); closeModal('modal_filter_item');">Submit</button>
   </div>
 </div>
 
-<!-- Modal Input Gabungan In/Move/Out -->
 <div id="modal_input_all" class="modal-container" style="min-width:900px;">
   <div class="modal-header">
     <h3 class="modal-title">Input Inventory</h3>
     <button class="btn-close" onclick="closeModal('modal_input_all')">&times;</button>
   </div>
   <div class="modal-body" style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
-    <!-- Input In -->
+
     <div style="flex:1; min-width: 220px; border-right:1px solid #eee; padding-right:16px; display: flex; flex-direction: column; justify-content: flex-start;">
       <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">In</h4>
       <div class="form-group">
@@ -260,7 +224,6 @@
 </div>
 
 <script type="text/javascript">
-// Perbaikan untuk JavaScript di inv_ecct.php
 var currentTable = 'ecct';
 var currentEcctType = 'app';
 
@@ -283,7 +246,6 @@ function renderToolbar() {
     toolbar += '<button id="btn_app" class="btn btn-sm ' + (currentEcctType === 'app' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcctType(\'app\')">APP</button>';
     toolbar += '<button id="btn_osc" class="btn btn-sm ' + (currentEcctType === 'osc' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcctType(\'osc\')">OSC</button>';
     toolbar += '</div>';
-    // Hapus input search, tombol filter, dan tombol search pada ECCT
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcct(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
     toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
@@ -301,7 +263,6 @@ function switchEcctType(type) {
   showDataEcct();
 }
 
-// Fungsi untuk membuka modal
 function openModal(modalId) {
   const overlay = document.getElementById('modal_overlay');
   const modal = document.getElementById(modalId);
@@ -312,7 +273,6 @@ function openModal(modalId) {
   }
 }
 
-// Fungsi untuk menutup modal
 function closeModal(modalId) {
   const overlay = document.getElementById('modal_overlay');
   const modal = document.getElementById(modalId);
@@ -322,13 +282,11 @@ function closeModal(modalId) {
     modal.style.display = 'none';
   }
 
-  // Reset form jika modal input
   if (modalId === 'modal_input_all') {
     resetInputForm();
   }
 }
 
-// Reset form input
 function resetInputForm() {
   document.getElementById('in_serial_number').value = '';
   document.getElementById('out_serial_number').value = '';
@@ -336,11 +294,9 @@ function resetInputForm() {
   document.getElementById('move_location').value = '';
 }
 
-// Event listener untuk menutup modal dengan klik overlay atau ESC
 document.addEventListener('DOMContentLoaded', function() {
   const overlay = document.getElementById('modal_overlay');
 
-  // Klik overlay untuk menutup modal
   overlay.addEventListener('click', function(event) {
     if (event.target === overlay) {
       const modals = ['modal_filter_ecct', 'modal_filter_item', 'modal_input_all'];
@@ -353,7 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // ESC key untuk menutup modal
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
       const modals = ['modal_filter_ecct', 'modal_filter_item', 'modal_input_all'];
@@ -367,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// PERBAIKAN UTAMA: Fungsi showDataEcct dengan parameter page yang benar
 function showDataEcct(page = 1) {
   var loading = '<div style="text-align: center; padding: 40px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px;">Loading data...</p></div>';
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
@@ -398,7 +352,6 @@ function showDataEcct(page = 1) {
   loadData(link);
 }
 
-// PERBAIKAN UTAMA: Fungsi showDataAllItem dengan parameter page yang benar
 function showDataAllItem(page = 1) {
   var loading = '<div style="text-align: center; padding: 40px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px;">Loading data...</p></div>';
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
@@ -442,23 +395,6 @@ function loadData(link) {
   }
 }
 
-function handlePagination(page) {
-  if (currentTable === 'allitem') {
-    showDataAllItem(page);
-  } else if (currentTable === 'ecct') {
-    showDataEcct(page);
-  }
-}
-
-function getCurrentTableFunction() {
-  if (currentTable === 'allitem') {
-    return 'showDataAllItem';
-  } else if (currentTable === 'ecct') {
-    return 'showDataEcct';
-  }
-  return 'showDataItem';
-}
-
 function submitInput(type) {
   let data = {};
   let url = "<?php echo $config['url_menu']; ?>input_process";
@@ -491,7 +427,6 @@ function submitInput(type) {
     return;
   }
 
-  // Validasi karakter ke-6 harus 'T'
   if (serialNumber.length < 6 || serialNumber.charAt(5).toUpperCase() !== 'T') {
     alert('masukan ecct!');
     return;
@@ -525,9 +460,9 @@ function submitInput(type) {
   });
 }
 
-// Inisialisasi saat halaman dimuat
 window.onload = function() {
   renderToolbar();
-  showDataEcct(); // Default ke tabel ECCT saat halaman dimuat
+  showDataEcct();
 }
+
 </script>
