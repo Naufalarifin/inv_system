@@ -12,6 +12,18 @@ $column_totals = array(
     'size_cus' => 0,
 );
 
+
+// Daftar warna untuk 7 baris VOH (tetap hardcoded untuk tampilan)
+$voh_colors = array(
+    array('name' => 'Black', 'hex' => '#000000'),
+    array('name' => 'Navy', 'hex' => '#001f5b'),
+    array('name' => 'Maroon', 'hex' => '#800000'),
+    array('name' => 'Army', 'hex' => '#4b5320'),
+    array('name' => 'Dark Gray', 'hex' => '#A9A9A9'), // hex #A9A9A9 untuk dark gray
+    array('name' => 'Gray', 'hex' => '#808080'),
+    array('name' => 'Custom', 'hex' => '#ffffff'),
+);
+
 $sizes = array('size_xs','size_s','size_m','size_l','size_xl','size_xxl','size_3xl','size_all','size_cus');
 $model_data = isset($data['data']) && is_array($data['data']) ? $data['data'] : array();
 
@@ -142,7 +154,11 @@ $voh_colors = array(
                     <td align="left"><?php echo htmlspecialchars($item['dvc_code']); ?></td>
                     <td align="left"><?php echo htmlspecialchars($item['warna']); ?></td>
                     <?php foreach ($sizes as $sz) { ?>
-                        <td align="center"><?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; ?></td>
+                        <td align="center">
+                            <?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; 
+                            ?>
+                            <br>
+                        </td>
                     <?php } ?>
                     <td align="center"><strong><?php echo $subtotal; ?></strong></td>
                     <td align="center"><?php echo $percentage; ?>%</td>

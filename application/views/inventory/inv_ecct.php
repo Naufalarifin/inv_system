@@ -55,7 +55,7 @@
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="btn-group ml-2">
-          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stok</button>
+          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stcok</button>
           <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Activity</button>
         </div>
       </div>

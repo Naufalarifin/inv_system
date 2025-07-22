@@ -278,7 +278,7 @@
 
         <div class="welcome-section">
             <h1>Hai Admin</h1>
-            <p>Selamat datang di sistem manajemen data</p>
+            <p>Selamat datang di Inventory System</p>
         </div>
 
         <div class="card-container">
@@ -286,7 +286,7 @@
                 <div>
                     <div class="card-icon"><i class="ki-filled ki-cube-2"></i> </div>
                     <h3>Inventory</h3>
-                    <p>Kelola data inventory dan sample management system</p>
+                    <p>Kelola data inventory <br> dan stok inventory system</p>
                 </div>
                 <div class="card-actions">
                     <button class="dropdown-btn">

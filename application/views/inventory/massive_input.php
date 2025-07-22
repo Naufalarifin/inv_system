@@ -248,6 +248,11 @@ async function submitMassiveInput(type) {
     } else {
         resultSummaryElement.classList.add('error');
         summaryMessage += '\n\nFailed serial numbers:\n' + failedSerials.join('\n');
+        // Kembalikan SN yang gagal ke textarea input
+        const failedSNs = failedSerials.map(f => f.split(':')[0]);
+        if (type === 'in') document.getElementById('in_serial_numbers').value = failedSNs.join('\n');
+        else if (type === 'out') document.getElementById('out_serial_numbers').value = failedSNs.join('\n');
+        else if (type === 'move') document.getElementById('move_serial_numbers').value = failedSNs.join('\n');
     }
     resultSummaryElement.innerText = summaryMessage;
     resultSummaryElement.style.display = 'block';

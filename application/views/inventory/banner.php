@@ -35,11 +35,11 @@
          <div class="flex items-center flex-wrap gap-1 lg:gap-5">
           <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
            <div class="menu-item">
-            <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'all_item') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/all_item">
+            <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'all_item') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/inv_ecbs">
              <span class="menu-icon">
               <i class="ki-filled ki-chart-simple"></i>
              </span>
-             <span class="menu-title">All Item</span>
+             <span class="menu-title">Stock</span>
             </a>
            </div>
            <div class="menu-item">
@@ -47,23 +47,7 @@
              <span class="menu-icon">
               <i class="ki-filled ki-shield-search"></i>
              </span>
-             <span class="menu-title">ECCT</span>
-            </a>
-           </div>
-           <div class="menu-item">
-            <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'inv') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/inv">
-             <span class="menu-icon">
-              <i class="ki-filled ki-rocket"></i>
-             </span>
-             <span class="menu-title">ECBS</span>
-            </a>
-           </div>
-           <div class="menu-item">
-            <a class="menu-link <?php echo (isset($config['hal_sub']) && $config['hal_sub'] == 'massive_input') ? 'active' : ''; ?>" href="<?php echo $config['base_url']; ?>inventory/massive_input">
-             <span class="menu-icon">
-              <i class="ki-filled ki-tablet-book"></i>
-             </span>
-             <span class="menu-title">Massive Input</span>
+             <span class="menu-title">Activity</span>
             </a>
            </div>
           </div>
