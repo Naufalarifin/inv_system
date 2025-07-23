@@ -331,8 +331,8 @@ class Inventory_model extends CI_Model {
 
     private function _getColorFromChars($color_chars) {
         $color_map = array(
-            '01' => 'Dark Gray', '02' => 'Black', '03' => 'Grey', '04' => 'Blue Navy',
-            '05' => 'Green Army', '06' => 'Maroon', '99' => 'Custom', '00' => '-'
+            '01' => 'Dark Gray', '02' => 'Black', '03' => 'Grey', '04' => 'Navy',
+            '05' => 'Army', '06' => 'Maroon', '99' => 'Custom', '00' => '-'
         );
 
         return isset($color_map[$color_chars]) ? $color_map[$color_chars] : null;

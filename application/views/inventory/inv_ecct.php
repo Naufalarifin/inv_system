@@ -43,30 +43,91 @@
 .modal-body {
     padding: 20px;
 }
-
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+.btn-close:hover {
+    color: #000;
+}
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+.input-tab-btn {
+  background: #fff;
+  color: #0074d9;
+  border: 1px solid #0074d9;
+  border-radius: 4px 4px 0 0;
+  padding: 6px 18px;
+  margin-right: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s;
+}
+.input-tab-btn.active {
+  background: #0074d9;
+  color: #fff;
+}
+.input-form-label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  display: block;
+}
+.input-result-message {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  display: none;
+}
+.input-result-message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.input-result-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
 </style>
 
+<!-- Container -->
 <div class="container-fixed">
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="btn-group ml-2">
-          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stcok</button>
+          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stock</button>
           <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Activity</button>
         </div>
       </div>
-      <div id="toolbar_right" class="flex items-center gap-2"> </div>
+      <div id="toolbar_right" class="flex items-center gap-2"></div>
     </div>
     <div id="show_data"></div>
   </div>
 </div>
 
-<div id="modal_overlay" class="modal-overlay"> </div>
+<!-- Modal Overlay -->
+<div id="modal_overlay" class="modal-overlay"></div>
 
+<!-- Modal Filter All Item -->
 <div id="modal_filter_item" class="modal-container">
   <div class="modal-header">
     <h3 class="modal-title">Data Filter</h3>
@@ -128,7 +189,7 @@
           <option value="Om Bob">Om Bob</option>
           <option value="Rekanan">Rekanan</option>
           <option value="LN">LN</option>
-          <option value="ECBS">ECBS</option>
+          <option value="ECCT">ECCT</option>
           <option value="LN Office">LN Office</option>
           <option value="Lantai 1">Lantai 1</option>
           <option value="Unknow">Unknow</option>
@@ -156,69 +217,75 @@
       </div>
     </div>
   </div>
-  <div class="modal-footer" style="padding: 14px 14px;">
+  <div class="modal-footer">
     <button class="btn btn-light" onclick="closeModal('modal_filter_item')">Cancel</button>
     <button class="btn btn-primary" onclick="showDataAllItem(); closeModal('modal_filter_item');">Submit</button>
   </div>
 </div>
 
-<div id="modal_input_all" class="modal-container" style="min-width:900px;">
+<!-- Modal Input Gabungan In/Move/Out dengan Tab -->
+<div id="modal_input_all" class="modal-container" style="min-width:500px;">
   <div class="modal-header">
     <h3 class="modal-title">Input Inventory</h3>
     <button class="btn-close" onclick="closeModal('modal_input_all')">&times;</button>
   </div>
-  <div class="modal-body" style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
-
-    <div style="flex:1; min-width: 220px; border-right:1px solid #eee; padding-right:16px; display: flex; flex-direction: column; justify-content: flex-start;">
-      <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">In</h4>
-      <div class="form-group">
-        <label>Serial Number *</label>
-        <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
-        <small style="color: #666; font-size: 12px;">Masukan serial number sesuai ketentuan</small>
-      </div>
-      <div class="form-group">
-        <label>QC Status *</label>
-        <select id="in_qc_status" class="select">
-          <option value="0">LN</option>
-          <option value="1">DN</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('in')">Submit In</button>
+  <div class="modal-body" style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Tab Buttons -->
+    <div id="inputTabButtons" style="margin-bottom: 18px;">
+      <button type="button" class="input-tab-btn active" onclick="showInputTab('in')" id="tabBtn_in">in</button>
+      <button type="button" class="input-tab-btn" onclick="showInputTab('move')" id="tabBtn_move">move</button>
+      <button type="button" class="input-tab-btn" onclick="showInputTab('out')" id="tabBtn_out">out</button>
     </div>
-    <!-- Input Move -->
-    <div style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: flex; flex-direction: column; justify-content: flex-start;">
-      <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">Move</h4>
-      <div class="form-group">
-        <label>Serial Number *</label>
-        <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
-        <small style="color: #666; font-size: 12px;">Serial number harus sudah ada di database</small>
+    <div style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
+      <!-- Input In -->
+      <div id="inputTab_in" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: flex; flex-direction: column; justify-content: flex-start;">
+        <div class="form-group">
+          <label class="input-form-label">QC Status</label>
+          <select id="in_qc_status" class="select">
+            <option value="0">LN</option>
+            <option value="1">DN</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="input-form-label">Serial Number</label>
+          <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
+        </div>
+        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('in')">Submit</button>
+        <div id="in_result_message" class="input-result-message"></div>
       </div>
-      <div class="form-group">
-        <label>Lokasi Tujuan *</label>
-        <select id="move_location" class="select">
-          <option value="">-- Pilih Lokasi Tujuan --</option>
-          <option value="Lantai 2">🏢 Lantai 2</option>
-          <option value="Bang Toni">👨‍💼 Bang Toni</option>
-          <option value="Om Bob">👨‍💼 Om Bob</option>
-          <option value="Rekanan">🤝 Rekanan</option>
-          <option value="LN">🏭 LN</option>
-          <option value="ECBS">🏭 ECBS</option>
-          <option value="LN Office">🏢 LN Office</option>
-          <option value="Lantai 1">🏢 Lantai 1</option>
-          <option value="Unknow">❓ Unknown</option>
-        </select>
+      <!-- Input Move -->
+      <div id="inputTab_move" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: none; flex-direction: column; justify-content: flex-start;">
+        <div class="form-group">
+        <div class="form-group">
+          <label class="input-form-label">Lokasi Tujuan</label>
+          <select id="move_location" class="select">
+            <option value="">-- Pilih Lokasi Tujuan --</option>
+            <option value="Lantai 2">🏢 Lantai 2</option>
+            <option value="Bang Toni">👨‍💼 Bang Toni</option>
+            <option value="Om Bob">👨‍💼 Om Bob</option>
+            <option value="Rekanan">🤝 Rekanan</option>
+            <option value="LN">🏭 LN</option>
+            <option value="ECCT">🏭 ECCT</option>
+            <option value="LN Office">🏢 LN Office</option>
+            <option value="Lantai 1">🏢 Lantai 1</option>
+            <option value="Unknow">❓ Unknown</option>
+          </select>
+        </div>
+          <label class="input-form-label">Serial Number</label>
+          <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
+        </div>
+        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('move')">Submit</button>
+        <div id="move_result_message" class="input-result-message"></div>
       </div>
-      <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('move')">Submit Move</button>
-    </div>
-    <!-- Input Out -->
-    <div style="flex:1; min-width: 220px; padding-left:16px; display: flex; flex-direction: column; justify-content: flex-start;">
-      <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">Out</h4>
-      <div class="form-group">
-        <label>Serial Number *</label>
-        <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
-        <small style="color: #666; font-size: 12px;">Serial number harus sudah ada di database</small>
+      <!-- Input Out -->
+      <div id="inputTab_out" class="input-tab-content" style="flex:1; min-width: 220px; padding-left:16px; display: none; flex-direction: column; justify-content: flex-start;">
+        <div class="form-group">
+          <label class="input-form-label">Serial Number</label>
+          <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
+        </div>
+        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('out')">Submit</button>
+        <div id="out_result_message" class="input-result-message"></div>
       </div>
-      <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('out')">Submit Out</button>
     </div>
   </div>
 </div>
@@ -248,11 +315,16 @@ function renderToolbar() {
     toolbar += '</div>';
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcct(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
-    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
-    toolbar += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>';
-    toolbar += '<span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>';
-    toolbar += '<button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal(\'modal_input_all\')">Input</button>';
-    toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataAllItem(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
+    toolbar += `
+    <button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal('modal_input_all')" id="input_btn" type="button">Input</button>  
+    <div class="input-group input-sm" style="float: right; display: flex; align-items: center; gap: 5px;">
+        <input class="input input-sm" placeholder="Search" type="text" id="key_activity" style="" onkeyup="if(event.key === 'Enter'){showDataAllItem();}" />
+        <span class="btn btn-light btn-sm" onclick="openModal('modal_filter_item')">Filter</span>
+        <span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>
+        
+        <a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataAllItem('export');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
+      </div>
+    `;
   }
   document.getElementById('toolbar_right').innerHTML = toolbar;
 }
@@ -327,7 +399,7 @@ function showDataEcct(page = 1) {
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
 
   var val = "?";
-  // Hapus fields filter dan search ECCT
+  // Hapus fields filter dan search ECCT yang tidak digunakan
   // const fields = ["key_ecct", "dvc_name_ecct", "dvc_code_ecct", "data_view_ecct"];
   // fields.forEach(field => {
   //   var element = document.getElementById(field);
@@ -357,7 +429,7 @@ function showDataAllItem(page = 1) {
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
 
   var val = "?";
-  const fields = ["key_item", "dvc_size", "dvc_col", "dvc_qc", "date_from", "date_to", "loc_move", "sort_by", "data_view_item"];
+  const fields = ["key_activity", "dvc_size", "dvc_col", "dvc_qc", "date_from", "date_to", "loc_move", "sort_by", "data_view_item"];
 
   fields.forEach(field => {
     var element = document.getElementById(field);
@@ -366,7 +438,7 @@ function showDataAllItem(page = 1) {
     }
   });
 
-  val += "&context=inv_ecct";
+  val += "&context=inv_ecct"; // Pertahankan konteks inv_ecct
 
   if (page === 'export') {
     var link = "<?php echo $config['url_menu']; ?>data/data_item_export" + val;
@@ -395,11 +467,54 @@ function loadData(link) {
   }
 }
 
+// Fungsi untuk menangani pagination berdasarkan table yang aktif
+function handlePagination(page) {
+  if (currentTable === 'allitem') {
+    showDataAllItem(page);
+  } else if (currentTable === 'ecct') {
+    showDataEcct(page);
+  }
+}
+
+// Fungsi untuk mendapatkan fungsi table yang aktif
+function getCurrentTableFunction() {
+  if (currentTable === 'allitem') {
+    return 'showDataAllItem';
+  } else if (currentTable === 'ecct') {
+    return 'showDataEcct';
+  }
+  return 'showDataAllItem'; // Default
+}
+
+function showInputTab(tab) {
+  // Hide all tab contents
+  document.querySelectorAll('.input-tab-content').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  // Remove active from all tab buttons
+  document.querySelectorAll('.input-tab-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  // Show selected tab content
+  document.getElementById('inputTab_' + tab).style.display = 'flex';
+  // Set active tab button
+  document.getElementById('tabBtn_' + tab).classList.add('active');
+}
+
+// Set default tab to 'in' on modal open
+if (typeof window.inputTabDefaultSet === 'undefined') {
+  window.inputTabDefaultSet = true;
+  document.addEventListener('DOMContentLoaded', function() {
+    showInputTab('in');
+  });
+}
+
 function submitInput(type) {
   let data = {};
   let url = "<?php echo $config['url_menu']; ?>input_process";
-
+  let resultDiv = null;
   let serialNumber = '';
+
   if (type === 'in') {
     serialNumber = document.getElementById('in_serial_number').value.trim();
     data = {
@@ -407,12 +522,14 @@ function submitInput(type) {
       serial_number: serialNumber,
       qc_status: document.getElementById('in_qc_status').value
     };
+    resultDiv = document.getElementById('in_result_message');
   } else if (type === 'out') {
     serialNumber = document.getElementById('out_serial_number').value.trim();
     data = {
       type: 'out',
       serial_number: serialNumber
     };
+    resultDiv = document.getElementById('out_result_message');
   } else if (type === 'move') {
     serialNumber = document.getElementById('move_serial_number').value.trim();
     data = {
@@ -420,21 +537,46 @@ function submitInput(type) {
       serial_number: serialNumber,
       location: document.getElementById('move_location').value
     };
+    resultDiv = document.getElementById('move_result_message');
+  }
+
+  if (resultDiv) {
+    resultDiv.style.display = 'none';
+    resultDiv.innerText = '';
   }
 
   if (!serialNumber) {
-    alert('⚠️ Serial number harus diisi!');
+    if (resultDiv) {
+      resultDiv.innerText = 'Serial number harus diisi!';
+      resultDiv.className = 'input-result-message error';
+      resultDiv.style.display = 'block';
+    }
     return;
   }
 
+  // Validasi khusus ECCT: Serial number harus mengandung 'T' di posisi ke-6
   if (serialNumber.length < 6 || serialNumber.charAt(5).toUpperCase() !== 'T') {
-    alert('masukan ecct!');
+    if (resultDiv) {
+      resultDiv.innerText = 'Masukan ECCT!';
+      resultDiv.className = 'input-result-message error';
+      resultDiv.style.display = 'block';
+    }
     return;
   }
 
   if (type === 'move' && !data.location) {
-    alert('⚠️ Lokasi harus dipilih!');
+    if (resultDiv) {
+      resultDiv.innerText = 'Lokasi harus dipilih!';
+      resultDiv.className = 'input-result-message error';
+      resultDiv.style.display = 'block';
+    }
     return;
+  }
+
+  if (resultDiv) {
+    resultDiv.innerText = 'Memproses...';
+    resultDiv.className = 'input-result-message';
+    resultDiv.style.display = 'block';
   }
 
   fetch(url, {
@@ -444,25 +586,43 @@ function submitInput(type) {
   })
   .then(response => response.json())
   .then(result => {
-    alert(result.message);
-    if (result.success) {
-      closeModal('modal_input_all');
-      // Refresh tabel yang aktif setelah input berhasil
-      if (currentTable === 'allitem') {
-        showDataAllItem();
-      } else if (currentTable === 'ecct') {
-        showDataEcct();
+    if (resultDiv) {
+      resultDiv.innerText = result.message;
+      if (result.success) {
+        resultDiv.className = 'input-result-message success';
+        if (type === 'in') document.getElementById('in_serial_number').value = '';
+        if (type === 'out') document.getElementById('out_serial_number').value = '';
+        if (type === 'move') document.getElementById('move_serial_number').value = '';
+      } else {
+        resultDiv.className = 'input-result-message error';
+      }
+      resultDiv.style.display = 'block';
+    } else {
+      if (result.success) {
+        closeModal('modal_input_all');
+        if (currentTable === 'allitem') {
+          showDataAllItem();
+        } else if (currentTable === 'ecct') {
+          showDataEcct();
+        }
+      } else {
+        alert(result.message);
       }
     }
   })
   .catch(error => {
-        alert('❌ Error: ' + error.message);
+    if (resultDiv) {
+      resultDiv.innerText = '❌ Error: ' + error.message;
+      resultDiv.className = 'input-result-message error';
+      resultDiv.style.display = 'block';
+    } else {
+      alert('❌ Error: ' + error.message);
+    }
   });
 }
 
 window.onload = function() {
   renderToolbar();
-  showDataEcct();
+  showDataEcct(); // Default ke tabel ECCT saat halaman dimuat
 }
-
 </script>

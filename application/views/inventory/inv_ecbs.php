@@ -66,6 +66,46 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+.input-tab-btn {
+  background: #fff;
+  color: #0074d9;
+  border: 1px solid #0074d9;
+  border-radius: 4px 4px 0 0;
+  padding: 6px 18px;
+  margin-right: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s;
+}
+.input-tab-btn.active {
+  background: #0074d9;
+  color: #fff;
+}
+.input-form-label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  display: block;
+}
+.input-result-message {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  display: none;
+}
+.input-result-message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.input-result-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
 </style>
 
 <!-- Container -->
@@ -183,64 +223,69 @@
   </div>
 </div>
 
-<!-- Modal Input Gabungan In/Move/Out -->
-<div id="modal_input_all" class="modal-container" style="min-width:900px;">
+<!-- Modal Input Gabungan In/Move/Out dengan Tab -->
+<div id="modal_input_all" class="modal-container" style="min-width:500px;">
   <div class="modal-header">
     <h3 class="modal-title">Input Inventory</h3>
     <button class="btn-close" onclick="closeModal('modal_input_all')">&times;</button>
   </div>
-  <div class="modal-body" style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
-    <!-- Input In -->
-    <div style="flex:1; min-width: 220px; border-right:1px solid #eee; padding-right:16px; display: flex; flex-direction: column; justify-content: flex-start;">
-      <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">In</h4>
-      <div class="form-group">
-        <label>Serial Number *</label>
-        <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
-        <small style="color: #666; font-size: 12px;">Masukan serial number sesuai ketentuan</small>
-      </div>
-      <div class="form-group">
-        <label>QC Status *</label>
-        <select id="in_qc_status" class="select">
-          <option value="0">LN</option>
-          <option value="1">DN</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('in')">Submit In</button>
+  <div class="modal-body" style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Tab Buttons -->
+    <div id="inputTabButtons" style="margin-bottom: 18px;">
+      <button type="button" class="input-tab-btn active" onclick="showInputTab('in')" id="tabBtn_in">in</button>
+      <button type="button" class="input-tab-btn" onclick="showInputTab('move')" id="tabBtn_move">move</button>
+      <button type="button" class="input-tab-btn" onclick="showInputTab('out')" id="tabBtn_out">out</button>
     </div>
-    <!-- Input Move -->
-    <div style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: flex; flex-direction: column; justify-content: flex-start;">
-      <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">Move</h4>
-      <div class="form-group">
-        <label>Serial Number *</label>
-        <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
-        <small style="color: #666; font-size: 12px;">Serial number harus sudah ada di database</small>
+    <div style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
+      <!-- Input In -->
+      <div id="inputTab_in" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: flex; flex-direction: column; justify-content: flex-start;">
+        <div class="form-group">
+          <label class="input-form-label">QC Status</label>
+          <select id="in_qc_status" class="select">
+            <option value="0">LN</option>
+            <option value="1">DN</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="input-form-label">Serial Number</label>
+          <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
+        </div>
+        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('in')">Submit</button>
+        <div id="in_result_message" class="input-result-message"></div>
       </div>
-      <div class="form-group">
-        <label>Lokasi Tujuan *</label>
-        <select id="move_location" class="select">
-          <option value="">-- Pilih Lokasi Tujuan --</option>
-          <option value="Lantai 2">🏢 Lantai 2</option>
-          <option value="Bang Toni">👨‍💼 Bang Toni</option>
-          <option value="Om Bob">👨‍💼 Om Bob</option>
-          <option value="Rekanan">🤝 Rekanan</option>
-          <option value="LN">🏭 LN</option>
-          <option value="ECBS">🏭 ECBS</option>
-          <option value="LN Office">🏢 LN Office</option>
-          <option value="Lantai 1">🏢 Lantai 1</option>
-          <option value="Unknow">❓ Unknown</option>
-        </select>
+      <!-- Input Move -->
+      <div id="inputTab_move" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: none; flex-direction: column; justify-content: flex-start;">
+        <div class="form-group">
+        <div class="form-group">
+          <label class="input-form-label">Lokasi Tujuan</label>
+          <select id="move_location" class="select">
+            <option value="">-- Pilih Lokasi Tujuan --</option>
+            <option value="Lantai 2">🏢 Lantai 2</option>
+            <option value="Bang Toni">👨‍💼 Bang Toni</option>
+            <option value="Om Bob">👨‍💼 Om Bob</option>
+            <option value="Rekanan">🤝 Rekanan</option>
+            <option value="LN">🏭 LN</option>
+            <option value="ECBS">🏭 ECBS</option>
+            <option value="LN Office">🏢 LN Office</option>
+            <option value="Lantai 1">🏢 Lantai 1</option>
+            <option value="Unknow">❓ Unknown</option>
+          </select>
+        </div>
+          <label class="input-form-label">Serial Number</label>
+          <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
+        </div>
+        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('move')">Submit</button>
+        <div id="move_result_message" class="input-result-message"></div>
       </div>
-      <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('move')">Submit Move</button>
-    </div>
-    <!-- Input Out -->
-    <div style="flex:1; min-width: 220px; padding-left:16px; display: flex; flex-direction: column; justify-content: flex-start;">
-      <h4 style="font-size:15px; font-weight:600; margin-bottom:10px;">Out</h4>
-      <div class="form-group">
-        <label>Serial Number *</label>
-        <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
-        <small style="color: #666; font-size: 12px;">Serial number harus sudah ada di database</small>
+      <!-- Input Out -->
+      <div id="inputTab_out" class="input-tab-content" style="flex:1; min-width: 220px; padding-left:16px; display: none; flex-direction: column; justify-content: flex-start;">
+        <div class="form-group">
+          <label class="input-form-label">Serial Number</label>
+          <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" />
+        </div>
+        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('out')">Submit</button>
+        <div id="out_result_message" class="input-result-message"></div>
       </div>
-      <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('out')">Submit Out</button>
     </div>
   </div>
 </div>
@@ -451,11 +496,16 @@ function getCurrentTableFunction() {
   return 'showDataActivity';
 }
 
+// Tambahkan div notifikasi untuk out dan move
+document.getElementById('inputTab_move').innerHTML += '<div id="move_result_message" class="input-result-message"></div>';
+document.getElementById('inputTab_out').innerHTML += '<div id="out_result_message" class="input-result-message"></div>';
+
 function submitInput(type) {
   let data = {};
   let url = "<?php echo $config['url_menu']; ?>input_process";
-
+  let resultDiv = null;
   let serialNumber = '';
+
   if (type === 'in') {
     serialNumber = document.getElementById('in_serial_number').value.trim();
     data = {
@@ -463,12 +513,14 @@ function submitInput(type) {
       serial_number: serialNumber,
       qc_status: document.getElementById('in_qc_status').value
     };
+    resultDiv = document.getElementById('in_result_message');
   } else if (type === 'out') {
     serialNumber = document.getElementById('out_serial_number').value.trim();
     data = {
       type: 'out',
       serial_number: serialNumber
     };
+    resultDiv = document.getElementById('out_result_message');
   } else if (type === 'move') {
     serialNumber = document.getElementById('move_serial_number').value.trim();
     data = {
@@ -476,22 +528,27 @@ function submitInput(type) {
       serial_number: serialNumber,
       location: document.getElementById('move_location').value
     };
+    resultDiv = document.getElementById('move_result_message');
+  }
+
+  if (resultDiv) {
+    resultDiv.style.display = 'none';
+    resultDiv.innerText = '';
   }
 
   if (!serialNumber) {
-    alert('⚠️ Serial number harus diisi!');
+    if (resultDiv) {
+      resultDiv.innerText = 'Serial number tidak boleh kosong!';
+      resultDiv.className = 'input-result-message error';
+      resultDiv.style.display = 'block';
+    }
     return;
   }
 
-  // Validasi karakter ke-6 harus 'S'
-  if (serialNumber.length < 6 || serialNumber.charAt(5).toUpperCase() !== 'S') {
-    alert('masukan ecbs!');
-    return;
-  }
-
-  if (type === 'move' && !data.location) {
-    alert('⚠️ Lokasi harus dipilih!');
-    return;
+  if (resultDiv) {
+    resultDiv.innerText = 'Memproses...';
+    resultDiv.className = 'input-result-message';
+    resultDiv.style.display = 'block';
   }
 
   fetch(url, {
@@ -501,19 +558,38 @@ function submitInput(type) {
   })
   .then(response => response.json())
   .then(result => {
-    alert(result.message);
-    if (result.success) {
-      closeModal('modal_input_all');
-      // Refresh tabel yang aktif setelah input berhasil
-      if (currentTable === 'activity') {
-        showDataActivity();
-      } else if (currentTable === 'ecbs') {
-        showDataEcbs();
+    if (resultDiv) {
+      resultDiv.innerText = result.message;
+      if (result.success) {
+        resultDiv.className = 'input-result-message success';
+        if (type === 'in') document.getElementById('in_serial_number').value = '';
+        if (type === 'out') document.getElementById('out_serial_number').value = '';
+        if (type === 'move') document.getElementById('move_serial_number').value = '';
+      } else {
+        resultDiv.className = 'input-result-message error';
+      }
+      resultDiv.style.display = 'block';
+    } else {
+      if (result.success) {
+        closeModal('modal_input_all');
+        if (currentTable === 'activity') {
+          showDataActivity();
+        } else if (currentTable === 'ecbs') {
+          showDataEcbs();
+        }
+      } else {
+        alert(result.message);
       }
     }
   })
   .catch(error => {
-        alert('❌ Error: ' + error.message);
+    if (resultDiv) {
+      resultDiv.innerText = '❌ Error: ' + error.message;
+      resultDiv.className = 'input-result-message error';
+      resultDiv.style.display = 'block';
+    } else {
+      alert('❌ Error: ' + error.message);
+    }
   });
 }
 
@@ -521,5 +597,27 @@ function submitInput(type) {
 window.onload = function() {
   renderToolbar();
   showDataEcbs(); // Default ke tabel ECBS saat halaman dimuat
+}
+
+function showInputTab(tab) {
+  // Hide all tab contents
+  document.querySelectorAll('.input-tab-content').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  // Remove active from all tab buttons
+  document.querySelectorAll('.input-tab-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  // Show selected tab content
+  document.getElementById('inputTab_' + tab).style.display = 'flex';
+  // Set active tab button
+  document.getElementById('tabBtn_' + tab).classList.add('active');
+}
+// Set default tab to 'in' on modal open
+if (typeof window.inputTabDefaultSet === 'undefined') {
+  window.inputTabDefaultSet = true;
+  document.addEventListener('DOMContentLoaded', function() {
+    showInputTab('in');
+  });
 }
 </script>

@@ -21,9 +21,9 @@
                  $breadcrumb_link = $config['base_url'] . 'inventory/inv_ecct';
                } elseif ($config['hal_sub'] == 'inv_ecbs') {
                  $breadcrumb_last = 'ECBS';
-                 $breadcrumb_link = $config['base_url'] . 'inventory/inv';
+                 $breadcrumb_link = $config['base_url'] . 'inventory/inv_ecbs';
                } elseif ($config['hal_sub'] == 'massive_input') {
-                $breadcrumb_last = 'MassiveInput';
+                $breadcrumb_last = 'Massive Input';
                 $breadcrumb_link = $config['base_url'] . 'inventory/massive_input';
                }
              }
