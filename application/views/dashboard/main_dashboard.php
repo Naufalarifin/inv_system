@@ -294,9 +294,9 @@
                         <span class="dropdown-arrow">▼</span>
                     </button>
                     <div class="card-dropdown">
-                        <div class="dropdown-item">
+                        <!-- <div class="dropdown-item">
                             <a href="<?php echo $config['base_url']; ?>inventory/all_item" class="dropdown-link">All Items</a>
-                        </div>
+                        </div> -->
                         <div class="dropdown-item">
                             <a href="<?php echo $config['base_url']; ?>inventory/inv_ecct" class="dropdown-link">ECCT</a>
                         </div>

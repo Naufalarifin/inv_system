@@ -18,13 +18,24 @@
   $menu1_link = array("inventory", "report");
   $menu1_icon = array("ki-cube-2", "ki-book");
 
-  $menu2_name[0] = array("All Item", "ECCT", "ECBS", "Massive Input");
-  $menu2_link[0] = array("inventory/all_item", "inventory/inv_ecct", "inventory/inv_ecbs", "inventory/massive_input");
-  $menu2_icon[0] = array("ki-technology-2", "ki-technology-1", "ki-technology-3", "ki-upload");
+  $menu2_name[0] = array("ECCT", "ECBS", "Massive Input");
+  $menu2_link[0] = array("inventory/inv_ecct", "inventory/inv_ecbs", "inventory/massive_input");
+  $menu2_icon[0] = array("ki-technology-1", "ki-technology-3", "ki-technology-4");
 
   $menu2_name[1] = array("Rekap", "Statistik");
   $menu2_link[1] = array("laporan/rekap", "laporan/statistik");
-  $menu2_icon[1] = array("ki-chart-bar", "ki-chart-pie"); 
+  $menu2_icon[1] = array("ki-chart-bar", "ki-chart-pie");
+  // $menu1_name = array("Inventory", "Report");
+  // $menu1_link = array("inventory", "report");
+  // $menu1_icon = array("ki-cube-2", "ki-book");
+
+  // $menu2_name[0] = array("All Item", "ECCT", "ECBS", "Massive Input");
+  // $menu2_link[0] = array("inventory/all_item", "inventory/inv_ecct", "inventory/inv_ecbs", "inventory/massive_input");
+  // $menu2_icon[0] = array("ki-technology-2", "ki-technology-1", "ki-technology-3", "ki-upload");
+
+  // $menu2_name[1] = array("Rekap", "Statistik");
+  // $menu2_link[1] = array("laporan/rekap", "laporan/statistik");
+  // $menu2_icon[1] = array("ki-chart-bar", "ki-chart-pie"); 
   
 ?>
 
