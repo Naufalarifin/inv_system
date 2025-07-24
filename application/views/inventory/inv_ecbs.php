@@ -112,7 +112,7 @@
 <div class="container-fixed">
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
-      <div class="flex items-center gap-2">
+      <div id="toolbar_left" class="flex items-center gap-2">
 
       </div>
       <div id="toolbar_right" class="flex items-center gap-2"></div>
@@ -304,26 +304,32 @@ function switchTable(type) {
 }
 
 function renderToolbar() {
-  var toolbar = '';
+  var toolbarLeft = '';
+  var toolbarRight = '';
+  
   if (currentTable === 'ecbs') {
-    toolbar += '<div class="btn-group mr-2">';
-    toolbar += '<button id="btn_app" class="btn btn-sm ' + (currentEcbsType === 'app' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'app\')">APP</button>';
-    toolbar += '<button id="btn_osc" class="btn btn-sm ' + (currentEcbsType === 'osc' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'osc\')">OSC</button>';
-    toolbar += '</div>';
-    toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcbs(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
+    // Untuk ECBS, semua tetap di kanan
+    toolbarRight += '<div class="btn-group mr-2">';
+    toolbarRight += '<button id="btn_app" class="btn btn-sm ' + (currentEcbsType === 'app' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'app\')">APP</button>';
+    toolbarRight += '<button id="btn_osc" class="btn btn-sm ' + (currentEcbsType === 'osc' ? 'btn-primary' : 'btn-light') + '" onclick="switchEcbsType(\'osc\')">OSC</button>';
+    toolbarRight += '</div>';
+    toolbarRight += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcbs(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
-    toolbar += `
-    <button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal('modal_input_all')" id="input_btn" type="button">Input</button>  
-    <div class="input-group input-sm">
-    <input class="input input-sm" placeholder="Search" type="text" id="key_item" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />
-    <span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>
-    <span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>
-    </div>
-    <a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataActivity('export');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
-
-    `;
+    // Untuk activity, tombol Input di kiri
+    toolbarLeft += '<button class="btn btn-sm" style="background: #28a745; color: white;" onclick="openModal(\'modal_input_all\')" id="input_btn" type="button">Input</button>';
+    
+    // Search, Filter, dan Export di kanan
+    toolbarRight += '<div class="input-group input-sm">';
+    toolbarRight += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" onkeyup="if(event.key === \'Enter\'){showDataActivity();}" />';
+    toolbarRight += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>';
+    toolbarRight += '<span class="btn btn-primary btn-sm" onclick="showDataActivity();">Search</span>';
+    toolbarRight += '</div>';
+    toolbarRight += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataActivity(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   }
-  document.getElementById('toolbar_right').innerHTML = toolbar;
+  
+  // Update kedua div
+  document.getElementById('toolbar_left').innerHTML = toolbarLeft;
+  document.getElementById('toolbar_right').innerHTML = toolbarRight;
 }
 
 function switchEcbsType(type) {
