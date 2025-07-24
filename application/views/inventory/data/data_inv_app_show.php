@@ -38,37 +38,27 @@ foreach ($model_data as $item) {
 // Cek apakah data ECBS (ada field warna)
 $is_ecbs = isset($model_data[0]['warna']);
 
-// Daftar warna untuk 7 baris VOH (khusus ECBS)
-$voh_colors = array(
-    array('name' => 'Navy', 'hex' => '#001f5b'),
-    array('name' => 'Maroon', 'hex' => '#800000'),
-    array('name' => 'Army', 'hex' => '#4b5320'),
-    array('name' => 'Black', 'hex' => '#000000'),
-    array('name' => 'Grey', 'hex' => '#808080'),
-    array('name' => 'Blue Navy', 'hex' => '#000080'),
-    array('name' => 'Custom', 'hex' => '#ffffff'),
-);
 ?>
 <div class="card-table">
     <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 font-medium text-sm">
+        <table class="table table-border align-middle text-gray-700  text-s compact-table">
             <thead>
                 <tr>
-                    <th align="center" width="40">No</th>
-                    <th align="center" width="60">Nama Barang</th>
-                    <th align="center" width="100">Kode</th>
-                    <?php if($is_ecbs): ?><th align="center" width="60">Warna</th><?php endif; ?>
-                    <th align="center" width="60">XS</th>
-                    <th align="center" width="60">S</th>
-                    <th align="center" width="60">M</th>
-                    <th align="center" width="60">L</th>
-                    <th align="center" width="60">XL</th>
-                    <th align="center" width="60">XXL</th>
-                    <th align="center" width="60">3XL</th>
-                    <th align="center" width="60">ALL</th>
-                    <th align="center" width="60">CUS</th>
-                    <th align="center" width="80">Subtotal*</th>
-                    <th align="center" width="60">%</th>
+                    <th align="center" >No</th>
+                    <th align="center" >Nama Barang</th>
+                    <th align="center" >Kode</th>
+                    <?php if($is_ecbs): ?><th align="center" >Warna</th><?php endif; ?>
+                    <th align="center" >XS</th>
+                    <th align="center" >S</th>
+                    <th align="center" >M</th>
+                    <th align="center" >L</th>
+                    <th align="center" >XL</th>
+                    <th align="center" >XXL</th>
+                    <th align="center" >3XL</th>
+                    <th align="center" >ALL</th>
+                    <th align="center" >CUS</th>
+                    <th align="center" >Subtotal*</th>
+                    <th align="center" >%</th>
                 </tr>
             </thead>
             <tbody>
@@ -235,13 +225,17 @@ $voh_colors = array(
         </div>
     </div>
 </div>
+
 <style>
-.table.table-border.text-xs td, .table.table-border.text-xs th {
+.compact-table {
+    font-size: 12px !important;
+}
+.compact-table th,
+.compact-table td {
+    padding: 5px 7px !important;
+    line-height: 1.8 !important;
+}
+.compact-table th {
     font-size: 10px !important;
-    padding: 4px 6px !important;
 }
-.table.table-border tfoot tr td {
-    font-size: 12px !important; 
-    padding: 6px 8px !important;
-}
-</style> 
+</style>

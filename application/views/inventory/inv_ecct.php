@@ -54,10 +54,7 @@
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <div class="btn-group ml-2">
-          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stcok</button>
-          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Activity</button>
-        </div>
+        
       </div>
       <div id="toolbar_right" class="flex items-center gap-2"> </div>
     </div>
@@ -179,8 +176,8 @@
       <div class="form-group">
         <label>QC Status *</label>
         <select id="in_qc_status" class="select">
-          <option value="0">LN</option>
-          <option value="1">DN</option>
+          <option value="DN">DN</option>
+          <option value="LN">LN</option>
         </select>
       </div>
       <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 13px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('in')">Submit In</button>
@@ -248,10 +245,13 @@ function renderToolbar() {
     toolbar += '</div>';
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcct(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
-    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" style="margin-right:4px;" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
+    // Updated toolbar layout to match all_item.php
+    toolbar += '<div class="input-group input-sm">';
+    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
     toolbar += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>';
     toolbar += '<span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>';
-    toolbar += '<button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal(\'modal_input_all\')">Input</button>';
+    toolbar += '</div>';
+    toolbar += '<button class="btn btn-sm" style="background: #28a745; color: white; margin-left: 5px;" onclick="openModal(\'modal_input_all\')">Input</button>';
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataAllItem(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   }
   document.getElementById('toolbar_right').innerHTML = toolbar;

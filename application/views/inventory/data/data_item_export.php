@@ -6,7 +6,6 @@ header('Content-Disposition: attachment; filename="inventory_items_' . date('Y-m
     <thead>
         <tr>
             <th>No</th>
-            <th>Action ID</th>
             <th>Device Name</th>
             <th>Device Code</th>
             <th>Size</th>
@@ -33,17 +32,12 @@ header('Content-Disposition: attachment; filename="inventory_items_' . date('Y-m
         ?>
         <tr>
             <td><?php echo $no; ?></td>
-            <td><?php echo $row['id_act']; ?></td>
             <td><?php echo !empty($row['dvc_name']) ? $row['dvc_name'] : 'Unknown Device'; ?></td>
             <td><?php echo !empty($row['dvc_code']) ? $row['dvc_code'] : '-'; ?></td>
             <td><?php echo $row['dvc_size']; ?></td>
             <td><?php echo $row['dvc_col']; ?></td>
             <td><?php echo $row['dvc_sn']; ?></td>
-            <td><?php 
-                if ($row['dvc_qc'] == '1') echo 'Pass';
-                elseif ($row['dvc_qc'] == '2') echo 'Fail';
-                else echo 'Pending';
-            ?></td>
+            <td><?php echo $row['dvc_qc'];?></td>
             <td><?php echo $row['inv_in'] ? date("d/m/Y H:i", strtotime($row['inv_in'])) : '-'; ?></td>
             <td><?php echo $row['inv_move'] ? date("d/m/Y H:i", strtotime($row['inv_move'])) : '-'; ?></td>
             <td><?php echo $row['inv_out'] ? date("d/m/Y H:i", strtotime($row['inv_out'])) : '-'; ?></td>

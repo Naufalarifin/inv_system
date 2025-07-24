@@ -73,10 +73,7 @@
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <div class="btn-group ml-2">
-          <button id="btn_ecbs" class="btn btn-sm btn-primary" onclick="switchTable('ecbs')">Stock</button>
-          <button id="btn_activity" class="btn btn-sm btn-light" onclick="switchTable('activity')">Activity</button>
-        </div>
+
       </div>
       <div id="toolbar_right" class="flex items-center gap-2"></div>
     </div>
@@ -272,13 +269,13 @@ function renderToolbar() {
   } else {
     toolbar += `
     <button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal('modal_input_all')" id="input_btn" type="button">Input</button>  
-    <div class="input-group input-sm" style="float: right; display: flex; align-items: center; gap: 5px;">
-        <input class="input input-sm" placeholder="Search" type="text" id="key_activity" style="" onkeyup="if(event.key === 'Enter'){showDataActivity();}" />
-        <span class="btn btn-light btn-sm" onclick="openModal('modal_filter_item')">Filter</span>
-        <span class="btn btn-primary btn-sm" onclick="showDataActivity();">Search</span>
-        
-        <a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataActivity('export');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
-      </div>
+    <div class="input-group input-sm">
+    <input class="input input-sm" placeholder="Search" type="text" id="key_item" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />
+    <span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>
+    <span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>
+    </div>
+    <a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataActivity('export');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
+
     `;
   }
   document.getElementById('toolbar_right').innerHTML = toolbar;
