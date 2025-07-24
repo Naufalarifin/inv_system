@@ -41,7 +41,7 @@ $is_ecbs = isset($model_data[0]['warna']);
 ?>
 <div class="card-table">
     <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 font-medium text-sm">
+        <table class="table table-border align-middle text-gray-700  text-s compact-table">
             <thead>
                 <tr>
                     <th align="center" >No</th>
@@ -221,13 +221,17 @@ $is_ecbs = isset($model_data[0]['warna']);
         </div>
     </div>
 </div>
+
 <style>
-.table.table-border.text-xs td, .table.table-border.text-xs th {
+.compact-table {
+    font-size: 12px !important;
+}
+.compact-table th,
+.compact-table td {
+    padding: 5px 7px !important;
+    line-height: 1.8 !important;
+}
+.compact-table th {
     font-size: 10px !important;
-    padding: 4px 6px !important;
 }
-.table.table-border tfoot tr td {
-    font-size: 12px !important; 
-    padding: 6px 8px !important;
-}
-</style> 
+</style>

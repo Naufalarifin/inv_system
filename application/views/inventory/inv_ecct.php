@@ -113,10 +113,6 @@
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <div class="btn-group ml-2">
-          <button id="btn_ecct" class="btn btn-sm btn-primary" onclick="switchTable('ecct')">Stock</button>
-          <button id="btn_allitem" class="btn btn-sm btn-light" onclick="switchTable('allitem')">Activity</button>
-        </div>
       </div>
       <div id="toolbar_right" class="flex items-center gap-2"></div>
     </div>
@@ -229,12 +225,14 @@
     <h3 class="modal-title">Input Inventory</h3>
     <button class="btn-close" onclick="closeModal('modal_input_all')">&times;</button>
   </div>
+
   <div class="modal-body" style="display: flex; flex-direction: column; gap: 24px;">
     <!-- Tab Buttons -->
     <div id="inputTabButtons" style="margin-bottom: 18px;">
       <button type="button" class="input-tab-btn active" onclick="showInputTab('in')" id="tabBtn_in">in</button>
       <button type="button" class="input-tab-btn" onclick="showInputTab('move')" id="tabBtn_move">move</button>
       <button type="button" class="input-tab-btn" onclick="showInputTab('out')" id="tabBtn_out">out</button>
+
     </div>
     <div style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
       <!-- Input In -->
@@ -315,18 +313,15 @@ function renderToolbar() {
     toolbar += '</div>';
     toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataEcct(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   } else {
-    toolbar += `
-    <button class="btn btn-sm" style="background: #28a745; color: white; margin-left:5px;" onclick="openModal('modal_input_all')" id="input_btn" type="button">Input</button>  
-    <div class="input-group input-sm" style="float: right; display: flex; align-items: center; gap: 5px;">
-        <input class="input input-sm" placeholder="Search" type="text" id="key_activity" style="" onkeyup="if(event.key === 'Enter'){showDataAllItem();}" />
-        <span class="btn btn-light btn-sm" onclick="openModal('modal_filter_item')">Filter</span>
-        <span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>
-        
-        <a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataAllItem('export');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
-      </div>
-    `;
-  }
+    toolbar += '<div class="input-group input-sm">';
+    toolbar += '<input class="input input-sm" placeholder="Search" type="text" id="key_item" onkeyup="if(event.key === \'Enter\'){showDataAllItem();}" />';
+    toolbar += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>';
+    toolbar += '<span class="btn btn-primary btn-sm" onclick="showDataAllItem();">Search</span>';
+    toolbar += '</div>';
+    toolbar += '<button class="btn btn-sm" style="background: #28a745; color: white; margin-left: 5px;" onclick="openModal(\'modal_input_all\')">Input</button>';
+    toolbar += '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showDataAllItem(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>';
   document.getElementById('toolbar_right').innerHTML = toolbar;
+  }
 }
 
 function switchEcctType(type) {

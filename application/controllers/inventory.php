@@ -116,11 +116,11 @@ class Inventory extends CI_Controller {
                 break;
             case 'data_item_export':
                 if (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {
-                    $data['data'] = $this->data_model->getAllItemEcctOnly(999999);
+                    $data['data'] = $this->data_model->getAllItemByTech('ecct',999999);
                 } elseif (isset($_GET['context']) && $_GET['context'] === 'inv_ecbs') {
                     $data['data'] = $this->data_model->getAllItemByTech('ecbs', 999999);
                 } else {
-                    $data['data'] = $this->data_model->getAllItemEcctOnly(999999);
+                    $data['data'] = $this->data_model->getAllItemByTech('ecct',999999);
                 }
                 $this->load->view('inventory/data/data_item_export', $data);
                 break;

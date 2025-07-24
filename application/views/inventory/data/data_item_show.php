@@ -1,8 +1,8 @@
 <div class="card-table">
     <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 text-xs">
+        <table class="table table-border align-middle text-gray-700 compact-table">
             <thead>
-                <tr class="text-xs">
+                <tr>
                     <th align="center" width="30">No</th>
                     <th align="center" width="100">Device Info</th>
                     <th align="center" width="70">Size</th>
@@ -32,29 +32,27 @@
                         $displayColor = $showColorColumn && $hasColor;
                 ?>
                 <tr>
-                    <td align="center" class="text-xs"><?php echo $no; ?></td>
-                    <td align="center" class="text-xs">
+                    <td align="center"><?php echo $no; ?></td>
+                    <td align="center">
                         <span data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo htmlspecialchars($row['dvc_name']); ?>">
                             <?php echo $row['dvc_code']; ?>
                         </span>
                     </td>
                     <td align="center">
-                        <div class="text-xs">
-                            <?php if (!empty($row['dvc_size'])) { ?>
-                                <?php if ($row['dvc_size'] == 'small') { ?>
-                                    <span class="badge badge-xs badge-success badge-outline">S</span>
-                                <?php } elseif ($row['dvc_size'] == 'medium') { ?>
-                                    <span class="badge badge-xs badge-warning badge-outline">M</span>
-                                <?php } elseif ($row['dvc_size'] == 'large') { ?>
-                                    <span class="badge badge-xs badge-danger badge-outline">L</span>
-                                <?php } else { ?>
-                                    <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
-                                <?php } ?>
+                        <?php if (!empty($row['dvc_size'])) { ?>
+                            <?php if ($row['dvc_size'] == 'small') { ?>
+                                <span class="badge badge-xs badge-success badge-outline">S</span>
+                            <?php } elseif ($row['dvc_size'] == 'medium') { ?>
+                                <span class="badge badge-xs badge-warning badge-outline">M</span>
+                            <?php } elseif ($row['dvc_size'] == 'large') { ?>
+                                <span class="badge badge-xs badge-danger badge-outline">L</span>
+                            <?php } else { ?>
+                                <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
                             <?php } ?>
-                        </div>
+                        <?php } ?>
                     </td>
                     <?php if ($showColorColumn) { ?>
-                    <td align="left" style="padding: 4px 8px;">
+                    <td align="left" style="padding: 2px 4px;">
                         <?php if ($displayColor && isset($row['warna'])) { ?>
                             <?php
                             $color_map = [
@@ -70,21 +68,21 @@
                             ];
                             $warna = trim($row['warna']);
                             if (strtolower($warna) === 'custom') {
-                                echo '<span style="font-size:12px;">CUSTOM</span>';
+                                echo '<span style="font-size:10px;">CUSTOM</span>';
                             } elseif (!empty($warna) && $warna != '-') {
                                 $warna_css = isset($color_map[$warna]) ? $color_map[$warna] : '#fff';
-                                echo '<div style="display:flex;align-items:center;gap:6px;">';
-                                echo '<span style="display:inline-block;width:18px;height:18px;background:'.$warna_css.';border-radius:3px;border:1px solid #ccc;flex-shrink:0;"></span>';
-                                echo '<span class="text-xs" style="white-space:nowrap;">'.htmlspecialchars($row['warna']).'</span>';
+                                echo '<div style="display:flex;align-items:center;gap:4px;">';
+                                echo '<span style="display:inline-block;width:14px;height:14px;background:'.$warna_css.';border-radius:2px;border:1px solid #ccc;flex-shrink:0;"></span>';
+                                echo '<span style="font-size:10px;white-space:nowrap;">'.htmlspecialchars($row['warna']).'</span>';
                                 echo '</div>';
                             }
                             ?>
                         <?php } ?>
                     </td>
                     <?php } ?>
-                    <td align="center" class="text-xs"><?php echo $row['dvc_sn']; ?></td>
+                    <td align="center"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
-                        <?php if ($row['dvc_qc'] == '0') { ?>
+                        <?php if ($row['dvc_qc'] == 'LN') { ?>
                             <span class="badge badge-xs badge-success badge-outline">LN</span>
                         <?php } ?>
                     </td>
@@ -115,10 +113,24 @@
                 } else {
                 ?>
                 <tr>
-                    <td align="center" colspan="<?php echo $showColorColumn ? '9' : '8'; ?>" class="text-xs"><i>No Data Found</i></td>
+                    <td align="center" colspan="<?php echo $showColorColumn ? '9' : '8'; ?>"><i>No Data Found</i></td>
                 </tr>
                 <?php } ?>
             </tbody>
         </table>
     </div>
 </div>
+
+<style>
+.compact-table {
+    font-size: 12px !important;
+}
+.compact-table th,
+.compact-table td {
+    padding: 5px 7px !important;
+    line-height: 1.8 !important;
+}
+.compact-table th {
+    font-size: 10px !important;
+}
+</style>
