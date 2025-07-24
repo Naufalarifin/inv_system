@@ -90,14 +90,14 @@ class Data_model extends CI_Model {
         if ($show < 100 && isset($_GET[$show_key]) && $_GET[$show_key] != "") {
             $show = $_GET[$show_key];
         }
-        $sort = "ORDER BY dvc.dvc_name ASC ";
+        $sort = "ORDER BY dvc.dvc_priority ASC ";
         $this->load->model("sql_model");
         $filter = $this->sql_model->getFilterEcctList($show);
         if ($show >= 999999) {
             $filter['first'] = 0;
         }
         $result_data = array();
-        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' AND UPPER(dvc.dvc_type) = 'APP' ";
+        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_priority FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' AND UPPER(dvc.dvc_type) = 'APP' ";
         if ($tech === 'ecct') {
             $sql .= "AND dvc.status = 0 ";
         }
@@ -105,7 +105,7 @@ class Data_model extends CI_Model {
             $sql .= " " . $filter['all'] . " ";
         }
         $sql .= " " . $sort . " ";
-        $count_sql = str_replace("SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code", "SELECT COUNT(*) as total", $sql);
+        $count_sql = str_replace("SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_priority", "SELECT COUNT(*) as total", $sql);
         $count_query = $this->db->query($count_sql);
         $total_records = $count_query ? $count_query->row()->total : 0;
         $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
