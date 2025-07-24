@@ -92,16 +92,16 @@ textarea {
       <div class="input-section">
         <h4>Input In</h4>
         <div class="form-group">
-          <label for="in_serial_numbers">Serial Numbers *</label>
-          <textarea id="in_serial_numbers" placeholder="Enter serial numbers, one per line or separated by tabs"></textarea>
-          <small style="color: #666; font-size: 12px;">Enter multiple serial numbers, separated by new lines or tabs.</small>
-        </div>
-        <div class="form-group">
           <label for="in_qc_status">QC Status *</label>
           <select id="in_qc_status" class="select">
             <option value="0">LN</option>
             <option value="1">DN</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label for="in_serial_numbers">Serial Numbers *</label>
+          <textarea id="in_serial_numbers" placeholder="Enter serial numbers, one per line or separated by tabs"></textarea>
+          <small style="color: #666; font-size: 12px;">Enter multiple serial numbers, separated by new lines or tabs.</small>
         </div>
         <button class="btn btn-primary btn-submit" onclick="submitMassiveInput('in')">
           Submit In <span id="in_loading_spinner" class="loading-spinner" style="display:none;"></span>
@@ -112,11 +112,6 @@ textarea {
       <!-- Input Move Section -->
       <div class="input-section">
         <h4>Input Move</h4>
-        <div class="form-group">
-          <label for="move_serial_numbers">Serial Numbers *</label>
-          <textarea id="move_serial_numbers" placeholder="Enter serial numbers, one per line or separated by tabs"></textarea>
-          <small style="color: #666; font-size: 12px;">Serial numbers must already exist in the database.</small>
-        </div>
         <div class="form-group">
           <label for="move_location">Lokasi Tujuan *</label>
           <select id="move_location" class="select">
@@ -131,6 +126,11 @@ textarea {
             <option value="Lantai 1">🏢 Lantai 1</option>
             <option value="Unknown">❓ Unknown</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label for="move_serial_numbers">Serial Numbers *</label>
+          <textarea id="move_serial_numbers" placeholder="Enter serial numbers, one per line or separated by tabs"></textarea>
+          <small style="color: #666; font-size: 12px;">Serial numbers must already exist in the database.</small>
         </div>
         <button class="btn btn-primary btn-submit" onclick="submitMassiveInput('move')">
           Submit Move <span id="move_loading_spinner" class="loading-spinner" style="display:none;"></span>

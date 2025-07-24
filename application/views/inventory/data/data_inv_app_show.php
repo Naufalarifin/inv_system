@@ -19,8 +19,8 @@ $voh_colors = array(
     array('name' => 'Navy', 'hex' => '#001f5b'),
     array('name' => 'Maroon', 'hex' => '#800000'),
     array('name' => 'Army', 'hex' => '#4b5320'),
-    array('name' => 'Dark Gray', 'hex' => '#A9A9A9'), // hex #A9A9A9 untuk dark gray
-    array('name' => 'Gray', 'hex' => '#808080'),
+    array('name' => 'Dark Gray', 'hex' => '#A9A9A9'),
+    array('name' => 'Grey', 'hex' => '#808080'),
     array('name' => 'Custom', 'hex' => '#ffffff'),
 );
 
@@ -47,7 +47,6 @@ $is_ecbs = isset($model_data[0]['warna']);
                     <th align="center" >No</th>
                     <th align="center" >Nama Barang</th>
                     <th align="center" >Kode</th>
-                    <?php if($is_ecbs): ?><th align="center" >Warna</th><?php endif; ?>
                     <th align="center" >XS</th>
                     <th align="center" >S</th>
                     <th align="center" >M</th>
@@ -100,13 +99,12 @@ $is_ecbs = isset($model_data[0]['warna']);
                         <td align="center" rowspan="<?php echo $voh_count; ?>"><?php echo $row_display_no; ?></td>
                         <td align="left" rowspan="<?php echo $voh_count; ?>">Vest Outer Hoodie Element</td>
                     <?php } ?>
-                    <td align="left"><?php echo htmlspecialchars($row_data['dvc_code']); ?></td>
-                    <td align="left">
-                        <?php echo htmlspecialchars($row_data['warna']); ?><br>
+                    <td style="text-align: left; vertical-align: top; padding-left: 8px;">
+                        <?php echo htmlspecialchars($row_data['dvc_code']); ?>
                         <?php if (strtolower($color_info['name']) === 'custom') { ?>
-                            <span style="font-size:12px;font-weight:bold;">CUSTOM</span>
+                            <span style="font-size:12px;font-weight:bold;margin-left:4px;">CUSTOM</span>
                         <?php } else { ?>
-                            <span style="display:inline-block;width:16px;height:16px;background:<?php echo htmlspecialchars($color_info['hex']); ?>;border-radius:3px;margin-top:4px;vertical-align:middle;border:1px solid #ccc;"></span>
+                            <span style="display:inline-block;width:16px;height:16px;background:<?php echo htmlspecialchars($color_info['hex']); ?>;border-radius:3px;vertical-align:baseline;border:1px solid #ccc;margin-left:4px;margin-right:8px;"></span><span style="vertical-align:baseline;"><?php echo htmlspecialchars($color_info['name']) ?></span>
                         <?php } ?>
                     </td>
                     <?php foreach ($sizes as $sz) { ?>
@@ -139,19 +137,17 @@ $is_ecbs = isset($model_data[0]['warna']);
                             $percentage = $grand_total > 0 ? round(($subtotal / $grand_total) * 100, 1) : 0;
                 ?>
                 <tr>
-                    <td align="center"><?php echo $row_display_no++; ?></td>
-                    <td align="left"><?php echo htmlspecialchars($item['dvc_name']); ?></td>
-                    <td align="left"><?php echo htmlspecialchars($item['dvc_code']); ?></td>
-                    <td align="left"><?php echo htmlspecialchars($item['warna']); ?></td>
+                    <td style="text-align: center; vertical-align: top; padding-left: 8px;"><?php echo $row_display_no++; ?></td>
+                    <td style="text-align: left; vertical-align: top; padding-left: 8px;"><?php echo htmlspecialchars($item['dvc_name']); ?></td>
+                    <td style="text-align: left; vertical-align: top; padding-left: 8px;"><?php echo htmlspecialchars($item['dvc_code']); ?></td>
                     <?php foreach ($sizes as $sz) { ?>
-                        <td align="center">
-                            <?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; 
-                            ?>
+                        <td style="text-align: center; vertical-align: top; padding-left: 8px;">
+                            <?php echo isset($item[$sz]) ? (int)$item[$sz] : 0; ?>
                             <br>
                         </td>
                     <?php } ?>
-                    <td align="center"><strong><?php echo $subtotal; ?></strong></td>
-                    <td align="center"><?php echo $percentage; ?>%</td>
+                    <td style="text-align: center; vertical-align: top; padding-left: 8px;"><strong><?php echo $subtotal; ?></strong></td>
+                    <td style="text-align: center; vertical-align: top; padding-left: 8px;"><?php echo $percentage; ?>%</td>
                 </tr>
                 <?php
                         }
@@ -193,7 +189,7 @@ $is_ecbs = isset($model_data[0]['warna']);
             </tbody>
             <tfoot>
                 <tr style="background-color: #00bfff; color: white; font-weight: bold;">
-                    <td align="center" colspan="<?php echo $is_ecbs ? 4 : 3; ?>">TOTAL</td>
+                    <td align="center" colspan="<?php echo 3; ?>">TOTAL</td>
                     <td align="center"><?php echo $column_totals['size_xs']; ?></td>
                     <td align="center"><?php echo $column_totals['size_s']; ?></td>
                     <td align="center"><?php echo $column_totals['size_m']; ?></td>
@@ -207,7 +203,7 @@ $is_ecbs = isset($model_data[0]['warna']);
                     <td align="center" rowspan="2" style="vertical-align: middle;"><strong>100%</strong></td>
                 </tr>
                 <tr style="background-color: #00bfff; color: white; font-weight: bold;">
-                    <td align="center" colspan="<?php echo $is_ecbs ? 4 : 3; ?>">PERSENTASE</td>
+                    <td align="center" colspan="<?php echo 3; ?>">PERSENTASE</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_xs'] / $grand_total) * 100, 1) : 0; ?>%</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_s'] / $grand_total) * 100, 1) : 0; ?>%</td>
                     <td align="center"><?php echo $grand_total > 0 ? round(($column_totals['size_m'] / $grand_total) * 100, 1) : 0; ?>%</td>

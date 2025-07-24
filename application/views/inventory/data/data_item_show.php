@@ -16,8 +16,8 @@
                     <th align="center" width="80">Serial Number</th>
                     <th align="center" width="60">QC Status</th>
                     <th align="center" width="80">In</th>
-                    <th align="center" width="80">Out</th>
                     <th align="center" width="80">Move</th>
+                    <th align="center" width="80">Out</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,15 +56,12 @@
                         <?php if ($displayColor && isset($row['warna'])) { ?>
                             <?php
                             $color_map = [
-                                'Dark Gray' => '#555555',
-                                'dark grey' => '#555555',
                                 'Black' => '#000000',
-                                'Grey' => '#888888',
-                                'Blue Navy' => '#001f5b',
                                 'Navy' => '#001f5b',
                                 'Army' => '#4b5320',
                                 'Maroon' => '#800000',
-                                'Red Maroon' => '#800000',
+                                'Dark Gray' => '#A9A9A9',
+                                'Grey' => '#808080',
                                 'Custom' => '#ffffff',
                                 'none' => '#fff',
                                 '-' => '#fff'
@@ -97,16 +94,16 @@
                         <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
-                        <?php if ($row['inv_out']) { ?>
-                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_out']); ?>">
-                                <?php echo date("d/m/y H:i", strtotime($row['inv_out'])); ?>
+                        <?php if ($row['inv_move']) { ?>
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_move']); ?>, Lokasi: <?php echo htmlspecialchars($row['loc_move']); ?>">
+                                <?php echo date("d/m/y H:i", strtotime($row['inv_move'])); ?>
                             </span>
                         <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
-                        <?php if ($row['inv_move']) { ?>
-                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_move']); ?>, Lokasi: <?php echo htmlspecialchars($row['loc_move']); ?>">
-                                <?php echo date("d/m/y H:i", strtotime($row['inv_move'])); ?>
+                        <?php if ($row['inv_out']) { ?>
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_out']); ?>">
+                                <?php echo date("d/m/y H:i", strtotime($row['inv_out'])); ?>
                             </span>
                         <?php } else { echo '-'; } ?>
                     </td>
