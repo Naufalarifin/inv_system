@@ -23,7 +23,7 @@
                         $breadcrumb_last = 'ECBS';
                         $breadcrumb_link = $config['base_url'] . 'inventory/inv_ecbs';
                     } elseif ($config['hal_sub'] == 'massive_input') {
-                        $breadcrumb_last = 'MassiveInput';
+                        $breadcrumb_last = 'Massive Input';
                         $breadcrumb_link = $config['base_url'] . 'inventory/massive_input';
                     }
                 }
@@ -87,14 +87,6 @@
             <?php else: ?>
                 <!-- Default Menu (Other pages) -->
                 <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
-                    <div class="menu-item">
-                        <a class="menu-link active" href="<?php echo $config['base_url']; ?>inventory/all_item">
-                            <span class="menu-icon">
-                                <i class="ki-filled ki-shield-search"></i>
-                            </span>
-                            <span class="menu-title">All Activity</span>
-                        </a>
-                    </div>
                     <div class="menu-item">
                         <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_ecct">
                             <span class="menu-icon">

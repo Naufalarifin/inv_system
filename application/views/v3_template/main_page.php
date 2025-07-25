@@ -12,18 +12,6 @@ $show=$data['page']['show'];
 $last=($sum+($show-($sum%$show)))/$show;
 if($sum%$show==0){ $last-=1; }
 
-// Perbaikan logika deteksi fungsi pagination
-if(!isset($func_show)){
-  // Cek parameter URL untuk menentukan fungsi yang tepat
-  if(isset($_GET['table']) && $_GET['table'] == 'allitem'){
-    $func_show = 'showDataAllItem';
-  } else if(isset($_GET['table']) && $_GET['table'] == 'ecct'){
-    $func_show = 'showDataEcct';
-  } else if(isset($_GET['mode']) && $_GET['mode'] == 'allitem'){
-    $func_show = 'showDataAllItem';
-  } else if(isset($_GET['mode']) && $_GET['mode'] == 'ecct'){
-    $func_show = 'showDataEcct';
-  } else {
     // Auto-detect berdasarkan URL saat ini
     $current_url = $_SERVER['REQUEST_URI'];
     if(strpos($current_url, 'inv_ecct') !== false) {
@@ -37,8 +25,7 @@ if(!isset($func_show)){
     } else {
       $func_show = 'showDataItem';
     }
-  }
-}
+
 ?>
 
 <?php if($sum>$show){ ?>
@@ -118,6 +105,10 @@ function getCurrentTableFunction() {
       return 'showDataAllItem';
     } else if (currentTable === 'ecct') {
       return 'showDataEcct';
+    } else if (currentTable === 'ecbs') {
+      return 'showDataEcbs';
+    } else if (currentTable === 'activity') {
+      return 'showDataActivity';
     }
   }
   return 'showDataItem';
@@ -129,6 +120,10 @@ function handlePagination(page) {
       showDataAllItem(page);
     } else if (currentTable === 'ecct') {
       showDataEcct(page);
+    } else if (currentTable === 'ecbs') {
+      showDataEcbs(page);
+    }else if (currentTable === 'activity') {
+      showDataActivity(page);
     }
   } else {
     showDataItem(page);
