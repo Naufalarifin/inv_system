@@ -2,7 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Inventory extends CI_Controller {
-    
+
     public function __construct() {
         parent::__construct();
         $this->load->database();
@@ -63,6 +63,7 @@ class Inventory extends CI_Controller {
             $type = isset($input_data['type']) ? $input_data['type'] : null;
             switch ($type) {
                 case 'in':
+                    // Tidak ada perubahan di sini, karena $input_data sudah berisi 'user_date' jika ada
                     return $this->inventory_model->processInventoryIn($input_data);
                 case 'out':
                     return $this->inventory_model->processInventoryOut($input_data);
@@ -76,7 +77,7 @@ class Inventory extends CI_Controller {
 
     public function data($type = "", $input = "") {
         $data = $this->load_top("", "no_view");
-        
+
         // Mapping type ke handler dan parameter
         $type_map = [
             // APP
@@ -94,7 +95,7 @@ class Inventory extends CI_Controller {
             'data_inv_ecct_osc_export' => ['handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecct'],
             'data_inv_ecbs_osc_export' => ['handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecbs'],
         ];
-        
+
         if (isset($type_map[$type])) {
             $tech = isset($type_map[$type]['tech']) ? $type_map[$type]['tech'] : (isset($_GET['tech']) ? $_GET['tech'] : (isset($_POST['tech']) ? $_POST['tech'] : 'ecct'));
             $handler = $type_map[$type]['handler'];
@@ -104,7 +105,7 @@ class Inventory extends CI_Controller {
             $this->load_bot($data, "no_view");
             return;
         }
-        
+
         switch ($type) {
             case 'data_item_show':
                 $data['data'] = $this->data_model->getAllItemByTech('ecct', 10);
@@ -124,7 +125,7 @@ class Inventory extends CI_Controller {
                 }
                 $this->load->view('inventory/data/data_item_export', $data);
                 break;
-                
+
             default:
                 show_404();
                 break;
@@ -173,33 +174,4 @@ class Inventory extends CI_Controller {
         $this->load->model("load_model");
         $this->load_model->load_bot_v3($data, $view);
     }
-
-    // public function input_edit_process() {
-    //     $this->_handle_json_request(function() {
-    //         $input_data = $this->_get_json_input();
-    //         if (!$input_data) {
-    //             return $this->_json_response(false, 'Invalid JSON input');
-    //         }
-    //         return $this->inventory_model->processInventoryEdit($input_data);
-    //     });
-    // }
-
-    // public function input_delete_process() {
-    //     $json = file_get_contents('php://input');
-    //     $data = json_decode($json, true);
-    //     $response = array('success' => false, 'message' => '');
-    //     if (!isset($data['id_act'])) {
-    //         $response['message'] = 'ID tidak ditemukan';
-    //         $this->_output_json($response);
-    //         return;
-    //     }
-    //     $id_act = $data['id_act'];
-    //     if ($this->db->where('id_act', $id_act)->delete('inv_act')) {
-    //         $response['success'] = true;
-    //         $response['message'] = 'Data berhasil dihapus';
-    //     } else {
-    //         $response['message'] = 'Gagal menghapus data';
-    //     }
-    //     $this->_output_json($response);
-    // }
 }

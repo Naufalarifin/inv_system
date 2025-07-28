@@ -71,15 +71,15 @@ function resetInputForm() {
   document.getElementById("out_serial_number").value = ""
   document.getElementById("move_serial_number").value = ""
   document.getElementById("move_location").value = ""
-  
+
   // Reset massive inputs
   document.getElementById("in_serial_numbers_massive").value = ""
   document.getElementById("out_serial_numbers_massive").value = ""
   document.getElementById("move_serial_numbers_massive").value = ""
-  
+
   // Clear result messages
   const resultDivs = ["in_result_message", "out_result_message", "move_result_message"]
-  resultDivs.forEach(id => {
+  resultDivs.forEach((id) => {
     const div = document.getElementById(id)
     if (div) {
       div.style.display = "none"
@@ -98,7 +98,7 @@ function renderInputMode() {
   // Update toggle buttons
   const singularBtn = document.getElementById("btn_singular")
   const massiveBtn = document.getElementById("btn_massive")
-  
+
   if (singularBtn && massiveBtn) {
     if (inputMode === "singular") {
       singularBtn.className = "input-mode-btn active"
@@ -108,16 +108,16 @@ function renderInputMode() {
       massiveBtn.className = "input-mode-btn active"
     }
   }
-  
+
   // Show/hide appropriate input elements based on current tab and mode
-  const currentTab = document.querySelector('.input-tab-btn.active').id.replace('tabBtn_', '')
+  const currentTab = document.querySelector(".input-tab-btn.active").id.replace("tabBtn_", "")
   updateInputDisplay(currentTab)
 }
 
 function updateInputDisplay(tab) {
   const singularContainer = document.getElementById(`${tab}_singular_container`)
   const massiveContainer = document.getElementById(`${tab}_massive_container`)
-  
+
   if (singularContainer && massiveContainer) {
     if (inputMode === "singular") {
       singularContainer.style.display = "block"
@@ -376,8 +376,24 @@ function showSecondaryData(page = 1) {
   const loading = showLoading()
   if (page !== "export") document.getElementById("show_data").innerHTML = loading
 
-  var val = "?";
-  const fields = ["key_activity", "dvc_size", "dvc_col", "dvc_qc", "dvc_type","in_date_from", "in_date_to", "move_date_from", "move_date_to","out_date_from", "out_date_to","loc_move", "sort_by", "data_view_item", "activity"];
+  var val = "?"
+  const fields = [
+    "key_activity",
+    "dvc_size",
+    "dvc_col",
+    "dvc_qc",
+    "dvc_type",
+    "in_date_from",
+    "in_date_to",
+    "move_date_from",
+    "move_date_to",
+    "out_date_from",
+    "out_date_to",
+    "loc_move",
+    "sort_by",
+    "data_view_item",
+    "activity",
+  ]
 
   fields.forEach((field) => {
     var element = document.getElementById(field)
@@ -483,6 +499,7 @@ function submitInput(type) {
       type: "in",
       serial_number: serialNumber,
       qc_status: document.getElementById("in_qc_status").value,
+      // Untuk singular input, user_date tidak disediakan, sehingga inv_in akan menjadi current timestamp
     }
     resultDiv = document.getElementById("in_result_message")
   } else if (type === "out") {
@@ -539,68 +556,102 @@ function submitInput(type) {
 // =================== MASSIVE INPUT SUBMISSION ===================
 async function submitMassiveInput(type) {
   // Get elements
-  const serialNumbersEl = document.getElementById(`${type}_serial_numbers_massive`);
-  const qcStatusEl = document.getElementById(`${type}_qc_status`);
-  const locationEl = document.getElementById(`${type}_location`);
-  const resultEl = document.getElementById(`${type}_result_message`);
-  const loadingEl = document.getElementById(`${type}_loading_spinner`);
+  const serialNumbersEl = document.getElementById(`${type}_serial_numbers_massive`)
+  const qcStatusEl = document.getElementById(`${type}_qc_status`)
+  const locationEl = document.getElementById(`${type}_location`)
+  const resultEl = document.getElementById(`${type}_result_message`)
+  const loadingEl = document.getElementById(`${type}_loading_spinner`)
 
   // Show loading
-  loadingEl.style.display = 'inline-block';
-  resultEl.style.display = 'none';
+  loadingEl.style.display = "inline-block"
+  resultEl.style.display = "none"
 
-  // Get serial numbers
-  const serialNumbers = serialNumbersEl.value.split(/[\n\t]+/).map(s => s.trim()).filter(s => s !== '');
-  const url = "http://localhost/cdummy/inventory/input_process";
-  
-  let successCount = 0, failCount = 0;
-  const failedSerials = [];
+  // Get serial numbers and parse them
+  const rawInputs = serialNumbersEl.value
+    .split(/[\n\t]+/)
+    .map((s) => s.trim())
+    .filter((s) => s !== "")
+
+  const dateRegex = /(\d{2}-\d{2}-\d{4})$/ // Matches dd-mm-yyyy at the end of the string
+
+  let processedInputs = []
+  if (type === "in") {
+    for (const inputLine of rawInputs) {
+      const match = inputLine.match(dateRegex)
+      if (match) {
+        const serialNumber = inputLine.replace(match[0], "").trim()
+        // START MODIFIKASI: user_date akan dikirim untuk inv_in
+        const userDate = match[0]
+        processedInputs.push({ serial_number: serialNumber, user_date: userDate })
+        // END MODIFIKASI
+      } else {
+        processedInputs.push({ serial_number: inputLine }) // SN only
+      }
+    }
+  } else {
+    // For 'out' and 'move', only serial number is expected
+    processedInputs = rawInputs.map((sn) => ({ serial_number: sn }))
+  }
+
+  const url = "http://localhost/cdummy/inventory/input_process" // TETAPKAN URL ASLI ANDA
+
+  let successCount = 0,
+    failCount = 0
+  const failedSerials = []
 
   // If no serial numbers, send empty request to get server error message
-  const numbersToProcess = serialNumbers.length > 0 ? serialNumbers : [''];
+  const inputsToProcess = processedInputs.length > 0 ? processedInputs : [{ serial_number: "" }]
 
   // Process each serial number (let server handle all validation)
-  for (const sn of numbersToProcess) {
-      let data = { type, serial_number: sn };
-      if (type === 'in') data.qc_status = qcStatusEl?.value;
-      if (type === 'move') data.location = locationEl?.value;
-
-      try {
-          const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data)
-          });
-          const result = await response.json();
-
-          if (result.success) {
-              successCount++;
-          } else {
-              failCount++;
-              failedSerials.push(`${sn}: ${result.message}`);
-          }
-      } catch (error) {
-          failCount++;
-          failedSerials.push(`${sn}: ❌ Error: ${error.message}`);
+  for (const item of inputsToProcess) {
+    const data = { type, serial_number: item.serial_number }
+    if (type === "in") {
+      data.qc_status = qcStatusEl?.value
+      // START MODIFIKASI: Tambahkan user_date jika ada
+      if (item.user_date) {
+        data.user_date = item.user_date
       }
+      // END MODIFIKASI
+    }
+    if (type === "move") data.location = locationEl?.value
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        successCount++
+      } else {
+        failCount++
+        failedSerials.push(`${item.serial_number || "Empty SN"}: ${result.message}`)
+      }
+    } catch (error) {
+      failCount++
+      failedSerials.push(`${item.serial_number || "Empty SN"}: ❌ Error: ${error.message}`)
+    }
   }
 
   // Show results
-  loadingEl.style.display = 'none';
-  let message = `Processing complete: ${successCount} successful, ${failCount} failed.`;
-  
+  loadingEl.style.display = "none"
+  let message = `Processing complete: ${successCount} successful, ${failCount} failed.`
+
   if (failCount === 0) {
-      serialNumbersEl.value = '';
-      refreshCurrentData(); // Fix: langsung panggil function yang ada
-      resultEl.className = 'input-result-message success';
+    serialNumbersEl.value = ""
+    refreshCurrentData()
+    resultEl.className = "input-result-message success"
   } else {
-      message += '\n\nFailed serial numbers:\n' + failedSerials.join('\n');
-      serialNumbersEl.value = failedSerials.map(f => f.split(':')[0]).join('\n');
-      resultEl.className = 'input-result-message error';
+    message += "\n\nFailed serial numbers:\n" + failedSerials.join("\n")
+    // Only keep the serial numbers that failed in the textarea
+    serialNumbersEl.value = failedSerials.map((f) => f.split(":")[0]).join("\n")
+    resultEl.className = "input-result-message error"
   }
-  
-  resultEl.innerText = message;
-  resultEl.style.display = 'block';
+
+  resultEl.innerText = message
+  resultEl.style.display = "block"
 }
 
 // =================== REFRESH FUNCTIONS ===================

@@ -347,14 +347,14 @@
         <button type="button" class="input-tab-btn" onclick="showInputTab('move')" id="tabBtn_move" style="font-size: 24px; padding: 12px 24px; margin-left: -1px; margin-right: 0; border-radius: 0;">move</button>
         <button type="button" class="input-tab-btn" onclick="showInputTab('out')" id="tabBtn_out" style="font-size: 24px; padding: 12px 24px; margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0;">out</button>
       </div>
-      
+
       <!-- Mode Toggle Buttons -->
       <div>
         <button type="button" class="input-mode-btn active" onclick="switchInput('singular')" id="btn_singular" style="padding: 12px 24px; font-size: 24px; margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;">Singular</button>
         <button type="button" class="input-mode-btn" onclick="switchInput('massive')" id="btn_massive" style="padding: 12px 24px; font-size: 24px; margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0;">Massive</button>
       </div>
     </div>
-    
+
     <div style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
       <!-- Input In -->
       <div id="inputTab_in" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: flex; flex-direction: column; justify-content: flex-start;">
@@ -365,7 +365,7 @@
             <option value="DN">DN</option>
           </select>
         </div>
-        
+
         <!-- Singular Input -->
         <div id="in_singular_container">
           <div class="form-group" style="margin-bottom: 24px;">
@@ -373,13 +373,18 @@
             <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" maxlength="15" />
           </div>
         </div>
-        
+
         <!-- Massive Input -->
         <div id="in_massive_container" style="display: none;">
           <div class="form-group" style="margin-bottom: 24px;">
             <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
             <textarea id="in_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
-            <small style="color: #666; font-size: 12px;">Enter multiple serial numbers, separated by new lines or tabs.</small>
+            <!-- START MODIFIKASI: Petunjuk untuk input massal -->
+            <small style="color: #666; font-size: 12px;">
+              Enter multiple serial numbers, one per line or separated by tabs.<br/>
+              Format: `SN` atau `SN dd-mm-yyyy` (tanggal ini akan disimpan di kolom `inv_in`).
+            </small>
+            <!-- END MODIFIKASI -->
           </div>
           <button class="btn btn-primary" onclick="submitInput('in')" style="font-size: 24px;">
             Submit <span id="in_loading_spinner" class="loading-spinner" style="display:none;"></span>
@@ -387,7 +392,7 @@
         </div>
         <div id="in_result_message" class="input-result-message" style="font-size: 24px;"></div>
       </div>
-      
+
       <!-- Input Move -->
       <div id="inputTab_move" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: none; flex-direction: column; justify-content: flex-start;">
         <div class="form-group" style="margin-bottom: 24px;">
@@ -405,7 +410,7 @@
             <option value="Unknow">❓ Unknown</option>
           </select>
         </div>
-        
+
         <!-- Singular Input -->
         <div id="move_singular_container">
           <div class="form-group" style="margin-bottom: 24px;">
@@ -413,7 +418,7 @@
             <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" maxlength="15" />
           </div>
         </div>
-        
+
         <!-- Massive Input -->
         <div id="move_massive_container" style="display: none;">
           <div class="form-group" style="margin-bottom: 24px;">
@@ -425,10 +430,10 @@
             Submit <span id="move_loading_spinner" class="loading-spinner" style="display:none;"></span>
           </button>
         </div>
-        
+
         <div id="move_result_message" class="input-result-message" style="font-size: 24px;"></div>
       </div>
-      
+
       <!-- Input Out -->
       <div id="inputTab_out" class="input-tab-content" style="flex:1; min-width: 220px; padding-left:16px; display: none; flex-direction: column; justify-content: flex-start;">
         <!-- Singular Input -->
@@ -438,7 +443,7 @@
             <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" maxlength="15" />
           </div>
         </div>
-        
+
         <!-- Massive Input -->
         <div id="out_massive_container" style="display: none;">
           <div class="form-group" style="margin-bottom: 24px;">
@@ -450,7 +455,7 @@
             Submit <span id="out_loading_spinner" class="loading-spinner" style="display:none;"></span>
           </button>
         </div>
-        
+
         <div id="out_result_message" class="input-result-message" style="font-size: 24px;"></div>
       </div>
     </div>

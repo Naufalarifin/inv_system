@@ -10,9 +10,12 @@ class Inventory_model extends CI_Model {
     public function processInventoryIn($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         $qc_status = isset($data['qc_status']) ? trim($data['qc_status']) : '';
+        // START MODIFIKASI: Ambil tanggal yang disediakan pengguna dari data input
+        $user_provided_date_string = isset($data['user_date']) ? trim($data['user_date']) : '';
+        // END MODIFIKASI
 
         $validation_result = $this->_validateSerialNumber($serial_number);
-        if (!$validation_result['success']) { 
+        if (!$validation_result['success']) {
             return $this->_response(false, $validation_result['message']);
         }
 
@@ -21,7 +24,7 @@ class Inventory_model extends CI_Model {
         }
 
         $parsed_data = $this->_parseSerialNumber($serial_number);
-        if (!$parsed_data['valid']) { 
+        if (!$parsed_data['valid']) {
             return $this->_response(false, $parsed_data['message']);
         }
 
@@ -30,6 +33,25 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Device tidak ditemukan dengan kode: ' . $parsed_data['device_code']);
         }
 
+        // START MODIFIKASI: Tentukan nilai untuk inv_in dan act_date
+        $inv_in_value = null;
+        if (!empty($user_provided_date_string)) {
+            // Jika tanggal disediakan, konversi dari dd-mm-yyyy ke YYYY-MM-DD
+            $converted_date_ymd = $this->_convertDdMmYyyyToYmd($user_provided_date_string);
+            if ($converted_date_ymd === null) {
+                return $this->_response(false, 'Format tanggal tidak valid. Gunakan dd-mm-yyyy.');
+            }
+            // inv_in adalah DATETIME, jadi tambahkan waktu default
+            $inv_in_value = $converted_date_ymd . ' 00:00:00';
+        } else {
+            // Jika tanggal tidak disediakan, gunakan timestamp saat ini untuk inv_in
+            $inv_in_value = date('Y-m-d H:i:s');
+        }
+
+        // act_date selalu diisi dengan tanggal saat ini (current date)
+        $act_date_value = date('Y-m-d');
+        // END MODIFIKASI
+
         $insert_data = array(
             'id_act' => $this->_generateNewActId(),
             'id_dvc' => $device->id_dvc,
@@ -37,7 +59,8 @@ class Inventory_model extends CI_Model {
             'dvc_col' => $parsed_data['color'],
             'dvc_sn' => $serial_number,
             'dvc_qc' => $qc_status,
-            'inv_in' => date('Y-m-d H:i:s'),
+            // START MODIFIKASI: inv_in sekarang menggunakan tanggal dari input atau current timestamp
+            'inv_in' => $inv_in_value,
             'adm_in' => $this->_getAdminId(),
             'inv_move' => null,
             'inv_out' => null,
@@ -46,6 +69,9 @@ class Inventory_model extends CI_Model {
             'adm_out' => null,
             'adm_rls' => null,
             'loc_move' => null,
+            // START MODIFIKASI: act_date selalu menggunakan current date
+            'act_date' => $act_date_value,
+            // END MODIFIKASI
         );
 
         if ($this->db->insert('inv_act', $insert_data)) {
@@ -119,107 +145,6 @@ class Inventory_model extends CI_Model {
     }
 
     /**
-     * Process inventory EDIT - METHOD BARU
-     */
-    // public function processInventoryEdit($data) {
-    //     $id_act = isset($data['id_act']) ? trim($data['id_act']) : '';
-    //     $serial_number = isset($data['dvc_sn']) ? trim($data['dvc_sn']) : '';
-    //     $qc_status = isset($data['dvc_qc']) ? trim($data['dvc_qc']) : '';
-    //     $loc_move = isset($data['loc_move']) ? trim($data['loc_move']) : '';
-
-    //     // Validate ID
-    //     if (empty($id_act)) {
-    //         return $this->_response(false, 'ID tidak ditemukan');
-    //     }
-
-    //     // Get existing data
-    //     $existing_item = $this->_getInventoryById($id_act);
-    //     if (!$existing_item) {
-    //         return $this->_response(false, 'Data tidak ditemukan');
-    //     }
-
-    //     $update_data = array();
-
-    //     // Handle serial number update
-    //     if (!empty($serial_number) && $serial_number !== $existing_item->dvc_sn) {
-    //         // Validate serial number
-    //         $validation_result = $this->_validateSerialNumber($serial_number);
-    //         if (!$validation_result['valid']) {
-    //             return $this->_response(false, $validation_result['message']);
-    //         }
-
-    //         // Check if new serial number already exists (exclude current record)
-    //         if ($this->_isSerialNumberExistsForEdit($serial_number, $id_act)) {
-    //             return $this->_response(false, 'Serial number sudah ada dalam database');
-    //         }
-
-    //         // Parse serial number
-    //         $parsed_data = $this->_parseSerialNumber($serial_number);
-
-    //         // Get device info
-    //         $device = $this->_getDeviceByCode($parsed_data['device_code']);
-    //         if (!$device) {
-    //             return $this->_response(false, 'Device tidak ditemukan dengan kode: ' . $parsed_data['device_code']);
-    //         }
-
-    //         // Update serial number, device ID, size, dan color
-    //         $update_data['dvc_sn'] = $serial_number;
-    //         $update_data['id_dvc'] = $device->id_dvc;
-
-    //         if ($parsed_data['size'] !== null) {
-    //             $update_data['dvc_size'] = $parsed_data['size'];
-    //         }
-    //         if (isset($update_data['dvc_col'])) {
-    //             $update_data['dvc_col'] = $parsed_data['color'];
-    //         }
-    //     }
-
-    //     // Handle QC status update
-    //     if ($qc_status !== '') {
-    //         $update_data['dvc_qc'] = $qc_status;
-    //     }
-
-    //     // Handle location move update
-    //     if ($loc_move !== '0' && $loc_move !== '') {
-    //         if (!$existing_item->inv_out) {
-    //             $update_data['loc_move'] = $loc_move;
-    //         } else {
-    //             if ($loc_move != $existing_item->loc_move) {
-    //                 return $this->_response(false, 'Location Move hanya bisa diubah jika belum keluar!');
-    //             }
-    //         }
-    //     }
-
-    //     // Check if there are changes
-    //     if (empty($update_data)) {
-    //         return $this->_response(false, 'Tidak ada data yang diubah');
-    //     }
-
-    //     if ($this->db->where('id_act', $id_act)->update('inv_act', $update_data)) {
-    //         // Build success message with updated info
-    //         $updated_info = array();
-    //         if (isset($update_data['id_dvc'])) {
-    //             $updated_info[] = 'Device ID: ' . $update_data['id_dvc'];
-    //         }
-    //         if (isset($update_data['dvc_size'])) {
-    //             $updated_info[] = 'Size: ' . $update_data['dvc_size'];
-    //         }
-    //         if (isset($update_data['dvc_col'])) {
-    //             $updated_info[] = 'Color: ' . $update_data['dvc_col'];
-    //         }
-
-    //         $message = 'Data berhasil diupdate';
-    //         if (!empty($updated_info)) {
-    //             $message .= ' (' . implode(', ', $updated_info) . ')';
-    //         }
-
-    //         return $this->_response(true, $message);
-    //     } else {
-    //         return $this->_response(false, 'Gagal update data');
-    //     }
-    // }
-
-    /**
      * Private helper methods
      */
     private function _validateSerialNumber($serial_number) {
@@ -240,9 +165,9 @@ class Inventory_model extends CI_Model {
             return ['valid' => false, 'message' => 'Serial number harus 15 karakter'];
         }
 
-        $yy = substr($serial_number, 0, 2); 
-        $mm = strtoupper(substr($serial_number, 2, 1)); 
-        $dd = substr($serial_number, 3, 2); 
+        $yy = substr($serial_number, 0, 2);
+        $mm = strtoupper(substr($serial_number, 2, 1));
+        $dd = substr($serial_number, 3, 2);
 
         $flag = strtoupper(substr($serial_number, 6, 1)); // 1 digit flag N/R
 
@@ -371,4 +296,14 @@ class Inventory_model extends CI_Model {
 
         return $response;
     }
+
+    // START MODIFIKASI: Fungsi helper baru untuk mengkonversi tanggal dd-mm-yyyy ke YYYY-MM-DD string
+    private function _convertDdMmYyyyToYmd($date_string) {
+        $d = DateTime::createFromFormat('d-m-Y', $date_string);
+        if ($d && $d->format('d-m-Y') === $date_string) {
+            return $d->format('Y-m-d');
+        }
+        return null; // Return null jika format tidak valid
+    }
+    // END MODIFIKASI
 }
