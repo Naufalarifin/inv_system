@@ -36,7 +36,7 @@
 }
 .modal-title {
     margin: 0;
-    font-size: 18px;
+    font-size: 24px;
     font-weight: 600;
     color: #333;
 }
@@ -71,7 +71,7 @@
   color: #0074d9;
   border: 1px solid #0074d9;
   border-radius: 4px 4px 0 0;
-  padding: 6px 18px;
+  padding: 6px 24px;
   margin-right: 4px;
   font-size: 15px;
   font-weight: 600;
@@ -80,6 +80,23 @@
   transition: background 0.2s, color 0.2s;
 }
 .input-tab-btn.active {
+  background: #0074d9;
+  color: #fff;
+}
+.input-mode-btn {
+  background: #fff;
+  color: #0074d9;
+  border: 1px solid #0074d9;
+  border-radius: 4px;
+  padding: 4px 12px;
+  margin-right: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s;
+}
+.input-mode-btn.active {
   background: #0074d9;
   color: #fff;
 }
@@ -95,6 +112,7 @@
   border-radius: 4px;
   font-size: 13px;
   display: none;
+  white-space: pre-wrap;
 }
 .input-result-message.success {
   background-color: #d4edda;
@@ -122,6 +140,29 @@
   margin-bottom: 2px;
   background:rgb(247, 245, 245) ;
   border-radius: 5px 5px 5px 5px;
+}
+.auto-submit-info {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  margin-top: 5px;
+}
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1677ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+.massive-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 14px;
 }
 </style>
 
@@ -291,43 +332,66 @@
 </div>
 
 <!-- Modal Input Gabungan In/Move/Out dengan Tab -->
-<div id="modal_input_all" class="modal-container" style="min-width:500px;">
+<div id="modal_input_all" class="modal-container" style="min-width:500px; max-width: 650px;">
   <div class="modal-header">
     <h3 class="modal-title" style="font-size: 24px;">Input Inventory</h3>
     <button class="btn-close" onclick="closeModal('modal_input_all')" style="font-size: 24px;">&times;</button>
   </div>
-  <div class="modal-body" style="display: flex; flex-direction: column; gap: 10px;">
-    <!-- Tab Buttons -->
-    <div id="inputTabButtons" style="margin-bottom: 18px;">
-      <button type="button" class="input-tab-btn active" onclick="showInputTab('in')" id="tabBtn_in" style="font-size: 24px;">in</button>
-      <button type="button" class="input-tab-btn" onclick="showInputTab('move')" id="tabBtn_move" style="font-size: 24px;">move</button>
-      <button type="button" class="input-tab-btn" onclick="showInputTab('out')" id="tabBtn_out" style="font-size: 24px;">out</button>
+
+  <div class="modal-body" style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Tab Navigation - Now aligned horizontally -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <!-- Tab Buttons -->
+      <div id="inputTabButtons">
+        <button type="button" class="input-tab-btn active" onclick="showInputTab('in')" id="tabBtn_in" style="font-size: 24px; padding: 12px 24px; margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;">in</button>
+        <button type="button" class="input-tab-btn" onclick="showInputTab('move')" id="tabBtn_move" style="font-size: 24px; padding: 12px 24px; margin-left: -1px; margin-right: 0; border-radius: 0;">move</button>
+        <button type="button" class="input-tab-btn" onclick="showInputTab('out')" id="tabBtn_out" style="font-size: 24px; padding: 12px 24px; margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0;">out</button>
+      </div>
+      
+      <!-- Mode Toggle Buttons -->
+      <div>
+        <button type="button" class="input-mode-btn active" onclick="switchInput('singular')" id="btn_singular" style="padding: 12px 24px; font-size: 24px; margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;">Singular</button>
+        <button type="button" class="input-mode-btn" onclick="switchInput('massive')" id="btn_massive" style="padding: 12px 24px; font-size: 24px; margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0;">Massive</button>
+      </div>
     </div>
+    
     <div style="display: flex; gap: 24px; justify-content: space-between; align-items: flex-start;">
       <!-- Input In -->
       <div id="inputTab_in" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: flex; flex-direction: column; justify-content: flex-start;">
-        <div class="form-group">
-          <label class="input-form-label" style="font-size: 24px;">QC Status</label>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">QC Status</label>
           <select id="in_qc_status" class="select" style="font-size: 24px;">
-          <option value="LN">LN</option>
-          <option value="DN">DN</option>
+            <option value="LN">LN</option>
+            <option value="DN">DN</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="input-form-label" style="font-size: 24px;">Serial Number</label>
-          <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" />
+        
+        <!-- Singular Input -->
+        <div id="in_singular_container">
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Number</label>
+            <input type="text" id="in_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" maxlength="15" />
+          </div>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center; margin-top: 18px;">
-          <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 24px; align-self: flex-start;" onclick="submitInput('in')">Submit</button>
-          
-          <a class="text-gray-700 hover:text-primary" href="<?php echo $config['base_url']; ?>inventory/massive_input" style="font-size: 18px; text-decoration: none;">Massive Input</a>
-        </div><div id="in_result_message" class="input-result-message" style="font-size: 24px;"></div>
+        
+        <!-- Massive Input -->
+        <div id="in_massive_container" style="display: none;">
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
+            <textarea id="in_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
+            <small style="color: #666; font-size: 12px;">Enter multiple serial numbers, separated by new lines or tabs.</small>
+          </div>
+          <button class="btn btn-primary" onclick="submitInput('in')" style="font-size: 24px;">
+            Submit <span id="in_loading_spinner" class="loading-spinner" style="display:none;"></span>
+          </button>
+        </div>
+        <div id="in_result_message" class="input-result-message" style="font-size: 24px;"></div>
       </div>
+      
       <!-- Input Move -->
       <div id="inputTab_move" class="input-tab-content" style="flex:1; min-width: 220px; border-right:1px solid #eee; padding:0 16px; display: none; flex-direction: column; justify-content: flex-start;">
-        <div class="form-group">
-        <div class="form-group">
-          <label class="input-form-label" style="font-size: 24px;">Lokasi Tujuan</label>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Lokasi Tujuan</label>
           <select id="move_location" class="select" style="font-size: 24px;">
             <option value="">-- Pilih Lokasi Tujuan --</option>
             <option value="Lantai 2">🏢 Lantai 2</option>
@@ -335,25 +399,58 @@
             <option value="Om Bob">👨‍💼 Om Bob</option>
             <option value="Rekanan">🤝 Rekanan</option>
             <option value="LN">🏭 LN</option>
-            <option value="ECBS">🏭 ECBS</option>
+            <option value="ECCT">🏭 ECCT</option>
             <option value="LN Office">🏢 LN Office</option>
             <option value="Lantai 1">🏢 Lantai 1</option>
             <option value="Unknow">❓ Unknown</option>
           </select>
         </div>
-          <label class="input-form-label" style="font-size: 24px;">Serial Number</label>
-          <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" />
+        
+        <!-- Singular Input -->
+        <div id="move_singular_container">
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Number</label>
+            <input type="text" id="move_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" maxlength="15" />
+          </div>
         </div>
-        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 24px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('move')">Submit</button>
+        
+        <!-- Massive Input -->
+        <div id="move_massive_container" style="display: none;">
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
+            <textarea id="move_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
+            <small style="color: #666; font-size: 12px;">Serial numbers must already exist in the database.</small>
+          </div>
+          <button class="btn btn-primary" onclick="submitInput('move')" style="font-size: 24px;">
+            Submit <span id="move_loading_spinner" class="loading-spinner" style="display:none;"></span>
+          </button>
+        </div>
+        
         <div id="move_result_message" class="input-result-message" style="font-size: 24px;"></div>
       </div>
+      
       <!-- Input Out -->
       <div id="inputTab_out" class="input-tab-content" style="flex:1; min-width: 220px; padding-left:16px; display: none; flex-direction: column; justify-content: flex-start;">
-        <div class="form-group">
-          <label class="input-form-label" style="font-size: 24px;">Serial Number</label>
-          <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" />
+        <!-- Singular Input -->
+        <div id="out_singular_container">
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Number</label>
+            <input type="text" id="out_serial_number" class="input" placeholder="Masukan nomor seri di sini" style="font-size: 24px;" maxlength="15" />
+          </div>
         </div>
-        <button class="btn btn-primary" style="padding: 0 14px; min-width: 90px; font-size: 24px; margin-top: 18px; align-self: flex-start;" onclick="submitInput('out')">Submit</button>
+        
+        <!-- Massive Input -->
+        <div id="out_massive_container" style="display: none;">
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
+            <textarea id="out_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
+            <small style="color: #666; font-size: 12px;">Serial numbers must already exist in the database.</small>
+          </div>
+          <button class="btn btn-primary" onclick="submitInput('out')" style="font-size: 24px;">
+            Submit <span id="out_loading_spinner" class="loading-spinner" style="display:none;"></span>
+          </button>
+        </div>
+        
         <div id="out_result_message" class="input-result-message" style="font-size: 24px;"></div>
       </div>
     </div>
@@ -374,4 +471,4 @@ var currentEcbsType = 'app';
 </script>
 
 <!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventoryy.js'); ?> ?v=1.0"></script>
+<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.0"></script>
