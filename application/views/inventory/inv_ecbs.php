@@ -106,6 +106,23 @@
   color: #721c24;
   border: 1px solid #f5c6cb;
 }
+.activity-date-section {
+  padding-top: 20px;
+}
+.activity-date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+}
+.activity-date-column {
+  text-align: center;
+}
+.activity-date-label {
+  font-weight: bold;
+  margin-bottom: 2px;
+  background:rgb(247, 245, 245) ;
+  border-radius: 5px 5px 5px 5px;
+}
 </style>
 
 <!-- Container -->
@@ -131,88 +148,141 @@
     <button class="btn-close" onclick="closeModal('modal_filter_item')">&times;</button>
   </div>
   <div class="modal-body">
-    <div class="grid lg:grid-cols-3">
-      <div class="form-group">
-        <span class="form-hint">Device Size</span>
-        <select class="select" id="dvc_size">
-          <option value="">All</option>
-          <option value="XS">XS</option>
-          <option value="S">S</option>
-          <option value="M">M</option>
-          <option value="L">L</option>
-          <option value="XL">XL</option>
-          <option value="XXL">XXL</option>
-          <option value="3XL">3XL</option>
-          <option value="ALL">ALL SIZE</option>
-          <option value="Cus">Cus</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Device Color</span>
-        <select class="select" id="dvc_col">
-          <option value="">All</option>
-          <option value="Dark Gray">Dark Gray</option>
-          <option value="Black">Black</option>
-          <option value="Grey">Grey</option>
-          <option value="Blue Navy">Blue Navy</option>
-          <option value="Green Army">Green Army</option>
-          <option value="Red Maroon">Red Maroon</option>
-          <option value="Custom">Custom</option>
-          <option value="-">-</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <span class="form-hint">QC Status</span>
-        <select class="select" id="dvc_qc">
-          <option value="">All</option>
-          <option value="0">LN</option>
-          <option value="1">DN</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Date From</span>
-        <input class="input calendar" type="text" value="" id="date_from" />
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Date To</span>
-        <input class="input calendar" type="text" value="" id="date_to" />
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Location</span>
-        <select class="select" id="loc_move">
-          <option value="">All</option>
-          <option value="Lantai 2">Lantai 2</option>
-          <option value="Bang Toni">Bang Toni</option>
-          <option value="Om Bob">Om Bob</option>
-          <option value="Rekanan">Rekanan</option>
-          <option value="LN">LN</option>
-          <option value="ECBS">ECBS</option>
-          <option value="LN Office">LN Office</option>
-          <option value="Lantai 1">Lantai 1</option>
-          <option value="Unknow">Unknow</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Sort By</span>
-        <select class="select" id="sort_by">
-          <option value="">None</option>
-          <option value="id_act_asc">ID ASC</option>
-          <option value="id_act_desc">ID DESC</option>
-          <option value="dvc_sn_asc">Serial Number ASC</option>
-          <option value="dvc_sn_desc">Serial Number DESC</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <span class="form-hint">Data View</span>
-        <select class="select" id="data_view_item">
-          <option value="5">5</option>
-          <option value="10" selected="selected">10</option>
-          <option value="15">15</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-        </select>
-      </div>
-    </div>
+  <div class="grid lg:grid-cols-3 gap-2">
+    <div class="form-group">
+                    <span class="form-hint">Activity</span>
+                    <select class="select" id="activity">
+                        <option value="">All</option>
+                        <option value="in-only">In-Only</option>
+                        <option value="in-stock">In-Stock</option>
+                        <option value="move">Move</option>
+                        <option value="out">Out</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">Device Size</span>
+                    <select class="select" id="dvc_size">
+                        <option value="">All</option>
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                        <option value="3XL">3XL</option>
+                        <option value="ALL">ALL SIZE</option>
+                        <option value="Cus">Cus</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">Device Color</span>
+                    <select class="select" id="dvc_col">
+                        <option value="">All</option>
+                        <option value="Dark Gray">Dark Gray</option>
+                        <option value="Black">Black</option>
+                        <option value="Grey">Grey</option>
+                        <option value="Blue Navy">Blue Navy</option>
+                        <option value="Green Army">Green Army</option>
+                        <option value="Red Maroon">Red Maroon</option>
+                        <option value="Custom">Custom</option>
+                        <option value="-">-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">QC Status</span>
+                    <select class="select" id="dvc_qc">
+                        <option value="">All</option>
+                        <option value="0">LN</option>
+                        <option value="1">DN</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">Device Type</span>
+                    <select class="select" id="dvc_type">
+                        <option value="">All</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">Location</span>
+                    <select class="select" id="loc_move">
+                        <option value="">All</option>
+                        <option value="Lantai 2">Lantai 2</option>
+                        <option value="Bang Toni">Bang Toni</option>
+                        <option value="Om Bob">Om Bob</option>
+                        <option value="Rekanan">Rekanan</option>
+                        <option value="LN">LN</option>
+                        <option value="ECCT">ECCT</option>
+                        <option value="LN Office">LN Office</option>
+                        <option value="Lantai 1">Lantai 1</option>
+                        <option value="Unknow">Unknow</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">Sort By</span>
+                    <select class="select" id="sort_by">
+                        <option value="">None</option>
+                        <option value="id_act_asc">ID ASC</option>
+                        <option value="id_act_desc">ID DESC</option>
+                        <option value="dvc_sn_asc">Serial Number ASC</option>
+                        <option value="dvc_sn_desc">Serial Number DESC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span class="form-hint">Data View</span>
+                    <select class="select" id="data_view_item">
+                        <option value="5">5</option>
+                        <option value="10" selected="selected">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="activity-date-section">
+                <h4 style="margin-bottom: 5px; color: #333;">Activity Date Filters</h4>
+                <div class="activity-date-grid">
+                    <!-- In Activity Dates -->
+                    <div class="activity-date-column">
+                        <div class="activity-date-label">IN</div>
+                        <div class="form-group">
+                            <span class="form-hint">Date From</span>
+                            <input class="input calendar" type="date" value="" id="in_date_from" />
+                        </div>
+                        <div class="form-group">
+                            <span class="form-hint">Date To</span>
+                            <input class="input calendar" type="date" value="" id="in_date_to" />
+                        </div>
+                    </div>
+                    <!-- Move Activity Dates -->
+                    <div class="activity-date-column">
+                        <div class="activity-date-label">MOVE</div>
+                        <div class="form-group">
+                            <span class="form-hint">Date From</span>
+                            <input class="input calendar" type="date" value="" id="move_date_from" />
+                        </div>
+                        <div class="form-group">
+                            <span class="form-hint">Date To</span>
+                            <input class="input calendar" type="date" value="" id="move_date_to" />
+                        </div>
+                    </div>
+                    <!-- Out Activity Dates -->
+                    <div class="activity-date-column">
+                        <div class="activity-date-label">OUT</div>
+                        <div class="form-group">
+                            <span class="form-hint">Date From</span>
+                            <input class="input calendar" type="date" value="" id="out_date_from" />
+                        </div>
+                        <div class="form-group">
+                            <span class="form-hint">Date To</span>
+                            <input class="input calendar" type="date" value="" id="out_date_to" />
+                        </div>
+                    </div>
+                </div>
+            </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-light" onclick="closeModal('modal_filter_item')">Cancel</button>
@@ -304,4 +374,4 @@ var currentEcbsType = 'app';
 </script>
 
 <!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventory.js'); ?>"></script>
+<script src="<?php echo base_url('js/inventoryy.js'); ?> ?v=1.0"></script>

@@ -4,6 +4,7 @@
             <thead>
                 <tr>
                     <th align="center" width="30">No</th>
+                    <th align="center" width="80">Serial Number</th>
                     <th align="center" width="100">Device Info</th>
                     <th align="center" width="70">Size</th>
                     <?php 
@@ -13,7 +14,6 @@
                     if ($showColorColumn) { ?>
                         <th align="center" width="120">Warna</th>
                     <?php } ?>
-                    <th align="center" width="80">Serial Number</th>
                     <th align="center" width="60">QC Status</th>
                     <th align="center" width="80">In</th>
                     <th align="center" width="80">Move</th>
@@ -33,8 +33,9 @@
                 ?>
                 <tr>
                     <td align="center"><?php echo $no; ?></td>
+                    <td align="center"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
-                        <span data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo htmlspecialchars($row['dvc_name']); ?>">
+                        <span class="hover-info" data-info="<?php echo htmlspecialchars($row['dvc_name']); ?>">
                             <?php echo $row['dvc_code']; ?>
                         </span>
                     </td>
@@ -80,7 +81,6 @@
                         <?php } ?>
                     </td>
                     <?php } ?>
-                    <td align="center"><?php echo $row['dvc_sn']; ?></td>
                     <td align="center">
                         <?php if ($row['dvc_qc'] == 'LN') { ?>
                             <span class="badge badge-xs badge-success badge-outline">LN</span>
@@ -88,21 +88,21 @@
                     </td>
                     <td align="center">
                         <?php if ($row['inv_in']) { ?>
-                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_in']); ?>">
+                            <span class="hover-info" data-info="Admin: <?php echo htmlspecialchars($row['adm_in']); ?>">
                                 <?php echo date("d/m/y H:i", strtotime($row['inv_in'])); ?>
                             </span>
                         <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
                         <?php if ($row['inv_move']) { ?>
-                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_move']); ?>, Lokasi: <?php echo htmlspecialchars($row['loc_move']); ?>">
+                            <span class="hover-info" data-info="Admin: <?php echo htmlspecialchars($row['adm_move']); ?>, Lokasi: <?php echo htmlspecialchars($row['loc_move']); ?>">
                                 <?php echo date("d/m/y H:i", strtotime($row['inv_move'])); ?>
                             </span>
                         <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
                         <?php if ($row['inv_out']) { ?>
-                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Admin: <?php echo htmlspecialchars($row['adm_out']); ?>">
+                            <span class="hover-info" data-info="Admin: <?php echo htmlspecialchars($row['adm_out']); ?>">
                                 <?php echo date("d/m/y H:i", strtotime($row['inv_out'])); ?>
                             </span>
                         <?php } else { echo '-'; } ?>
@@ -123,14 +123,41 @@
 
 <style>
 .compact-table {
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
 .compact-table th,
 .compact-table td {
-    padding: 5px 7px !important;
+    padding: 0px 4px !important;
     line-height: 1.8 !important;
 }
 .compact-table th {
-    font-size: 10px !important;
+    font-size: 14px !important;
+}
+
+/* Simple Hover Info */
+.hover-info {
+    position: relative;
+    cursor: pointer;
+}
+
+.hover-info::after {
+    content: attr(data-info);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+}
+
+.hover-info:hover::after {
+    opacity: 1;
 }
 </style>

@@ -226,7 +226,7 @@ function showSecondaryData(page = 1) {
   if (page !== 'export') document.getElementById('show_data').innerHTML = loading;
 
   var val = "?";
-  const fields = ["key_activity", "dvc_size", "dvc_col", "dvc_qc", "date_from", "date_to", "loc_move", "sort_by", "data_view_item"];
+  const fields = ["key_activity", "dvc_size", "dvc_col", "dvc_qc", "dvc_type","in_date_from", "in_date_to", "move_date_from", "move_date_to","out_date_from", "out_date_to","loc_move", "sort_by", "data_view_item", "activity"];
 
   fields.forEach(field => {
     var element = document.getElementById(field);
@@ -344,11 +344,7 @@ function submitInput(type) {
         if (type === 'in') document.getElementById('in_serial_number').value = '';
         if (type === 'out') document.getElementById('out_serial_number').value = '';
         if (type === 'move') document.getElementById('move_serial_number').value = '';
-        if (currentTable === 'allitem') {
-          showDataAllItem();
-        } else if (currentTable === 'ecct') {
-          showDataEcct();
-        }
+        refreshCurrentData();
       } else {
         resultDiv.className = 'input-result-message error';
       }

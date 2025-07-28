@@ -160,58 +160,32 @@ textarea {
 var config = <?php echo json_encode($config); ?>;
 
 async function submitMassiveInput(type) {
-    let serialNumbersText;
-    let qcStatus = null;
-    let location = null;
-    let resultSummaryElement;
-    let loadingSpinnerElement;
+    // Get elements
+    const serialNumbersEl = document.getElementById(`${type}_serial_numbers`);
+    const qcStatusEl = document.getElementById(`${type}_qc_status`);
+    const locationEl = document.getElementById(`${type}_location`);
+    const resultEl = document.getElementById(`${type}_result_summary`);
+    const loadingEl = document.getElementById(`${type}_loading_spinner`);
 
-    if (type === 'in') {
-        serialNumbersText = document.getElementById('in_serial_numbers').value;
-        qcStatus = document.getElementById('in_qc_status').value;
-        resultSummaryElement = document.getElementById('in_result_summary');
-        loadingSpinnerElement = document.getElementById('in_loading_spinner');
-    } else if (type === 'out') {
-        serialNumbersText = document.getElementById('out_serial_numbers').value;
-        resultSummaryElement = document.getElementById('out_result_summary');
-        loadingSpinnerElement = document.getElementById('out_loading_spinner');
-    } else if (type === 'move') {
-        serialNumbersText = document.getElementById('move_serial_numbers').value;
-        location = document.getElementById('move_location').value;
-        resultSummaryElement = document.getElementById('move_result_summary');
-        loadingSpinnerElement = document.getElementById('move_loading_spinner');
-    }
+    // Show loading
+    loadingEl.style.display = 'inline-block';
+    resultEl.style.display = 'none';
 
-    // Show loading spinner
-    loadingSpinnerElement.style.display = 'inline-block';
-    resultSummaryElement.style.display = 'none'; // Hide previous summary
-
-    const serialNumbers = serialNumbersText.split(/[\n\t]+/).map(s => s.trim()).filter(s => s !== '');
-
-    if (serialNumbers.length === 0) {
-        alert('⚠️ Please enter at least one serial number.');
-        loadingSpinnerElement.style.display = 'none';
-        return;
-    }
-
-    if (type === 'move' && !location) {
-        alert('⚠️ Lokasi tujuan tidak boleh kosong!');
-        loadingSpinnerElement.style.display = 'none';
-        return;
-    }
-
-    let successCount = 0;
-    let failCount = 0;
-    const failedSerials = [];
+    // Get serial numbers
+    const serialNumbers = serialNumbersEl.value.split(/[\n\t]+/).map(s => s.trim()).filter(s => s !== '');
     const url = config.url_menu + 'input_process';
+    
+    let successCount = 0, failCount = 0;
+    const failedSerials = [];
 
-    for (const sn of serialNumbers) {
-        let data = { type: type, serial_number: sn };
-        if (type === 'in') {
-            data.qc_status = qcStatus;
-        } else if (type === 'move') {
-            data.location = location;
-        }
+    // If no serial numbers, send empty request to get server error message
+    const numbersToProcess = serialNumbers.length > 0 ? serialNumbers : [''];
+
+    // Process each serial number (let server handle all validation)
+    for (const sn of numbersToProcess) {
+        let data = { type, serial_number: sn };
+        if (type === 'in') data.qc_status = qcStatusEl?.value;
+        if (type === 'move') data.location = locationEl?.value;
 
         try {
             const response = await fetch(url, {
@@ -229,35 +203,27 @@ async function submitMassiveInput(type) {
             }
         } catch (error) {
             failCount++;
-            failedSerials.push(`${sn}: Network error or invalid response (${error.message})`);
+            failedSerials.push(`${sn}: ❌ Error: ${error.message}`);
         }
     }
 
-    // Hide loading spinner
-    loadingSpinnerElement.style.display = 'none';
-
-    // Display summary
-    let summaryMessage = `Processing complete: ${successCount} successful, ${failCount} failed.`;
-    resultSummaryElement.className = 'result-message';
+    // Show results
+    loadingEl.style.display = 'none';
+    let message = `Processing complete: ${successCount} successful, ${failCount} failed.`;
+    
     if (failCount === 0) {
-        resultSummaryElement.classList.add('success');
-        // Clear textarea only on full success
-        if (type === 'in') document.getElementById('in_serial_numbers').value = '';
-        else if (type === 'out') document.getElementById('out_serial_numbers').value = '';
-        else if (type === 'move') document.getElementById('move_serial_numbers').value = '';
+        serialNumbersEl.value = '';
+        if (typeof refreshCurrentData === 'function') refreshCurrentData();
+        resultEl.className = 'result-message success';
     } else {
-        resultSummaryElement.classList.add('error');
-        summaryMessage += '\n\nFailed serial numbers:\n' + failedSerials.join('\n');
-        // Kembalikan SN yang gagal ke textarea input
-        const failedSNs = failedSerials.map(f => f.split(':')[0]);
-        if (type === 'in') document.getElementById('in_serial_numbers').value = failedSNs.join('\n');
-        else if (type === 'out') document.getElementById('out_serial_numbers').value = failedSNs.join('\n');
-        else if (type === 'move') document.getElementById('move_serial_numbers').value = failedSNs.join('\n');
+        message += '\n\nFailed serial numbers:\n' + failedSerials.join('\n');
+        serialNumbersEl.value = failedSerials.map(f => f.split(':')[0]).join('\n');
+        resultEl.className = 'result-message error';
     }
-    resultSummaryElement.innerText = summaryMessage;
-    resultSummaryElement.style.display = 'block';
+    
+    resultEl.innerText = message;
+    resultEl.style.display = 'block';
 }
-
 // No specific onload function needed for this page, as it's purely input.
 // The styles are embedded directly.
 </script>

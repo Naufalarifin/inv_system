@@ -69,14 +69,59 @@ class Sql_model extends CI_Model {
         if (isset($_GET['dvc_qc']) && $_GET['dvc_qc'] != "") {
             $filter['all'] .= " AND inv_act.dvc_qc = '" . $this->db->escape_str($_GET['dvc_qc']) . "'";
         }
-        if (isset($_GET['date_from']) && $_GET['date_from'] != "") {
-            $filter['all'] .= " AND DATE(inv_act.inv_in) >= '" . $this->db->escape_str($_GET['date_from']) . "'";
+
+        // Filter Device Type - Join dengan inv_dvc untuk mendapatkan dvc_type
+        if (isset($_GET['dvc_type']) && $_GET['dvc_type'] != "") {
+            $filter['all'] .= " AND dvc.dvc_type = '" . $this->db->escape_str($_GET['dvc_type']) . "'";
         }
-        if (isset($_GET['date_to']) && $_GET['date_to'] != "") {
-            $filter['all'] .= " AND DATE(inv_act.inv_in) <= '" . $this->db->escape_str($_GET['date_to']) . "'";
-        }
+
         if (isset($_GET['loc_move']) && $_GET['loc_move'] != "") {
             $filter['all'] .= " AND inv_act.loc_move = '" . $this->db->escape_str($_GET['loc_move']) . "'";
+        }
+
+        // Activity Date Filters
+        // IN Date Filters
+        if (isset($_GET['in_date_from']) && $_GET['in_date_from'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_in) >= '" . $this->db->escape_str($_GET['in_date_from']) . "'";
+        }
+        if (isset($_GET['in_date_to']) && $_GET['in_date_to'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_in) <= '" . $this->db->escape_str($_GET['in_date_to']) . "'";
+        }
+
+        // MOVE Date Filters
+        if (isset($_GET['move_date_from']) && $_GET['move_date_from'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_move) >= '" . $this->db->escape_str($_GET['move_date_from']) . "'";
+        }
+        if (isset($_GET['move_date_to']) && $_GET['move_date_to'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_move) <= '" . $this->db->escape_str($_GET['move_date_to']) . "'";
+        }
+
+        // OUT Date Filters
+        if (isset($_GET['out_date_from']) && $_GET['out_date_from'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_out) >= '" . $this->db->escape_str($_GET['out_date_from']) . "'";
+        }
+        if (isset($_GET['out_date_to']) && $_GET['out_date_to'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.inv_out) <= '" . $this->db->escape_str($_GET['out_date_to']) . "'";
+        }
+
+        $activity_filter = isset($_GET['activity']) ? $_GET['activity'] : '';
+
+        switch($activity_filter) {
+            case 'in-only':
+                $filter['all'] .= " AND (inv_move IS NULL OR inv_move = '') AND (inv_out IS NULL OR inv_out = '') ";
+                break;
+            case 'in-stock':
+                $filter['all'] .= " AND (inv_out IS NULL OR inv_out = '') ";
+                break;
+            case 'move':
+                $filter['all'] .= " AND inv_in IS NOT NULL AND inv_in != '' AND inv_move IS NOT NULL AND inv_move != '' AND (inv_out IS NULL OR inv_out = '') ";
+                break;   
+            case 'out':
+                $filter['all'] .= " AND inv_out IS NOT NULL AND inv_out != '' ";
+                break;
+            default:
+                $filter['all'] .= '';
+                break;
         }
 
         if (isset($_GET['sort_by']) && $_GET['sort_by'] != "") {
