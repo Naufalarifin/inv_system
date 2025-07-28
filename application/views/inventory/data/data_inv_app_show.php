@@ -224,14 +224,14 @@ $is_ecbs = isset($model_data[0]['warna']);
 
 <style>
 .compact-table {
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
 .compact-table th,
 .compact-table td {
-    padding: 5px 7px !important;
+    padding: 0px 4px !important;
     line-height: 1.8 !important;
 }
 .compact-table th {
-    font-size: 10px !important;
+    font-size: 14px !important;
 }
 </style>

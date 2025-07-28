@@ -376,18 +376,8 @@ function showSecondaryData(page = 1) {
   const loading = showLoading()
   if (page !== "export") document.getElementById("show_data").innerHTML = loading
 
-  var val = "?"
-  const fields = [
-    "key_activity",
-    "dvc_size",
-    "dvc_col",
-    "dvc_qc",
-    "date_from",
-    "date_to",
-    "loc_move",
-    "sort_by",
-    "data_view_item",
-  ]
+  var val = "?";
+  const fields = ["key_activity", "dvc_size", "dvc_col", "dvc_qc", "dvc_type","in_date_from", "in_date_to", "move_date_from", "move_date_to","out_date_from", "out_date_to","loc_move", "sort_by", "data_view_item", "activity"];
 
   fields.forEach((field) => {
     var element = document.getElementById(field)
@@ -548,116 +538,69 @@ function submitInput(type) {
 
 // =================== MASSIVE INPUT SUBMISSION ===================
 async function submitMassiveInput(type) {
-  let serialNumbersText
-  let qcStatus = null
-  let location = null
-  let resultDiv
-  let loadingSpinner
+  // Get elements
+  const serialNumbersEl = document.getElementById(`${type}_serial_numbers_massive`);
+  const qcStatusEl = document.getElementById(`${type}_qc_status`);
+  const locationEl = document.getElementById(`${type}_location`);
+  const resultEl = document.getElementById(`${type}_result_message`);
+  const loadingEl = document.getElementById(`${type}_loading_spinner`);
 
-  if (type === "in") {
-    serialNumbersText = document.getElementById("in_serial_numbers_massive").value
-    qcStatus = document.getElementById("in_qc_status").value
-    resultDiv = document.getElementById("in_result_message")
-    loadingSpinner = document.getElementById("in_loading_spinner")
-  } else if (type === "out") {
-    serialNumbersText = document.getElementById("out_serial_numbers_massive").value
-    resultDiv = document.getElementById("out_result_message")
-    loadingSpinner = document.getElementById("out_loading_spinner")
-  } else if (type === "move") {
-    serialNumbersText = document.getElementById("move_serial_numbers_massive").value
-    location = document.getElementById("move_location").value
-    resultDiv = document.getElementById("move_result_message")
-    loadingSpinner = document.getElementById("move_loading_spinner")
-  }
+  // Show loading
+  loadingEl.style.display = 'inline-block';
+  resultEl.style.display = 'none';
 
-  // Show loading spinner
-  if (loadingSpinner) loadingSpinner.style.display = "inline-block"
-  resultDiv.style.display = "none"
-
-  const serialNumbers = serialNumbersText.split(/[\n\t]+/).map(s => s.trim()).filter(s => s !== "")
-
-  if (serialNumbers.length === 0) {
-    alert("⚠️ Please enter at least one serial number.")
-    if (loadingSpinner) loadingSpinner.style.display = "none"
-    return
-  }
-
-  if (type === "move" && !location) {
-    alert("⚠️ Lokasi tujuan tidak boleh kosong!")
-    if (loadingSpinner) loadingSpinner.style.display = "none"
-    return
-  }
-
-  let successCount = 0
-  let failCount = 0
-  const failedSerials = []
-  const url = CONFIG.urlMenu + "input_process"
-
-  for (const sn of serialNumbers) {
-    let data = { type: type, serial_number: sn }
-    if (type === "in") {
-      data.qc_status = qcStatus
-    } else if (type === "move") {
-      data.location = location
-    }
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      const result = await response.json()
-
-      if (result.success) {
-        successCount++
-      } else {
-        failCount++
-        failedSerials.push(`${sn}: ${result.message}`)
-      }
-    } catch (error) {
-      failCount++
-      failedSerials.push(`${sn}: Network error or invalid response (${error.message})`)
-    }
-  }
-
+  // Get serial numbers
+  const serialNumbers = serialNumbersEl.value.split(/[\n\t]+/).map(s => s.trim()).filter(s => s !== '');
+  const url = "http://localhost/cdummy/inventory/input_process";
   
-  // Hide loading spinner
-  if (loadingSpinner) loadingSpinner.style.display = "none"
+  let successCount = 0, failCount = 0;
+  const failedSerials = [];
 
-  // Display summary
-  let summaryMessage = `Processing complete: ${successCount} successful, ${failCount} failed.`
-  resultDiv.className = "input-result-message"
+  // If no serial numbers, send empty request to get server error message
+  const numbersToProcess = serialNumbers.length > 0 ? serialNumbers : [''];
+
+  // Process each serial number (let server handle all validation)
+  for (const sn of numbersToProcess) {
+      let data = { type, serial_number: sn };
+      if (type === 'in') data.qc_status = qcStatusEl?.value;
+      if (type === 'move') data.location = locationEl?.value;
+
+      try {
+          const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+          });
+          const result = await response.json();
+
+          if (result.success) {
+              successCount++;
+          } else {
+              failCount++;
+              failedSerials.push(`${sn}: ${result.message}`);
+          }
+      } catch (error) {
+          failCount++;
+          failedSerials.push(`${sn}: ❌ Error: ${error.message}`);
+      }
+  }
+
+  // Show results
+  loadingEl.style.display = 'none';
+  let message = `Processing complete: ${successCount} successful, ${failCount} failed.`;
+  
   if (failCount === 0) {
-    resultDiv.classList.add("success")
-    // Clear textarea only on full success
-    if (type === "in") document.getElementById("in_serial_numbers_massive").value = ""
-    else if (type === "out") document.getElementById("out_serial_numbers_massive").value = ""
-    else if (type === "move") document.getElementById("move_serial_numbers_massive").value = ""
+      serialNumbersEl.value = '';
+      refreshCurrentData(); // Fix: langsung panggil function yang ada
+      resultEl.className = 'input-result-message success';
   } else {
-    resultDiv.classList.add("error")
-    summaryMessage += "\n\nFailed serial numbers:\n" + failedSerials.join("\n")
-    // Kembalikan SN yang gagal ke textarea input
-    const failedSNs = failedSerials.map((f) => f.split(":")[0])
-    if (type === "in") document.getElementById("in_serial_numbers_massive").value = failedSNs.join("\n")
-    else if (type === "out") document.getElementById("out_serial_numbers_massive").value = failedSNs.join("\n")
-    else if (type === "move") document.getElementById("move_serial_numbers_massive").value = failedSNs.join("\n")
+      message += '\n\nFailed serial numbers:\n' + failedSerials.join('\n');
+      serialNumbersEl.value = failedSerials.map(f => f.split(':')[0]).join('\n');
+      resultEl.className = 'input-result-message error';
   }
-  resultDiv.innerText = summaryMessage
-  resultDiv.style.display = "block"
-
-  // Refresh data after successful submission
-  if (successCount > 0) {
-    if (currentTable === "allitem") {
-      showDataAllItem()
-    } else if (currentTable === "ecct") {
-      showDataEcct()
-    } else if (currentTable === "activity") {
-      showDataActivity()
-    } else if (currentTable === "ecbs") {
-      showDataEcbs()
-    }
-  }
+  
+  resultEl.innerText = message;
+  resultEl.style.display = 'block';
 }
 
 // =================== REFRESH FUNCTIONS ===================

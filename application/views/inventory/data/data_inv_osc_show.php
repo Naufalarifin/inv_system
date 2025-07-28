@@ -101,9 +101,6 @@ function renderOscTableSection($title, $items) {
     echo '                </tr>';
     echo '            </tfoot>';
     echo '        </table>';
-    echo '        <div style="padding: 10px; font-size: 11px; color: #666;">';
-    echo '            <strong>*Keterangan:</strong> Jumlah hanya menghitung item yang belum keluar (inv_out masih kosong)';
-    echo '        </div>';
     echo '    </div>';
     echo '</div>';
 }
@@ -111,6 +108,9 @@ function renderOscTableSection($title, $items) {
 renderOscTableSection('JENIS OSCILLATOR', $oscillators);
 echo '<div style="margin-top: 20px;"></div>';
 renderOscTableSection('JENIS ACCESORIES', $accessories);
+echo '        <div style="padding: 10px; font-size: 11px; color: #666;">';
+echo '            <strong>*Keterangan:</strong> Jumlah hanya menghitung item yang belum keluar (inv_out masih kosong)';
+echo '        </div>';
 ?>
 
 <style>
