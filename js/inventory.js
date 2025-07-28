@@ -530,9 +530,6 @@ function submitInput(type) {
         resultDiv.innerText = result.message
         if (result.success) {
           resultDiv.className = "input-result-message success"
-          if (type === "in") document.getElementById("in_serial_number").value = ""
-          if (type === "out") document.getElementById("out_serial_number").value = ""
-          if (type === "move") document.getElementById("move_serial_number").value = ""
           if (currentTable === "allitem") {
             showDataAllItem()
           } else if (currentTable === "ecct") {
@@ -646,7 +643,10 @@ async function submitMassiveInput(type) {
   } else {
     message += "\n\nFailed serial numbers:\n" + failedSerials.join("\n")
     // Only keep the serial numbers that failed in the textarea
-    serialNumbersEl.value = failedSerials.map((f) => f.split(":")[0]).join("\n")
+    serialNumbersEl.value = failedSerials
+      .map((f) => f.split(":")[0])
+      .filter((sn) => sn !== "Empty SN") // Tambahkan filter ini
+      .join("\n")
     resultEl.className = "input-result-message error"
   }
 
