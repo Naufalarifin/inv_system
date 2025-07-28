@@ -306,4 +306,4 @@ var currentEcctType = 'app';
 </script>
 
 <!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventory-universal.js'); ?>"></script>
+<script src="<?php echo base_url('js/inventory.js'); ?>"></script>

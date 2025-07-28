@@ -301,8 +301,8 @@ function showInputTab(tab) {
 // =================== INPUT SUBMISSION ===================
 function submitInput(type) {
   let data = {};
-  let url = "<?php echo $config['url_menu']; ?>input_process";
-  let resultDiv = null;
+  let url = "http://localhost/cdummy/inventory/input_process";
+  let resultDiv = " ";
   let serialNumber = '';
 
   if (type === 'in') {
