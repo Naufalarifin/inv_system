@@ -532,9 +532,6 @@ function submitInput(type) {
         resultDiv.innerText = result.message
         if (result.success) {
           resultDiv.className = "input-result-message success"
-          if (type === "in") document.getElementById("in_serial_number").value = ""
-          if (type === "out") document.getElementById("out_serial_number").value = ""
-          if (type === "move") document.getElementById("move_serial_number").value = ""
           if (currentTable === "allitem") {
             showDataAllItem()
           } else if (currentTable === "ecct") {
