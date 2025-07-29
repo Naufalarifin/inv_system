@@ -129,17 +129,22 @@
 }
 .activity-date-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 15px;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 5px;
 }
 .activity-date-column {
+  text-align: center;
+}
+.activity-date-column {
+  font-size: 12px;
+  max-width: 130px;
   text-align: center;
 }
 .activity-date-label {
   font-weight: bold;
   margin-bottom: 2px;
   background:rgb(247, 245, 245) ;
-  border-radius: 5px 5px 5px 5px;
+  font-size: 12px;
 }
 .auto-submit-info {
   font-size: 12px;
@@ -232,17 +237,16 @@
                     <span class="form-hint">QC Status</span>
                     <select class="select" id="dvc_qc">
                         <option value="">All</option>
-                        <option value="0">LN</option>
-                        <option value="1">DN</option>
+                        <option value="DN">LN</option>
+                        <option value="LN">DN</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <span class="form-hint">Device Type</span>
                     <select class="select" id="dvc_type">
                         <option value="">All</option>
-                        <option value="Standard">Standard</option>
-                        <option value="Premium">Premium</option>
-                        <option value="Custom">Custom</option>
+                        <option value="osc">OSC</option>
+                        <option value="APP">APP</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -282,47 +286,59 @@
                 </div>
             </div>
 
-            <div class="activity-date-section">
-                <h4 style="margin-bottom: 5px; color: #333;">Activity Date Filters</h4>
-                <div class="activity-date-grid">
-                    <!-- In Activity Dates -->
-                    <div class="activity-date-column">
-                        <div class="activity-date-label">IN</div>
-                        <div class="form-group">
-                            <span class="form-hint">Date From</span>
-                            <input class="input calendar" type="date" value="" id="in_date_from" />
-                        </div>
-                        <div class="form-group">
-                            <span class="form-hint">Date To</span>
-                            <input class="input calendar" type="date" value="" id="in_date_to" />
-                        </div>
-                    </div>
-                    <!-- Move Activity Dates -->
-                    <div class="activity-date-column">
-                        <div class="activity-date-label">MOVE</div>
-                        <div class="form-group">
-                            <span class="form-hint">Date From</span>
-                            <input class="input calendar" type="date" value="" id="move_date_from" />
-                        </div>
-                        <div class="form-group">
-                            <span class="form-hint">Date To</span>
-                            <input class="input calendar" type="date" value="" id="move_date_to" />
-                        </div>
-                    </div>
-                    <!-- Out Activity Dates -->
-                    <div class="activity-date-column">
-                        <div class="activity-date-label">OUT</div>
-                        <div class="form-group">
-                            <span class="form-hint">Date From</span>
-                            <input class="input calendar" type="date" value="" id="out_date_from" />
-                        </div>
-                        <div class="form-group">
-                            <span class="form-hint">Date To</span>
-                            <input class="input calendar" type="date" value="" id="out_date_to" />
-                        </div>
-                    </div>
-                </div>
+        <div class="activity-date-section">
+        <h4 style="margin-bottom: 5px; color: #333;">Activity Date Filters</h4>
+        <div class="activity-date-grid">
+            <!-- In Activity Dates -->
+        <div class="activity-date-column">
+            <div class="activity-date-label">IN</div>
+            <div class="form-group">
+                <span class="form-hint">Date From</span>
+                <input class="input" type="date" value="" id="in_date_from" />
             </div>
+            <div class="form-group">
+                <span class="form-hint">Date To</span>
+                <input class="input" type="date" value="" id="in_date_to" />
+            </div>
+        </div>
+        <!-- Move Activity Dates -->
+        <div class="activity-date-column">
+            <div class="activity-date-label">MOVE</div>
+            <div class="form-group">
+                <span class="form-hint">Date From</span>
+                <input class="input" type="date" value="" id="move_date_from" />
+            </div>
+            <div class="form-group">
+                <span class="form-hint">Date To</span>
+                <input class="input" type="date" value="" id="move_date_to" />
+            </div>
+        </div>
+        <!-- Out Activity Dates -->
+        <div class="activity-date-column">
+            <div class="activity-date-label">OUT</div>
+            <div class="form-group">
+                <span class="form-hint">Date From</span>
+                <input class="input" type="date" value="" id="out_date_from" />
+            </div>
+            <div class="form-group">
+                <span class="form-hint">Date To</span>
+                <input class="input" type="date" value="" id="out_date_to" />
+            </div>
+        </div>
+        <!-- Act Activity Dates -->
+        <div class="activity-date-column">
+            <div class="activity-date-label">ACT_DATE</div>
+            <div class="form-group">
+                <span class="form-hint">Date From</span>
+                <input class="input" type="date" value="" id="act_date_from" />
+            </div>
+            <div class="form-group">
+                <span class="form-hint">Date To</span>
+                <input class="input" type="date" value="" id="act_date_to" />
+            </div>
+        </div>
+        </div>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-light" onclick="closeModal('modal_filter_item')">Cancel</button>
@@ -360,8 +376,8 @@
         <div class="form-group" style="margin-bottom: 24px;">
           <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">QC Status</label>
           <select id="in_qc_status" class="select" style="font-size: 24px;">
-            <option value="LN">LN</option>
             <option value="DN">DN</option>
+            <option value="LN">LN</option>
           </select>
         </div>
         
@@ -377,8 +393,10 @@
         <div id="in_massive_container" style="display: none;">
           <div class="form-group" style="margin-bottom: 24px;">
             <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
-            <textarea id="in_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
-            <small style="color: #666; font-size: 12px;">Enter multiple serial numbers, separated by new lines or tabs.</small>
+            <textarea id="in_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 20px;"></textarea>
+            <small style="color: #666; font-size: 12px;">
+              Format: `SN` atau `SN dd-mm-yyyy`.
+            </small>          
           </div>
           <button class="btn btn-primary" onclick="submitInput('in')" style="font-size: 24px;">
             Submit <span id="in_loading_spinner" class="loading-spinner" style="display:none;"></span>
@@ -418,7 +436,9 @@
           <div class="form-group" style="margin-bottom: 24px;">
             <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
             <textarea id="move_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
-            <small style="color: #666; font-size: 12px;">Serial numbers must already exist in the database.</small>
+            <small style="color: #666; font-size: 12px;">
+              Format: `SN` atau `SN dd-mm-yyyy`.
+            </small>
           </div>
           <button class="btn btn-primary" onclick="submitInput('move')" style="font-size: 24px;">
             Submit <span id="move_loading_spinner" class="loading-spinner" style="display:none;"></span>
@@ -443,7 +463,9 @@
           <div class="form-group" style="margin-bottom: 24px;">
             <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
             <textarea id="out_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
-            <small style="color: #666; font-size: 12px;">Serial numbers must already exist in the database.</small>
+            <small style="color: #666; font-size: 12px;">
+              Format: `SN` atau `SN dd-mm-yyyy`.
+            </small>
           </div>
           <button class="btn btn-primary" onclick="submitInput('out')" style="font-size: 24px;">
             Submit <span id="out_loading_spinner" class="loading-spinner" style="display:none;"></span>
@@ -470,4 +492,4 @@ var currentEcctType = 'app';
 </script>
 
 <!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.0"></script>
+<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.1"></script>

@@ -3,21 +3,22 @@
         <table class="table table-border align-middle text-gray-700 compact-table">
             <thead>
                 <tr>
-                    <th align="center" width="30">No</th>
-                    <th align="center" width="80">Serial Number</th>
-                    <th align="center" width="100">Device Info</th>
-                    <th align="center" width="70">Size</th>
+                    <th align="center" >No</th>
+                    <th align="center" >Serial Number</th>
+                    <th align="center" >Device Info</th>
+                    <th align="center" >Size</th>
                     <?php 
                     // Tampilkan kolom warna hanya untuk ECBS
                     $showColorColumn = (isset($data['tech']) && $data['tech'] === 'ecbs');
                     
                     if ($showColorColumn) { ?>
-                        <th align="center" width="120">Warna</th>
+                        <th align="center">Warna</th>
                     <?php } ?>
-                    <th align="center" width="60">QC Status</th>
-                    <th align="center" width="80">In</th>
-                    <th align="center" width="80">Move</th>
-                    <th align="center" width="80">Out</th>
+                    <th align="center" >QC Status</th>
+                    <th align="center" >Act Date</th>
+                    <th align="center" >In</th>
+                    <th align="center" >Move</th>
+                    <th align="center" >Out</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,12 +42,8 @@
                     </td>
                     <td align="center">
                         <?php if (!empty($row['dvc_size'])) { ?>
-                            <?php if ($row['dvc_size'] == 'small') { ?>
-                                <span class="badge badge-xs badge-success badge-outline">S</span>
-                            <?php } elseif ($row['dvc_size'] == 'medium') { ?>
-                                <span class="badge badge-xs badge-warning badge-outline">M</span>
-                            <?php } elseif ($row['dvc_size'] == 'large') { ?>
-                                <span class="badge badge-xs badge-danger badge-outline">L</span>
+                            <?php if ($row['dvc_size'] == '-') { ?>
+                                <span> </span>
                             <?php } else { ?>
                                 <span class="badge badge-xs badge-light badge-outline"><?php echo $row['dvc_size']; ?></span>
                             <?php } ?>
@@ -85,6 +82,13 @@
                         <?php if ($row['dvc_qc'] == 'LN') { ?>
                             <span class="badge badge-xs badge-success badge-outline">LN</span>
                         <?php } ?>
+                    </td>
+                    <td align="center"> 
+                        <?php if ($row['act_date']) { ?>
+                        <span class="hover-info" data-info="Admin: <?php echo htmlspecialchars($row['adm_act']); ?>">
+                            <?php echo date("d/m/y H:i", strtotime($row['act_date'])); ?>
+                        </span>
+                        <?php } else { echo '-'; } ?>
                     </td>
                     <td align="center">
                         <?php if ($row['inv_in']) { ?>

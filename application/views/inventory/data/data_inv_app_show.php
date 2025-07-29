@@ -163,21 +163,57 @@ $is_ecbs = isset($model_data[0]['warna']);
                     // --- ECCT MODE ---
                     $no = 0;
                     if(isset($model_data) && !empty($model_data)) {
+                        
+                        // Preprocessing: Group consecutive items with same device name
+                        $grouped_data = [];
+                        $current_group = null;
+                        
                         foreach ($model_data as $row) {
-                            $no++;
-                            $percentage = $grand_total > 0 ? round(($row['subtotal'] / $grand_total) * 100, 1) : 0;
-                ?>
-                <tr>
-                    <td align="center"><?php echo $no; ?></td>
-                    <td align="left"><?php echo $row['dvc_name']; ?></td>
-                    <td align="center"><?php echo $row['dvc_code']; ?></td>
-                    <?php foreach ($sizes as $sz) { ?>
-                        <td align="center"><?php echo $row[$sz]; ?></td>
-                    <?php } ?>
-                    <td align="center"><strong><?php echo $row['subtotal']; ?></strong></td>
-                    <td align="center"><?php echo $percentage; ?>%</td>
-                </tr>
-                <?php
+                            if ($current_group === null || $current_group['dvc_name'] !== $row['dvc_name']) {
+                                // Start new group
+                                if ($current_group !== null) {
+                                    $grouped_data[] = $current_group;
+                                }
+                                $current_group = [
+                                    'dvc_name' => $row['dvc_name'],
+                                    'rows' => [$row],
+                                    'rowspan' => 1
+                                ];
+                            } else {
+                                // Add to current group
+                                $current_group['rows'][] = $row;
+                                $current_group['rowspan']++;
+                            }
+                        }
+                        
+                        // Don't forget the last group
+                        if ($current_group !== null) {
+                            $grouped_data[] = $current_group;
+                        }
+                        
+                        // Render the grouped data
+                        foreach ($grouped_data as $group) {
+                            $first_row = true;
+                            
+                            foreach ($group['rows'] as $row) {
+                                $no++;
+                                $percentage = $grand_total > 0 ? round(($row['subtotal'] / $grand_total) * 100, 1) : 0;
+                                ?>
+                                <tr>
+                                    <td align="center"><?php echo $no; ?></td>
+                                    <?php if ($first_row) { ?>
+                                        <td align="left" rowspan="<?php echo $group['rowspan']; ?>"><?php echo $group['dvc_name']; ?></td>
+                                    <?php } ?>
+                                    <td align="center"><?php echo $row['dvc_code']; ?></td>
+                                    <?php foreach ($sizes as $sz) { ?>
+                                        <td align="center"><?php echo $row[$sz]; ?></td>
+                                    <?php } ?>
+                                    <td align="center"><strong><?php echo $row['subtotal']; ?></strong></td>
+                                    <td align="center"><?php echo $percentage; ?>%</td>
+                                </tr>
+                                <?php
+                                $first_row = false;
+                            }
                         }
                     } else {
                 ?>

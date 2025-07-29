@@ -150,7 +150,6 @@ class Data_model extends CI_Model {
                         $result_data[] = $device_data;
                     }
                 } else {
-                    // ECCT APP
                     $device_data = $device;
                     $sizes = array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'Cus');
                     $total = 0;
@@ -163,7 +162,7 @@ class Data_model extends CI_Model {
                     }
                     $device_data['subtotal'] = $total;
                     $result_data[] = $device_data;
-                }
+                } 
             }
         }
         $data['data'] = $result_data;

@@ -389,6 +389,8 @@ function showSecondaryData(page = 1) {
     "move_date_to",
     "out_date_from",
     "out_date_to",
+    "act_date_from",
+    "act_date_to",
     "loc_move",
     "sort_by",
     "data_view_item",
@@ -556,102 +558,100 @@ function submitInput(type) {
 // =================== MASSIVE INPUT SUBMISSION ===================
 async function submitMassiveInput(type) {
   // Get elements
-  const serialNumbersEl = document.getElementById(`${type}_serial_numbers_massive`)
-  const qcStatusEl = document.getElementById(`${type}_qc_status`)
-  const locationEl = document.getElementById(`${type}_location`)
-  const resultEl = document.getElementById(`${type}_result_message`)
-  const loadingEl = document.getElementById(`${type}_loading_spinner`)
+  const serialNumbersEl = document.getElementById(`${type}_serial_numbers_massive`);
+  const qcStatusEl = document.getElementById(`${type}_qc_status`);
+  const locationEl = document.getElementById(`${type}_location`);
+  const resultEl = document.getElementById(`${type}_result_message`);
+  const loadingEl = document.getElementById(`${type}_loading_spinner`);
 
   // Show loading
-  loadingEl.style.display = "inline-block"
-  resultEl.style.display = "none"
+  loadingEl.style.display = 'inline-block';
+  resultEl.style.display = 'none';
 
-  // Get serial numbers and parse them
-  const rawInputs = serialNumbersEl.value
-    .split(/[\n\t]+/)
-    .map((s) => s.trim())
-    .filter((s) => s !== "")
+  // Parse input - handle both simple SN and SN with date
+  const rawInputs = serialNumbersEl.value.split(/[\n]+/).map(s => s.trim()).filter(s => s !== '');
+  const processedInputs = [];
 
-  const dateRegex = /(\d{2}-\d{2}-\d{4})$/ // Matches dd-mm-yyyy at the end of the string
-
-  let processedInputs = []
-  if (type === "in") {
-    for (const inputLine of rawInputs) {
-      const match = inputLine.match(dateRegex)
-      if (match) {
-        const serialNumber = inputLine.replace(match[0], "").trim()
-        // START MODIFIKASI: user_date akan dikirim untuk inv_in
-        const userDate = match[0]
-        processedInputs.push({ serial_number: serialNumber, user_date: userDate })
-        // END MODIFIKASI
-      } else {
-        processedInputs.push({ serial_number: inputLine }) // SN only
-      }
+  for (const line of rawInputs) {
+    if (line.includes('\t')) {
+      // Format: "25212TN15501013	01-07-2023"
+      const [sn, date] = line.split('\t').map(s => s.trim());
+      processedInputs.push({ serial_number: sn, user_date: date });
+    } else {
+      // Just serial number
+      processedInputs.push({ serial_number: line });
     }
-  } else {
-    // For 'out' and 'move', only serial number is expected
-    processedInputs = rawInputs.map((sn) => ({ serial_number: sn }))
   }
 
-  const url = "http://localhost/cdummy/inventory/input_process" // TETAPKAN URL ASLI ANDA
+  const url = "http://localhost/cdummy/inventory/input_process";
+  
+  let successCount = 0, failCount = 0;
+  const failedSerials = [];
+  const failedInputs = []; // Simpan input asli yang gagal
 
-  let successCount = 0,
-    failCount = 0
-  const failedSerials = []
+  // If no inputs, send empty request to get server error message
+  const inputsToProcess = processedInputs.length > 0 ? processedInputs : [{ serial_number: '' }];
 
-  // If no serial numbers, send empty request to get server error message
-  const inputsToProcess = processedInputs.length > 0 ? processedInputs : [{ serial_number: "" }]
-
-  // Process each serial number (let server handle all validation)
-  for (const item of inputsToProcess) {
-    const data = { type, serial_number: item.serial_number }
-    if (type === "in") {
-      data.qc_status = qcStatusEl?.value
-      // START MODIFIKASI: Tambahkan user_date jika ada
-      if (item.user_date) {
-        data.user_date = item.user_date
-      }
-      // END MODIFIKASI
+  // Process each input (let server handle all validation)
+  for (const input of inputsToProcess) {
+    let data = { type, serial_number: input.serial_number };
+    
+    if (type === 'in') {
+      data.qc_status = qcStatusEl?.value;
     }
-    if (type === "move") data.location = locationEl?.value
+    if (type === 'move') data.location = locationEl?.value;
 
+    // Add user_date if available
+    if (input.user_date) {
+      data.user_date = input.user_date;
+    }
+    
     try {
       const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      const result = await response.json()
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await response.json();
 
       if (result.success) {
-        successCount++
+        successCount++;
       } else {
-        failCount++
-        failedSerials.push(`${item.serial_number || "Empty SN"}: ${result.message}`)
+        failCount++;
+        failedSerials.push(`${input.serial_number}: ${result.message}`);
+        failedInputs.push(input); // Simpan input asli
       }
     } catch (error) {
-      failCount++
-      failedSerials.push(`${item.serial_number || "Empty SN"}: ❌ Error: ${error.message}`)
+      failCount++;
+      failedSerials.push(`${input.serial_number}: ❌ Error ${error.message}`);
+      failedInputs.push(input); // Simpan input asli
     }
   }
 
   // Show results
-  loadingEl.style.display = "none"
-  let message = `Processing complete: ${successCount} successful, ${failCount} failed.`
-
+  loadingEl.style.display = 'none';
+  let message = `Processing complete: ${successCount} successful, ${failCount} failed.`;
+  
   if (failCount === 0) {
-    serialNumbersEl.value = ""
-    refreshCurrentData()
-    resultEl.className = "input-result-message success"
+    serialNumbersEl.value = '';
+    refreshCurrentData();
+    resultEl.className = 'input-result-message success';
   } else {
-    message += "\n\nFailed serial numbers:\n" + failedSerials.join("\n")
-    // Only keep the serial numbers that failed in the textarea
-    serialNumbersEl.value = failedSerials.map((f) => f.split(":")[0]).join("\n")
-    resultEl.className = "input-result-message error"
+    message += '\n\nFailed serial numbers:\n' + failedSerials.join('\n');
+    // Kembalikan input asli dengan format yang benar (SN + tab + tanggal jika ada)
+    const failedLines = failedInputs.map(input => {
+      if (input.user_date) {
+        return `${input.serial_number}\t${input.user_date}`;
+      } else {
+        return input.serial_number;
+      }
+    });
+    serialNumbersEl.value = failedLines.join('\n');
+    resultEl.className = 'input-result-message error';
   }
-
-  resultEl.innerText = message
-  resultEl.style.display = "block"
+  
+  resultEl.innerText = message;
+  resultEl.style.display = 'block';
 }
 
 // =================== REFRESH FUNCTIONS ===================

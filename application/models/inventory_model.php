@@ -10,9 +10,15 @@ class Inventory_model extends CI_Model {
     public function processInventoryIn($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         $qc_status = isset($data['qc_status']) ? trim($data['qc_status']) : '';
-        // START MODIFIKASI: Ambil tanggal yang disediakan pengguna dari data input
         $user_provided_date_string = isset($data['user_date']) ? trim($data['user_date']) : '';
-        // END MODIFIKASI
+
+        // Validasi user_date jika ada
+        if (!empty($user_provided_date_string)) {
+            $date_validation = $this->_validateUserDate($user_provided_date_string, 'in');
+            if (!$date_validation['success']) {
+                return $this->_response(false, $date_validation['message']);
+            }
+        }
 
         $validation_result = $this->_validateSerialNumber($serial_number);
         if (!$validation_result['success']) {
@@ -33,24 +39,16 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Device tidak ditemukan dengan kode: ' . $parsed_data['device_code']);
         }
 
-        // START MODIFIKASI: Tentukan nilai untuk inv_in dan act_date
+        // Tentukan nilai untuk inv_in dan act_date
         $inv_in_value = null;
         if (!empty($user_provided_date_string)) {
-            // Jika tanggal disediakan, konversi dari dd-mm-yyyy ke YYYY-MM-DD
             $converted_date_ymd = $this->_convertDdMmYyyyToYmd($user_provided_date_string);
-            if ($converted_date_ymd === null) {
-                return $this->_response(false, 'Format tanggal tidak valid. Gunakan dd-mm-yyyy.');
-            }
-            // inv_in adalah DATETIME, jadi tambahkan waktu default
-            $inv_in_value = $converted_date_ymd . ' 00:00:00';
+            $inv_in_value = $converted_date_ymd . '00:00:00';
         } else {
-            // Jika tanggal tidak disediakan, gunakan timestamp saat ini untuk inv_in
             $inv_in_value = date('Y-m-d H:i:s');
         }
 
-        // act_date selalu diisi dengan tanggal saat ini (current date)
-        $act_date_value = date('Y-m-d');
-        // END MODIFIKASI
+        $act_date_value = date('Y-m-d H:i:s');
 
         $insert_data = array(
             'id_act' => $this->_generateNewActId(),
@@ -59,7 +57,6 @@ class Inventory_model extends CI_Model {
             'dvc_col' => $parsed_data['color'],
             'dvc_sn' => $serial_number,
             'dvc_qc' => $qc_status,
-            // START MODIFIKASI: inv_in sekarang menggunakan tanggal dari input atau current timestamp
             'inv_in' => $inv_in_value,
             'adm_in' => $this->_getAdminId(),
             'inv_move' => null,
@@ -69,9 +66,8 @@ class Inventory_model extends CI_Model {
             'adm_out' => null,
             'adm_rls' => null,
             'loc_move' => null,
-            // START MODIFIKASI: act_date selalu menggunakan current date
             'act_date' => $act_date_value,
-            // END MODIFIKASI
+            'adm_act' => $this->_getAdminId(),
         );
 
         if ($this->db->insert('inv_act', $insert_data)) {
@@ -83,6 +79,8 @@ class Inventory_model extends CI_Model {
 
     public function processInventoryOut($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
+        $user_provided_date_string = isset($data['user_date']) ? trim($data['user_date']) : '';
+
         $inventory_item = $this->_getInventoryBySerial($serial_number);
         if (!$inventory_item) {
             return $this->_response(false, 'Serial number tidak ditemukan: ' . $serial_number);
@@ -92,14 +90,31 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Item sudah dalam status OUT');
         }
 
-        $now = date('Y-m-d H:i:s');
+        // Validasi user_date jika ada - dengan validasi tambahan untuk OUT
+        if (!empty($user_provided_date_string)) {
+            $date_validation = $this->_validateUserDate($user_provided_date_string, 'out', $inventory_item);
+            if (!$date_validation['success']) {
+                return $this->_response(false, $date_validation['message']);
+            }
+        }
+
+        // Tentukan timestamp untuk inv_out
+        $out_timestamp = null;
+        if (!empty($user_provided_date_string)) {
+            $converted_date_ymd = $this->_convertDdMmYyyyToYmd($user_provided_date_string);
+            $out_timestamp = $converted_date_ymd . ' 00:00:00';
+        } else {
+            $out_timestamp = date('Y-m-d H:i:s');
+        }
+
         $update_data = array(
-            'inv_out' => $now,
+            'adm_act' => $this->_getAdminId(),
+            'inv_out' => $out_timestamp,
             'adm_out' => $this->_getAdminId()
         );
 
         if (empty($inventory_item->inv_move) || $inventory_item->inv_move == '0000-00-00 00:00:00') {
-            $update_data['inv_move'] = $now;
+            $update_data['inv_move'] = $out_timestamp;
             $update_data['adm_move'] = $this->_getAdminId();
             $update_data['loc_move'] = 'Lantai 1';
         }
@@ -111,12 +126,10 @@ class Inventory_model extends CI_Model {
         }
     }
 
-    /**
-     * Process inventory MOVE
-     */
     public function processInventoryMove($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
         $location = isset($data['location']) ? trim($data['location']) : '';
+        $user_provided_date_string = isset($data['user_date']) ? trim($data['user_date']) : '';
 
         if (empty($location)) {
             return $this->_response(false, 'Lokasi tujuan tidak boleh kosong');
@@ -131,8 +144,26 @@ class Inventory_model extends CI_Model {
             return $this->_response(false, 'Item sudah dalam status OUT, tidak bisa dipindah');
         }
 
+        // Validasi user_date jika ada - dengan validasi tambahan untuk MOVE
+        if (!empty($user_provided_date_string)) {
+            $date_validation = $this->_validateUserDate($user_provided_date_string, 'move', $inventory_item);
+            if (!$date_validation['success']) {
+                return $this->_response(false, $date_validation['message']);
+            }
+        }
+
+        // Tentukan timestamp untuk inv_move
+        $move_timestamp = null;
+        if (!empty($user_provided_date_string)) {
+            $converted_date_ymd = $this->_convertDdMmYyyyToYmd($user_provided_date_string);
+            $move_timestamp = $converted_date_ymd . ' 00:00:00';
+        } else {
+            $move_timestamp = date('Y-m-d H:i:s');
+        }
+
         $update_data = array(
-            'inv_move' => date('Y-m-d H:i:s'),
+            'adm_act' => $this->_getAdminId(),
+            'inv_move' => $move_timestamp,
             'adm_move' => $this->_getAdminId(),
             'loc_move' => $location
         );
@@ -151,6 +182,56 @@ class Inventory_model extends CI_Model {
         if (empty($serial_number)) {
             return $this->_response(false, 'Serial number tidak boleh kosong');
         }
+        return $this->_response(true, 'Valid');
+    }
+
+    /**
+     * Validasi user_date dengan aturan berbeda berdasarkan type
+     */
+    private function _validateUserDate($date_string, $type = 'in', $inventory_item = null) {
+        if (empty($date_string)) {
+            return $this->_response(true, 'Valid'); // Empty date is allowed
+        }
+
+        // Cek format tanggal dd-mm-yyyy
+        $converted_date = $this->_convertDdMmYyyyToYmd($date_string);
+        if ($converted_date === null) {
+            return $this->_response(false, 'Format tanggal tidak valid. Gunakan format dd-mm-yyyy.');
+        }
+
+        // Cek apakah tanggal tidak melebihi hari ini
+        $today = date('Y-m-d');
+        if ($converted_date > $today) {
+            return $this->_response(false, 'Tanggal tidak boleh melebihi hari ini (' . date('d-m-Y') . ').');
+        }
+
+        // Validasi tambahan berdasarkan type
+        if ($type === 'move' && $inventory_item !== null) {
+            // MOVE: Tanggal tidak boleh sebelum tanggal IN
+            if (!empty($inventory_item->inv_in) && $inventory_item->inv_in !== '0000-00-00 00:00:00') {
+                $inv_in_date = date('Y-m-d', strtotime($inventory_item->inv_in));
+                if ($converted_date < $inv_in_date) {
+                    return $this->_response(false, 'Tanggal MOVE tidak boleh sebelum tanggal IN (' . date('d-m-Y', strtotime($inventory_item->inv_in)) . ').');
+                }
+            }
+        } elseif ($type === 'out' && $inventory_item !== null) {
+            // OUT: Tanggal tidak boleh sebelum tanggal IN dan MOVE
+            if (!empty($inventory_item->inv_in) && $inventory_item->inv_in !== '0000-00-00 00:00:00') {
+                $inv_in_date = date('Y-m-d', strtotime($inventory_item->inv_in));
+                if ($converted_date < $inv_in_date) {
+                    return $this->_response(false, 'Tanggal OUT tidak boleh sebelum tanggal IN (' . date('d-m-Y', strtotime($inventory_item->inv_in)) . ').');
+                }
+            }
+            
+            // Cek tanggal MOVE jika ada
+            if (!empty($inventory_item->inv_move) && $inventory_item->inv_move !== '0000-00-00 00:00:00') {
+                $inv_move_date = date('Y-m-d', strtotime($inventory_item->inv_move));
+                if ($converted_date < $inv_move_date) {
+                    return $this->_response(false, 'Tanggal OUT tidak boleh sebelum tanggal MOVE (' . date('d-m-Y', strtotime($inventory_item->inv_move)) . ').');
+                }
+            }
+        }
+
         return $this->_response(true, 'Valid');
     }
 
@@ -227,9 +308,13 @@ class Inventory_model extends CI_Model {
                 $size = $this->_getSizeFromChar($size_char);
             }
             $combined_78 = intval($char_7 . $char_8);
-            if ($combined_78 <= 50 && strlen($serial_number) > 11) {
-                $color_chars = substr($serial_number, 10, 2);
-                $color = $this->_getColorFromChars($color_chars);
+            if ($combined_78 <= 50 && strlen($serial_number) == 15) {
+                if ($combined_78 == 27){
+                    $color_chars = substr($serial_number, 10, 2);
+                    $color = $this->_getColorFromChars($color_chars);
+                }else{
+                    $color = 'Black'; 
+                }
             }
         }
 
@@ -297,13 +382,11 @@ class Inventory_model extends CI_Model {
         return $response;
     }
 
-    // START MODIFIKASI: Fungsi helper baru untuk mengkonversi tanggal dd-mm-yyyy ke YYYY-MM-DD string
     private function _convertDdMmYyyyToYmd($date_string) {
         $d = DateTime::createFromFormat('d-m-Y', $date_string);
         if ($d && $d->format('d-m-Y') === $date_string) {
             return $d->format('Y-m-d');
         }
-        return null; // Return null jika format tidak valid
+        return null;
     }
-    // END MODIFIKASI
 }

@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/vnd.ms-excel');
-header('Content-Disposition: attachment; filename="inventory_items_' . date('Y-m-d') . '.xls"');
+header('Content-Disposition: attachment; filename="' . $data['tech'] . '_items_' . date('Y-m-d') . '.xls"');
 ?>
 <table border="1">
     <thead>
@@ -12,6 +12,7 @@ header('Content-Disposition: attachment; filename="inventory_items_' . date('Y-m
             <th>Color</th>
             <th>Serial Number</th>
             <th>QC Status</th>
+            <th>Act Date</th>
             <th>Inv In</th>
             <th>Inv Move</th>
             <th>Inv Out</th>
@@ -38,6 +39,7 @@ header('Content-Disposition: attachment; filename="inventory_items_' . date('Y-m
             <td><?php echo $row['dvc_col']; ?></td>
             <td><?php echo $row['dvc_sn']; ?></td>
             <td><?php echo $row['dvc_qc'];?></td>
+            <td><?php echo $row['act_date'];?></td>
             <td><?php echo $row['inv_in'] ? date("d/m/Y H:i", strtotime($row['inv_in'])) : '-'; ?></td>
             <td><?php echo $row['inv_move'] ? date("d/m/Y H:i", strtotime($row['inv_move'])) : '-'; ?></td>
             <td><?php echo $row['inv_out'] ? date("d/m/Y H:i", strtotime($row['inv_out'])) : '-'; ?></td>
