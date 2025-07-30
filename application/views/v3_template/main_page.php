@@ -28,9 +28,9 @@ if($sum%$show==0){ $last-=1; }
 
 ?>
 
-<?php if($sum>$show){ ?>
-
 <div class="col-md-12" style="padding:20px 20px 10px 20px;border-top:1px solid #EEE;">
+
+<?php if($sum>$show){ ?>
 
 <?php if(in_array($func_show, array("showDataMedrec","showDataMonit") )){ ?>
 <nav aria-label="nav" style="margin-bottom:-20px;margin-top:-20px;">
@@ -65,6 +65,7 @@ if($sum%$show==0){ $last-=1; }
 
 <div style="float:left;width:calc(100% - 200px);height:35px;">
 
+
 <center>
 <?php for($i=1;$i<=$last;$i++){ if($last!=1){?>
   <?php if(($i>=($_GET['p']-3)) && ($i<=($_GET['p']+5)) ){ ?>
@@ -85,15 +86,28 @@ if($sum%$show==0){ $last-=1; }
 <?php } ?>
 </div>
 
+<?php } ?>
+
+<?php } // End of if($sum > $show) ?>
+
+<?php if (isset($_GET['context'])) { // Only show this section if 'context' parameter is present (i.e., for activity/allitem tabs) ?>
 <div style="width:100%;text-align: center;padding-top:0px;height:10px;vertical-align: middle;float:left;margin-bottom: 30px;font-size:14px;">
-  <?php echo $l_time!="" ? ("Loadtime : <b>".$l_time."s</b>") : "";?>
+  <?php 
+  // Calculate start and end index
+  $start_index = ((($_GET['p'] - 1) * $show) + 1);
+  $end_index = min(($_GET['p'] * $show), $sum);
+  ?>
+  <span style="float:left;">
+    <?php echo "Data ke <b>" . $start_index . "</b> - <b>" . $end_index . "</b> / <b>" . $sum . "</b> data";?>
+  </span>
+  <span style="float:right;">
+    <?php echo $l_time!="" ? ("Loadtime : <b>".$l_time."s</b>") : "";?>
+  </span>
+  <div style="clear:both;"></div> <!-- To clear floats -->
 </div>
-
 <?php } ?>
 
 </div>
-
-<?php } ?>
 
 <?php } ?>
 
