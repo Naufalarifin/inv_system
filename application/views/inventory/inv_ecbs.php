@@ -129,7 +129,7 @@
 }
 .activity-date-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 5px;
 }
 .activity-date-column {
@@ -137,7 +137,6 @@
 }
 .activity-date-column {
   font-size: 12px;
-  max-width: 130px;
   text-align: center;
 }
 .activity-date-label {
@@ -168,6 +167,67 @@
   resize: vertical;
   font-family: monospace;
   font-size: 14px;
+}
+
+/* Searchable dropdown styles */
+.searchable-dropdown {
+    position: relative;
+}
+.searchable-dropdown .select-display {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.searchable-dropdown .dropdown-arrow {
+    font-size: 12px;
+    color: #666;
+}
+.searchable-dropdown .dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+.searchable-dropdown .search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    outline: none;
+    font-size: 14px;
+}
+.searchable-dropdown .dropdown-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.searchable-dropdown .dropdown-option:hover {
+    background: #f5f5f5;
+}
+.searchable-dropdown .dropdown-option.selected {
+    background: #007bff;
+    color: white;
+}
+.searchable-dropdown .no-results {
+    padding: 8px 12px;
+    color: #999;
+    font-style: italic;
+}
+.searchable-dropdown.active .dropdown-content {
+    display: block;
+}
+.searchable-dropdown.active .select-display {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 </style>
 
@@ -285,6 +345,22 @@
             <option value="50">50</option>
         </select>
     </div>
+    <div class="form-group">
+                  <span class="form-hint">Device Code</span>
+                  <div class="searchable-dropdown" id="dvc_code_dropdown">
+                    <div class="select select-display" id="dvc_code_display">
+                        <span id="dvc_code_selected">All</span>
+                    </div>
+                    <div class="dropdown-content">
+                        <input type="text" class="search-input" placeholder="Type to search..." id="dvc_code_search">
+                        <div class="dropdown-options" id="dvc_code_options">
+                            <!-- Options akan di-populate oleh JavaScript -->
+                        </div>
+                    </div>
+                  </div>
+                  <!-- Hidden input untuk menyimpan nilai yang dipilih -->
+                  <input type="hidden" id="dvc_code" name="dvc_code" value="">
+              </div>
 </div>
 
 <div class="activity-date-section">
@@ -385,7 +461,7 @@
             <textarea id="in_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 20px;"></textarea>
             <!-- START MODIFIKASI: Petunjuk untuk input massal -->
             <small style="color: #666; font-size: 12px;">
-              Format: `SN` atau `SN dd-mm-yyyy`.
+              Format: `SN` atau `SN yyyy-mm-dd`.
             </small>
             <!-- END MODIFIKASI -->
           </div>
@@ -428,7 +504,7 @@
             <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
             <textarea id="move_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
             <small style="color: #666; font-size: 12px;">
-              Format: `SN` atau `SN dd-mm-yyyy`.
+              Format: `SN` atau `SN yyyy-mm-dd`.
             </small>
           </div>
           <button class="btn btn-primary" onclick="submitInput('move')" style="font-size: 24px;">
@@ -455,7 +531,7 @@
             <label class="input-form-label" style="font-size: 24px; display: block; margin-bottom: 12px; font-weight: 600;">Serial Numbers</label>
             <textarea id="out_serial_numbers_massive" class="input massive-textarea" placeholder="Enter serial numbers, one per line or separated by tabs" style="font-size: 24px;"></textarea>
             <small style="color: #666; font-size: 12px;">
-              Format: `SN` atau `SN dd-mm-yyyy`.
+              Format: `SN` atau `SN yyyy-mm-dd`.
             </small>
           </div>
           <button class="btn btn-primary" onclick="submitInput('out')" style="font-size: 24px;">
@@ -480,7 +556,20 @@ window.CONFIG = {
 
 // Backward compatibility variables
 var currentEcbsType = 'app';
+
+window.deviceCodes = [
+    <?php 
+    if(!empty($dvc_code)) {
+        $codes = [];
+        foreach($dvc_code as $code) {
+            $codes[] = "{ dvc_code: '" . addslashes($code->dvc_code) . "' }";
+        }
+        echo implode(",\n    ", $codes);
+    }
+    ?>
+];
 </script>
 
+
 <!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.1"></script>
+<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.3"></script>

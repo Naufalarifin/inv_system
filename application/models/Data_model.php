@@ -214,6 +214,23 @@ class Data_model extends CI_Model {
         return $data;
     }
 
+    public function getDeviceTypes($dvc_tech = '') {
+        $this->db->select('dvc_code');
+        $this->db->distinct();
+        $this->db->where('status', 0);
+        
+        if (!empty($dvc_tech)) {
+            $this->db->where('dvc_tech', $dvc_tech);
+        }
+        
+        $this->db->where('dvc_code IS NOT NULL');
+        $this->db->where('dvc_code !=', '');
+        $this->db->order_by('dvc_code', 'ASC');
+        
+        $query = $this->db->get('inv_dvc');
+        return $query->result();
+    }
+
     public function getCustom($col, $tab, $key, $val) {
         $sql = "SELECT " . $col . " ";
         $sql .= "FROM " . $tab . " ";

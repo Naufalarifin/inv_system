@@ -58,7 +58,11 @@ class Sql_model extends CI_Model {
 
         if (isset($_GET['key_activity']) && $_GET['key_activity'] != "") {
             $key = $this->db->escape_str($_GET['key_activity']);
-            $filter['all'] .= " AND (inv_act.dvc_sn LIKE '%" . $key . "%' OR inv_act.id_act LIKE '%" . $key . "%')";
+            $filter['all'] .= " AND (
+                inv_act.dvc_sn LIKE '%" . $key . "%' OR 
+                inv_act.id_act LIKE '%" . $key . "%' OR
+                inv_dvc.dvc_code LIKE '%" . $key . "%'
+            )";
         }
         if (isset($_GET['dvc_size']) && $_GET['dvc_size'] != "") {
             $filter['all'] .= " AND inv_act.dvc_size = '" . $this->db->escape_str($_GET['dvc_size']) . "'";
@@ -73,6 +77,10 @@ class Sql_model extends CI_Model {
         // Filter Device Type - Join dengan inv_dvc untuk mendapatkan dvc_type
         if (isset($_GET['dvc_type']) && $_GET['dvc_type'] != "") {
             $filter['all'] .= " AND inv_dvc.dvc_type = '" . $this->db->escape_str($_GET['dvc_type']) . "'";
+        }
+
+        if (isset($_GET['dvc_code']) && $_GET['dvc_code'] != "") {
+            $filter['all'] .= " AND inv_dvc.dvc_code = '" . $this->db->escape_str($_GET['dvc_code']) . "'";
         }
 
         if (isset($_GET['loc_move']) && $_GET['loc_move'] != "") {
