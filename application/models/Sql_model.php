@@ -56,8 +56,8 @@ class Sql_model extends CI_Model {
             $filter['first'] = ($page - 1) * $show;
         }
 
-        if (isset($_GET['key_item']) && $_GET['key_item'] != "") {
-            $key = $this->db->escape_str($_GET['key_item']);
+        if (isset($_GET['key_activity']) && $_GET['key_activity'] != "") {
+            $key = $this->db->escape_str($_GET['key_activity']);
             $filter['all'] .= " AND (inv_act.dvc_sn LIKE '%" . $key . "%' OR inv_act.id_act LIKE '%" . $key . "%')";
         }
         if (isset($_GET['dvc_size']) && $_GET['dvc_size'] != "") {
@@ -72,7 +72,7 @@ class Sql_model extends CI_Model {
 
         // Filter Device Type - Join dengan inv_dvc untuk mendapatkan dvc_type
         if (isset($_GET['dvc_type']) && $_GET['dvc_type'] != "") {
-            $filter['all'] .= " AND dvc.dvc_type = '" . $this->db->escape_str($_GET['dvc_type']) . "'";
+            $filter['all'] .= " AND inv_dvc.dvc_type = '" . $this->db->escape_str($_GET['dvc_type']) . "'";
         }
 
         if (isset($_GET['loc_move']) && $_GET['loc_move'] != "") {
@@ -104,6 +104,12 @@ class Sql_model extends CI_Model {
             $filter['all'] .= " AND DATE(inv_act.inv_out) <= '" . $this->db->escape_str($_GET['out_date_to']) . "'";
         }
 
+        if (isset($_GET['act_date_from']) && $_GET['act_date_from'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.act_date) >= '" . $this->db->escape_str($_GET['act_date_from']) . "'";
+        }
+        if (isset($_GET['act_date_to']) && $_GET['act_date_to'] != "") {
+            $filter['all'] .= " AND DATE(inv_act.act_date) <= '" . $this->db->escape_str($_GET['act_date_to']) . "'";
+        }
         $activity_filter = isset($_GET['activity']) ? $_GET['activity'] : '';
 
         switch($activity_filter) {
