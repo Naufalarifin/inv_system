@@ -254,9 +254,9 @@ function loadData(link) {
   }
 }
 
-function showLoading() {
-  return '<div style="text-align: center; padding: 40px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px;">Loading data...</p></div>'
-}
+// function showLoading() {
+//   return '<div style="text-align: center; padding: 40px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px;">Loading data...</p></div>'
+// }
 
 // =================== SERIAL NUMBER VALIDATION ===================
 function validateSerialNumber(serialNumber, type, resultDiv) {
@@ -302,6 +302,8 @@ function switchTable(type) {
   }
 }
 
+let searchTimeout = null;
+
 // =================== TOOLBAR RENDERING ===================
 function renderToolbar() {
   var toolbarLeft = ""
@@ -332,7 +334,7 @@ function renderToolbar() {
     // Search, Filter, dan Export di kanan
     toolbarRight += '<div class="input-group input-sm">'
     toolbarRight +=
-      '<input class="input input-sm" placeholder="Search" type="text" id="key_activity" onkeyup="if(event.key === \'Enter\'){showSecondaryData();}" />'
+      '<input class="input input-sm" placeholder="Search SN or Device Code..." type="text" id="key_activity" />'
     toolbarRight += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>'
     toolbarRight += '<span class="btn btn-primary btn-sm" onclick="showSecondaryData();">Search</span>'
     toolbarRight += "</div>"
@@ -343,6 +345,47 @@ function renderToolbar() {
   // Update kedua div
   document.getElementById("toolbar_left").innerHTML = toolbarLeft
   document.getElementById("toolbar_right").innerHTML = toolbarRight
+  
+  // Setup auto search setelah toolbar di-render
+  setupAutoSearch()
+}
+
+function setupAutoSearch() {
+  const searchInput = document.getElementById("key_activity")
+  
+  if (searchInput) {
+    // Remove existing event listeners untuk avoid duplicate
+    searchInput.removeEventListener("input", handleAutoSearch)
+    
+    // Add event listener untuk auto search
+    searchInput.addEventListener("input", handleAutoSearch)
+    
+    // Keep enter key functionality
+    searchInput.addEventListener("keyup", function(event) {
+      if (event.key === 'Enter') {
+        // Clear timeout dan langsung search
+        if (searchTimeout) {
+          clearTimeout(searchTimeout)
+        }
+        showSecondaryData()
+      }
+    })
+  }
+}
+
+// Handle auto search dengan debounce
+function handleAutoSearch(event) {
+  const searchTerm = event.target.value.trim()
+  
+  // Clear existing timeout
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  
+  // Set timeout untuk debounce (500ms delay agar tidak terlalu cepat)
+  searchTimeout = setTimeout(() => {
+    showSecondaryData()
+  }, 500)
 }
 
 // =================== TYPE SWITCHING ===================
@@ -362,8 +405,8 @@ function switchEcctType(type) {
 
 // =================== DATA LOADING FUNCTIONS ===================
 function showMainData(page = 1) {
-  const loading = showLoading()
-  if (page !== "export") document.getElementById("show_data").innerHTML = loading
+  // const loading = showLoading()
+  // if (page !== "export") document.getElementById("show_data").innerHTML = loading
 
   var val = "?"
   val += "&type=" + currentType
@@ -383,8 +426,8 @@ function showMainData(page = 1) {
 }
 
 function showSecondaryData(page = 1) {
-  const loading = showLoading()
-  if (page !== "export") document.getElementById("show_data").innerHTML = loading
+  // const loading = showLoading()
+  // if (page !== "export") document.getElementById("show_data").innerHTML = loading
 
   var val = "?"
   const fields = [
@@ -393,6 +436,7 @@ function showSecondaryData(page = 1) {
     "dvc_col",
     "dvc_qc",
     "dvc_type",
+    "dvc_code",
     "in_date_from",
     "in_date_to",
     "move_date_from",
@@ -708,3 +752,128 @@ window.onload = () => {
     showMainData()
   }
 }
+
+// Searchable Dropdown Class
+class SearchableDropdown {
+  constructor(containerId, options, hiddenInputId) {
+      this.container = document.getElementById(containerId);
+      if (!this.container) return;
+      
+      this.hiddenInput = document.getElementById(hiddenInputId);
+      this.display = this.container.querySelector('.select-display');
+      this.selectedSpan = this.container.querySelector('#dvc_code_selected');
+      this.searchInput = this.container.querySelector('.search-input');
+      this.optionsContainer = this.container.querySelector('.dropdown-options');
+      this.options = options || [];
+      this.filteredOptions = [...this.options];
+      
+      this.init();
+  }
+  
+  init() {
+      this.renderOptions();
+      this.bindEvents();
+  }
+  
+  renderOptions() {
+      if (!this.optionsContainer) return;
+      
+      this.optionsContainer.innerHTML = '';
+      
+      // Add "All" option
+      const allOption = document.createElement('div');
+      allOption.className = 'dropdown-option';
+      allOption.textContent = 'All';
+      allOption.dataset.value = '';
+      allOption.addEventListener('click', () => this.selectOption('', 'All'));
+      this.optionsContainer.appendChild(allOption);
+      
+      // Add filtered options
+      if (this.filteredOptions.length === 0) {
+          const noResults = document.createElement('div');
+          noResults.className = 'no-results';
+          noResults.textContent = 'No results found';
+          this.optionsContainer.appendChild(noResults);
+      } else {
+          this.filteredOptions.forEach(option => {
+              const optionElement = document.createElement('div');
+              optionElement.className = 'dropdown-option';
+              optionElement.textContent = option.dvc_code;
+              optionElement.dataset.value = option.dvc_code;
+              optionElement.addEventListener('click', () => this.selectOption(option.dvc_code, option.dvc_code));
+              this.optionsContainer.appendChild(optionElement);
+          });
+      }
+  }
+  
+  bindEvents() {
+      if (!this.display || !this.searchInput) return;
+      
+      this.display.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.toggle();
+      });
+      
+      this.searchInput.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          this.filteredOptions = this.options.filter(option => 
+              option.dvc_code.toLowerCase().includes(searchTerm)
+          );
+          this.renderOptions();
+      });
+      
+      this.container.addEventListener('click', (e) => {
+          e.stopPropagation();
+      });
+      
+      document.addEventListener('click', () => {
+          this.close();
+      });
+      
+      this.searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+          }
+      });
+  }
+  
+  toggle() {
+      if (this.container.classList.contains('active')) {
+          this.close();
+      } else {
+          this.open();
+      }
+  }
+  
+  open() {
+      this.container.classList.add('active');
+      if (this.searchInput) {
+          this.searchInput.focus();
+          this.searchInput.value = '';
+      }
+      this.filteredOptions = [...this.options];
+      this.renderOptions();
+  }
+  
+  close() {
+      this.container.classList.remove('active');
+  }
+  
+  selectOption(value, text) {
+      if (this.selectedSpan) {
+          this.selectedSpan.textContent = text;
+      }
+      if (this.hiddenInput) {
+          this.hiddenInput.value = value;
+      }
+      this.close();
+  }
+}
+
+// Initialize searchable dropdown setelah DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Cek apakah window.deviceCodes ada dan tidak kosong
+  if (typeof window.deviceCodes !== 'undefined' && window.deviceCodes.length > 0) {
+      new SearchableDropdown('dvc_code_dropdown', window.deviceCodes, 'dvc_code');
+  }
+});

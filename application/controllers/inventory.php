@@ -40,6 +40,7 @@ class Inventory extends CI_Controller {
         $data['onload'] = "showDataEcct();";
         $data = $this->load_top($data);
         $data['title_page'] = "Inventory ECCT";
+        $data['dvc_code'] = $this->data_model->getDeviceTypes('ecct');
         $this->load->view('inventory/banner', $data);
         $this->load->view('inventory/inv_ecct', $data);
         $this->load_bot($data);
@@ -49,6 +50,7 @@ class Inventory extends CI_Controller {
         $data['onload'] = "showDataEcbs();";
         $data = $this->load_top($data);
         $data['title_page'] = "Inventory ECBS";
+        $data['dvc_code'] = $this->data_model->getDeviceTypes('ecbs');
         $this->load->view('inventory/banner', $data);
         $this->load->view('inventory/inv_ecbs', $data);
         $this->load_bot($data);
