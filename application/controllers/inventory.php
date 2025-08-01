@@ -110,11 +110,30 @@ class Inventory extends CI_Controller {
 		    'data_inv_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export'),
 		    'data_inv_ecct_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecct'),
 		    'data_inv_ecbs_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecbs'),
+		);
 
 
-            if (isset($type_map[$type])) {
-                $data['data'] = $this->inventory_model->$handler($tech, 999999);
-            } elseif (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {
+        if (isset($type_map[$type])) {
+            $tech = isset($type_map[$type]['tech']) ? $type_map[$type]['tech'] : (isset($_GET['tech']) ? $_GET['tech'] : (isset($_POST['tech']) ? $_POST['tech'] : 'ecct'));
+            $handler = $type_map[$type]['handler'];
+            $view = $type_map[$type]['view'];
+            $data['data'] = $this->inventory_model->$handler($tech, 999999);
+            $this->load->view($view, $data);
+            $this->load_bot($data, "no_view");
+            return;
+        }
+
+        switch ($type) {
+            case 'data_item_show':
+                $data['data'] = $this->inventory_model->getAllItemByTech('ecct', 10);
+                $this->load->view('inventory/data/data_item_show', $data);
+                break;
+            case 'data_item_show_ecbs':
+                $data['data'] = $this->inventory_model->getAllItemByTech('ecbs', 10);
+                $this->load->view('inventory/data/data_item_show', $data);
+                break;
+            case 'data_item_export':
+                if (isset($_GET['context']) && $_GET['context'] === 'inv_ecct') {
                     $data['data'] = $this->inventory_model->getAllItemByTech('ecct',999999);
                 } elseif (isset($_GET['context']) && $_GET['context'] === 'inv_ecbs') {
                     $data['data'] = $this->inventory_model->getAllItemByTech('ecbs', 999999);
