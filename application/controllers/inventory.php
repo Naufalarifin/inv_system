@@ -158,6 +158,11 @@ class Inventory extends CI_Controller {
     private function _handle_json_request($callback) {
         try {
             $result = $callback();
+            return $this->_output_json($result);
+        } catch (Exception $e) {
+            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+        }
+    }
 
     protected function _get_json_input() {
         $json = file_get_contents('php://input');
