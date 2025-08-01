@@ -165,7 +165,7 @@ $is_ecbs = isset($model_data[0]['warna']);
                     if(isset($model_data) && !empty($model_data)) {
                         
                         // Preprocessing: Group consecutive items with same device name
-                        $grouped_data = [];
+                        $grouped_data = array();
                         $current_group = null;
                         
                         foreach ($model_data as $row) {
@@ -174,11 +174,11 @@ $is_ecbs = isset($model_data[0]['warna']);
                                 if ($current_group !== null) {
                                     $grouped_data[] = $current_group;
                                 }
-                                $current_group = [
+                                $current_group = array(
                                     'dvc_name' => $row['dvc_name'],
-                                    'rows' => [$row],
+                                    'rows' => array($row),
                                     'rowspan' => 1
-                                ];
+                                );
                             } else {
                                 // Add to current group
                                 $current_group['rows'][] = $row;

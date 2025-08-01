@@ -2,9 +2,9 @@
 header('Content-Type: application/vnd.ms-excel');
 header('Content-Disposition: attachment; filename="osc_export_' . date('Y-m-d_H-i-s') . '.xls"');
 
-$oscillators = [];
-$accessories = [];
-$accessories_codes = ['EFD', 'SC2', 'SC3'];
+$oscillators = array();
+$accessories = array();
+$accessories_codes = array('EFD', 'SC2', 'SC3');
 
 if($data['data'] && is_array($data['data'])) {
     foreach ($data['data'] as $row) {
@@ -23,16 +23,16 @@ if($data['data'] && is_array($data['data'])) {
 }
 
 function renderOscTableSectionExport($title, $items) {
-    $grouped_items = [];
+    $grouped_items = array();
     foreach ($items as $item) {
         $code = $item['dvc_code'];
         if (!isset($grouped_items[$code])) {
-            $grouped_items[$code] = [
+            $grouped_items[$code] = array(
                 'dvc_code' => $code,
                 'dvc_name' => $item['dvc_name'],
                 'ln_count' => 0,
                 'dn_count' => 0
-            ];
+            );
         }
         $grouped_items[$code]['ln_count'] += isset($item['ln_count']) ? $item['ln_count'] : 0;
         $grouped_items[$code]['dn_count'] += isset($item['dn_count']) ? $item['dn_count'] : 0;

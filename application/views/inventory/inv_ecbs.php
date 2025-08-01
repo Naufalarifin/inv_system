@@ -570,6 +570,3 @@ window.deviceCodes = [
 ];
 </script>
 
-
-<!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.3"></script>

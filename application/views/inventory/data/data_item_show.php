@@ -53,7 +53,7 @@
                     <td align="left" style="padding: 2px 4px;">
                         <?php if ($displayColor && isset($row['warna'])) { ?>
                             <?php
-                            $color_map = [
+                            $color_map = array(
                                 'Black' => '#000000',
                                 'Navy' => '#001f5b',
                                 'Army' => '#4b5320',
@@ -63,7 +63,7 @@
                                 'Custom' => '#ffffff',
                                 'none' => '#fff',
                                 '-' => '#fff'
-                            ];
+                            );
                             $warna = trim($row['warna']);
                             if (strtolower($warna) === 'custom') {
                                 echo '<span style="font-size:10px;">CUSTOM</span>';
