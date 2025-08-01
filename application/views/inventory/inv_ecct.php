@@ -370,7 +370,7 @@ var currentEcctType = 'app';
 window.deviceCodes = [
     <?php 
     if(!empty($dvc_code)) {
-        $codes = [];
+        $codes = array();
         foreach($dvc_code as $code) {
             $codes[] = "{ dvc_code: '" . addslashes($code->dvc_code) . "' }";
         }
@@ -380,5 +380,3 @@ window.deviceCodes = [
 ];
 </script>
 
-<!-- Load Universal Inventory Script -->
-<script src="<?php echo base_url('js/inventory.js'); ?> ? v = 1.2"></script>

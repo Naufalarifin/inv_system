@@ -1,7 +1,7 @@
 <?php
-$oscillators = [];
-$accessories = [];
-$accessories_codes = ['EFD', 'SC2', 'SC3'];
+$oscillators = array();
+$accessories = array();
+$accessories_codes = array('EFD', 'SC2', 'SC3');
 
 if($data['query'] && $data['query']->num_rows() > 0) {
     foreach ($data['query']->result_array() as $row) {
@@ -20,16 +20,16 @@ if($data['query'] && $data['query']->num_rows() > 0) {
 }
 
 function renderOscTableSection($title, $items) {
-    $grouped_items = [];
+    $grouped_items =  array();
     foreach ($items as $item) {
         $code = $item['dvc_code'];
         if (!isset($grouped_items[$code])) {
-            $grouped_items[$code] = [
+            $grouped_items[$code] =  array(
                 'dvc_code' => $code,
                 'dvc_name' => $item['dvc_name'],
                 'ln_count' => 0,
                 'dn_count' => 0
-            ];
+            );
         }
         $grouped_items[$code]['ln_count'] += isset($item['ln_count']) ? $item['ln_count'] : 0;
         $grouped_items[$code]['dn_count'] += isset($item['dn_count']) ? $item['dn_count'] : 0;
@@ -47,7 +47,7 @@ function renderOscTableSection($title, $items) {
 
     echo '<div class="card-table mb-4">';
     echo '    <div class="table-responsive">';
-    echo '        <table class="table table-border align-middle text-gray-700 font-medium text-sm">';
+    echo '        <table class="table table-border align-middle text-gray-700 font-medium text-sm compact-table">';
     echo '            <thead>';
     echo '                <tr>';
     echo '                    <th align="center" width="40">NO</th>';
@@ -108,19 +108,19 @@ function renderOscTableSection($title, $items) {
 renderOscTableSection('JENIS OSCILLATOR', $oscillators);
 echo '<div style="margin-top: 20px;"></div>';
 renderOscTableSection('JENIS ACCESORIES', $accessories);
-echo '        <div style="padding: 10px; font-size: 11px; color: #666;">';
-echo '            <strong>*Keterangan:</strong> Jumlah hanya menghitung item yang belum keluar (inv_out masih kosong)';
-echo '        </div>';
 ?>
 
 <style>
-.table.table-border.text-xs td, .table.table-border.text-xs th {
-  font-size: 10px !important;
-  padding: 4px 6px !important;
+.compact-table {
+    font-size: 14px !important;
 }
-.table.table-border tfoot tr td {
-    font-size: 12px !important;
-    padding: 6px 8px !important;
+.compact-table th,
+.compact-table td {
+    padding: 0px 4px !important;
+    line-height: 1.8 !important;
+}
+.compact-table th {
+    font-size: 14px !important;
 }
 
 </style> 

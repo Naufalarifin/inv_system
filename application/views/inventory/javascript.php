@@ -1,4 +1,5 @@
-/**
+<script type="text/javascript">
+	/**
  * Universal Inventory Management System
  * File JavaScript universal untuk inv_ecbs.php dan inv_ecct.php
  *
@@ -539,6 +540,7 @@ function showInputTab(tab) {
 
 // =================== INPUT SUBMISSION ===================
 function submitInput(type) {
+
   if (inputMode === "massive") {
     submitMassiveInput(type)
     return
@@ -548,6 +550,7 @@ function submitInput(type) {
   const url = CONFIG.urlMenu + "input_process"
   let resultDiv = ""
   let serialNumber = ""
+
 
   if (type === "in") {
     serialNumber = document.getElementById("in_serial_number").value.trim()
@@ -574,6 +577,8 @@ function submitInput(type) {
     }
     resultDiv = document.getElementById("move_result_message")
   }
+
+
 
   fetch(url, {
     method: "POST",
@@ -627,6 +632,8 @@ function submitInput(type) {
 
 // =================== MASSIVE INPUT SUBMISSION ===================
 async function submitMassiveInput(type) {
+
+
   // Get elements
   const serialNumbersEl = document.getElementById(`${type}_serial_numbers_massive`)
   const qcStatusEl = document.getElementById(`${type}_qc_status`)
@@ -656,7 +663,7 @@ async function submitMassiveInput(type) {
     }
   }
 
-  const url = "http://localhost/cdummy/inventory/input_process"
+  const url = "<?php echo $config['base_url']; ?>/inventory/input_process"
 
   let successCount = 0,
     failCount = 0
@@ -702,11 +709,17 @@ async function submitMassiveInput(type) {
     }
   }
 
+
+ 
+
   // Show results
   loadingEl.style.display = "none"
   let message = `Processing complete: ${successCount} successful, ${failCount} failed.`
 
+
+
   if (failCount === 0) {
+
     serialNumbersEl.value = ""
     refreshCurrentData()
     resultEl.className = "input-result-message success"
@@ -727,6 +740,9 @@ async function submitMassiveInput(type) {
   resultEl.innerText = message
   resultEl.style.display = "block"
 }
+
+
+
 
 // =================== REFRESH FUNCTIONS ===================
 function refreshCurrentData() {
@@ -877,3 +893,5 @@ document.addEventListener('DOMContentLoaded', function() {
       new SearchableDropdown('dvc_code_dropdown', window.deviceCodes, 'dvc_code');
   }
 });
+
+</script>

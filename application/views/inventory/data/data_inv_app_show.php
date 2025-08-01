@@ -56,7 +56,7 @@ $is_ecbs = isset($model_data[0]['warna']);
                     <th align="center" >3XL</th>
                     <th align="center" >ALL</th>
                     <th align="center" >CUS</th>
-                    <th align="center" >Subtotal*</th>
+                    <th align="center" >Subtotal</th>
                     <th align="center" >%</th>
                 </tr>
             </thead>
@@ -165,7 +165,7 @@ $is_ecbs = isset($model_data[0]['warna']);
                     if(isset($model_data) && !empty($model_data)) {
                         
                         // Preprocessing: Group consecutive items with same device name
-                        $grouped_data = [];
+                        $grouped_data = array();
                         $current_group = null;
                         
                         foreach ($model_data as $row) {
@@ -174,11 +174,11 @@ $is_ecbs = isset($model_data[0]['warna']);
                                 if ($current_group !== null) {
                                     $grouped_data[] = $current_group;
                                 }
-                                $current_group = [
+                                $current_group = array(
                                     'dvc_name' => $row['dvc_name'],
-                                    'rows' => [$row],
+                                    'rows' => array($row),
                                     'rowspan' => 1
-                                ];
+                                );
                             } else {
                                 // Add to current group
                                 $current_group['rows'][] = $row;
@@ -252,9 +252,6 @@ $is_ecbs = isset($model_data[0]['warna']);
                 </tr>
             </tfoot>
         </table>
-        <div style="padding: 10px; font-size: 11px; color: #666;">
-            <strong>*Keterangan:</strong> Jumlah hanya menghitung item yang belum keluar (inv_out masih kosong)
-        </div>
     </div>
 </div>
 
