@@ -151,6 +151,11 @@ class Inventory extends CI_Controller {
                 }
                 $this->load->view('inventory/data/data_item_export', $data);
                 break;
+            case 'osc_sync_differences':
+                $tech = isset($_GET['tech']) ? $_GET['tech'] : 'ecct';
+                $data['differences'] = $this->inventory_model->getOscSyncDifferences($tech);
+                $this->load->view('inventory/data/osc_sync_differences', $data);
+                break;
 
             default:
                 show_404();
@@ -162,9 +167,9 @@ class Inventory extends CI_Controller {
     private function _handle_json_request($callback) {
         try {
             $result = $callback();
-            $this->_output_json($result);
+            return $this->_output_json($result);
         } catch (Exception $e) {
-            $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
         }
     }
 

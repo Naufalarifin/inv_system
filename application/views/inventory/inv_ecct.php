@@ -111,8 +111,8 @@
                     <span class="form-hint">QC Status</span>
                     <select class="select" id="dvc_qc">
                         <option value="">All</option>
-                        <option value="DN">LN</option>
-                        <option value="LN">DN</option>
+                        <option value="DN">DN</option>
+                        <option value="LN">LN</option>
                     </select>
                 </div>
                 <div class="form-group">
