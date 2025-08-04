@@ -3,14 +3,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Inventory extends CI_Controller {
 
-	public function __construct() {
+    public function __construct() {
         parent::__construct();
         $this->load->database();
         $this->load->model(array('data_model', 'config_model', 'inventory_model','report_model'));
         $this->load->helper('url');
         session_start();
     }
-
 
     public function index() {
         $data = $this->load_top($data);
@@ -98,29 +97,43 @@ class Inventory extends CI_Controller {
         }
     }
 
-
     public function data($type = "", $input = "") {
         $data = $this->load_top("", "no_view");
 
+        // Handle data_inv_week_show data display
+        if ($type == 'data_inv_week_show') {
+            $year = $this->uri->segment(4); // Get year from URL segment
+            $month = $this->input->get('month');
+            
+            if ($year && $month) {
+                $data['data'] = $this->report_model->get_inv_week_data($year, $month);
+            } else {
+                $data['data'] = array();
+            }
+            
+            $this->load->view('inventory/data/data_inv_week_show', $data);
+            $this->load_bot($data, "no_view");
+            return;
+        }
+
         // Mapping type ke handler dan parameter
         $type_map = array(
-		    // APP
-		    'data_inv_app_show' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_show'),
-		    'data_inv_ecct_app_show' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_show', 'tech' => 'ecct'),
-		    'data_inv_ecbs_app_show' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_show', 'tech' => 'ecbs'),
-		    'data_inv_app_export' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_export'),
-		    'data_inv_ecct_app_export' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_export', 'tech' => 'ecct'),
-		    'data_inv_ecbs_app_export' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_export', 'tech' => 'ecbs'),
-		    
-		    // OSC
-		    'data_inv_osc_show' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_show'),
-		    'data_inv_ecct_osc_show' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_show', 'tech' => 'ecct'),
-		    'data_inv_ecbs_osc_show' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_show', 'tech' => 'ecbs'),
-		    'data_inv_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export'),
-		    'data_inv_ecct_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecct'),
-		    'data_inv_ecbs_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecbs'),
-		);
-
+            // APP
+            'data_inv_app_show' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_show'),
+            'data_inv_ecct_app_show' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_show', 'tech' => 'ecct'),
+            'data_inv_ecbs_app_show' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_show', 'tech' => 'ecbs'),
+            'data_inv_app_export' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_export'),
+            'data_inv_ecct_app_export' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_export', 'tech' => 'ecct'),
+            'data_inv_ecbs_app_export' => array('handler' => 'getDeviceStockApp', 'view' => 'inventory/data/data_inv_app_export', 'tech' => 'ecbs'),
+            
+            // OSC
+            'data_inv_osc_show' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_show'),
+            'data_inv_ecct_osc_show' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_show', 'tech' => 'ecct'),
+            'data_inv_ecbs_osc_show' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_show', 'tech' => 'ecbs'),
+            'data_inv_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export'),
+            'data_inv_ecct_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecct'),
+            'data_inv_ecbs_osc_export' => array('handler' => 'getDeviceStockOsc', 'view' => 'inventory/data/data_inv_osc_export', 'tech' => 'ecbs'),
+        );
 
         if (isset($type_map[$type])) {
             $tech = isset($type_map[$type]['tech']) ? $type_map[$type]['tech'] : (isset($_GET['tech']) ? $_GET['tech'] : (isset($_POST['tech']) ? $_POST['tech'] : 'ecct'));
@@ -164,6 +177,142 @@ class Inventory extends CI_Controller {
         $this->load_bot($data, "no_view");
     }
 
+    // Weekly period management methods
+    public function inv_week() {
+        $data['onload'] = "showInvWeekData();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory Weekly Period Management";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/inv_week', $data);
+        $this->load->view('inventory/javascript', $data);
+        $this->load_bot($data);
+    }
+
+    public function generate_inv_week_periods() {
+        try {
+            $input_data = $this->_get_json_input();
+            if (!$input_data) {
+                return $this->_output_json($this->_json_response(false, 'Invalid JSON input'));
+            }
+
+            $year = isset($input_data['year']) ? intval($input_data['year']) : null;
+            $month = isset($input_data['month']) ? intval($input_data['month']) : null;
+
+            if (!$year || !$month) {
+                return $this->_output_json($this->_json_response(false, 'Year and month are required'));
+            }
+
+            // Validate year and month ranges
+            if ($year < 2020 || $year > 2030) {
+                return $this->_output_json($this->_json_response(false, 'Invalid year range'));
+            }
+            
+            if ($month < 1 || $month > 12) {
+                return $this->_output_json($this->_json_response(false, 'Invalid month range'));
+            }
+
+            $result = $this->report_model->generate_weekly_periods($year, $month);
+            
+            $message = "Periods generated successfully with 27th-26th logic and 08:00-17:00 time schedule. Total periods: " . count($result);
+            return $this->_output_json($this->_json_response(true, $message, $result));
+
+        } catch (Exception $e) {
+            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+        }
+    }
+
+    public function update_inv_week_period() {
+        try {
+            $input_data = $this->_get_json_input();
+            if (!$input_data) {
+                return $this->_output_json($this->_json_response(false, 'Invalid JSON input'));
+            }
+
+            $id_week = isset($input_data['id_week']) ? intval($input_data['id_week']) : null;
+            $date_start = isset($input_data['date_start']) ? $input_data['date_start'] : null;
+            $date_finish = isset($input_data['date_finish']) ? $input_data['date_finish'] : null;
+
+            if (!$id_week || !$date_start || !$date_finish) {
+                return $this->_output_json($this->_json_response(false, 'All fields are required'));
+            }
+
+            // Validate date format
+            $start_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_start);
+            $finish_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_finish);
+            
+            if (!$start_dt || !$finish_dt) {
+                return $this->_output_json($this->_json_response(false, 'Invalid date format'));
+            }
+
+            if ($start_dt >= $finish_dt) {
+                return $this->_output_json($this->_json_response(false, 'Start date must be before finish date'));
+            }
+
+            $result = $this->report_model->update_inv_week($id_week, $date_start, $date_finish);
+            
+            if ($result) {
+                $message = "Period updated successfully. Times automatically set to 08:00-17:00";
+                return $this->_output_json($this->_json_response(true, $message));
+            } else {
+                return $this->_output_json($this->_json_response(false, 'Failed to update period'));
+            }
+
+        } catch (Exception $e) {
+            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+        }
+    }
+
+    public function export_inv_week() {
+        try {
+            $year = $this->input->get('year');
+            $month = $this->input->get('month');
+            
+            if (!$year || !$month) {
+                redirect('inventory/inv_week');
+            }
+
+            $data = $this->report_model->get_inv_week_data($year, $month);
+            $this->exportInvWeekData($data, 'inv_week_' . $year . '_' . $month);
+
+        } catch (Exception $e) {
+            redirect('inventory/inv_week');
+        }
+    }
+
+    private function exportInvWeekData($data, $filename) {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '_' . date('Y-m-d') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        
+        // Add BOM for UTF-8
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+        
+        // Header
+        fputcsv($output, array('ID Week', 'Year', 'Month', 'Week', 'Date Start', 'Date Finish', 'Duration (Days)'));
+        
+        // Data
+        foreach ($data as $row) {
+            $start_date = new DateTime($row['date_start']);
+            $finish_date = new DateTime($row['date_finish']);
+            $duration = $start_date->diff($finish_date)->days + 1;
+            
+            fputcsv($output, array(
+                $row['id_week'],
+                $row['period_y'],
+                $row['period_m'],
+                $row['period_w'],
+                $start_date->format('d/m/Y H:i'),
+                $finish_date->format('d/m/Y H:i'),
+                $duration
+            ));
+        }
+        
+        fclose($output);
+        exit;
+    }
+
+    // Helper methods
     private function _handle_json_request($callback) {
         try {
             $result = $callback();
@@ -195,15 +344,7 @@ class Inventory extends CI_Controller {
             ->set_output(json_encode($data));
     }
 
-
-
-
-
-
-
-
-
-
+    // Other existing methods...
     public function report($type = "", $input = "") {
         $data = $this->load_top("", "no_view");
         
@@ -256,7 +397,6 @@ class Inventory extends CI_Controller {
     }
     
     private function exportReportData($data, $filename) {
-        // Simple CSV export
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '_' . date('Y-m-d') . '.csv"');
         
@@ -279,65 +419,62 @@ class Inventory extends CI_Controller {
         exit;
     }
     
-    // Add these methods to your inventory controller
-
-public function save_needs_data() {
-    $data = array(
-        'id_dvc' => $this->input->post('id_dvc'),
-        'dvc_size' => $this->input->post('dvc_size'),
-        'dvc_col' => $this->input->post('dvc_col'),
-        'dvc_qc' => $this->input->post('dvc_qc'),
-        'needs_qty' => $this->input->post('needs_qty')
-    );
-    
-    // Check if record exists
-    $existing = $this->report_model->getNeedsData(
-        $data['id_dvc'], 
-        $data['dvc_size'], 
-        $data['dvc_col'], 
-        $data['dvc_qc']
-    );
-    
-    if ($existing) {
-        // Update existing record
-        $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $data['needs_qty']));
-    } else {
-        // Insert new record
-        $result = $this->report_model->saveNeedsData($data);
-    }
-    
-    echo json_encode(array('success' => $result));
-}
-
-public function save_all_needs_data() {
-    $data = $this->input->post('data');
-    $success_count = 0;
-    
-    foreach ($data as $item) {
+    public function save_needs_data() {
+        $data = array(
+            'id_dvc' => $this->input->post('id_dvc'),
+            'dvc_size' => $this->input->post('dvc_size'),
+            'dvc_col' => $this->input->post('dvc_col'),
+            'dvc_qc' => $this->input->post('dvc_qc'),
+            'needs_qty' => $this->input->post('needs_qty')
+        );
+        
         // Check if record exists
         $existing = $this->report_model->getNeedsData(
-            $item['id_dvc'], 
-            $item['dvc_size'], 
-            $item['dvc_col'], 
-            $item['dvc_qc']
+            $data['id_dvc'], 
+            $data['dvc_size'], 
+            $data['dvc_col'], 
+            $data['dvc_qc']
         );
         
         if ($existing) {
             // Update existing record
-            $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $item['needs_qty']));
+            $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $data['needs_qty']));
         } else {
             // Insert new record
-            $result = $this->report_model->saveNeedsData($item);
+            $result = $this->report_model->saveNeedsData($data);
         }
         
-        if ($result) {
-            $success_count++;
-        }
+        echo json_encode(array('success' => $result));
     }
-    
-    echo json_encode(array('success' => $success_count, 'total' => count($data)));
-}
 
+    public function save_all_needs_data() {
+        $data = $this->input->post('data');
+        $success_count = 0;
+        
+        foreach ($data as $item) {
+            // Check if record exists
+            $existing = $this->report_model->getNeedsData(
+                $item['id_dvc'], 
+                $item['dvc_size'], 
+                $item['dvc_col'], 
+                $item['dvc_qc']
+            );
+            
+            if ($existing) {
+                // Update existing record
+                $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $item['needs_qty']));
+            } else {
+                // Insert new record
+                $result = $this->report_model->saveNeedsData($item);
+            }
+            
+            if ($result) {
+                $success_count++;
+            }
+        }
+        
+        echo json_encode(array('success' => $success_count, 'total' => count($data)));
+    }
 
     function load_top($data = "", $view = "", $access = "") {
         $this->load->model("load_model");
@@ -350,3 +487,4 @@ public function save_all_needs_data() {
         $this->load_model->load_bot_v3($data, $view);
     }
 }
+?>
