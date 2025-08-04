@@ -6,7 +6,7 @@ class Inventory extends CI_Controller {
 	public function __construct() {
         parent::__construct();
         $this->load->database();
-        $this->load->model(array('data_model', 'config_model', 'inventory_model'));
+        $this->load->model(array('data_model', 'config_model', 'inventory_model','report_model'));
         $this->load->helper('url');
         session_start();
     }
@@ -57,6 +57,15 @@ class Inventory extends CI_Controller {
         $this->load->view('inventory/banner', $data);
         $this->load->view('inventory/inv_ecbs', $data);
         $this->load->view('inventory/javascript', $data);
+        $this->load_bot($data);
+    }
+
+    public function inv_report_needs() {
+        $data['onload'] = "showDataReportNeeds();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory Report Needs";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('report/inv_report_needs', $data);
         $this->load_bot($data);
     }
 
@@ -180,6 +189,150 @@ class Inventory extends CI_Controller {
             ->set_content_type('application/json')
             ->set_output(json_encode($data));
     }
+
+
+
+
+
+
+
+
+
+
+    public function report($type = "", $input = "") {
+        $data = $this->load_top("", "no_view");
+        
+        switch ($type) {
+            case 'report_ecbs_app_show':
+                $data['data'] = $this->report_model->getReportData('ecbs', 'app');
+                $this->load->view('report/needs/report_app_show', $data);
+                break;
+                
+            case 'report_ecct_app_show':
+                $data['data'] = $this->report_model->getReportData('ecct', 'app');
+                $this->load->view('report/needs/report_app_show', $data);
+                break;
+                
+            case 'report_ecbs_osc_show':
+                $data['data'] = $this->report_model->getReportData('ecbs', 'osc');
+                $this->load->view('report/needs/report_osc_show', $data);
+                break;
+                
+            case 'report_ecct_osc_show':
+                $data['data'] = $this->report_model->getReportData('ecct', 'osc');
+                $this->load->view('report/needs/report_osc_show', $data);
+                break;
+                
+            case 'report_ecbs_app_export':
+                $data['data'] = $this->report_model->getReportData('ecbs', 'app');
+                $this->exportReportData($data['data'], 'ECBS_APP_Report');
+                break;
+                
+            case 'report_ecct_app_export':
+                $data['data'] = $this->report_model->getReportData('ecct', 'app');
+                $this->exportReportData($data['data'], 'ECCT_APP_Report');
+                break;
+                
+            case 'report_ecbs_osc_export':
+                $data['data'] = $this->report_model->getReportData('ecbs', 'osc');
+                $this->exportReportData($data['data'], 'ECBS_OSC_Report');
+                break;
+                
+            case 'report_ecct_osc_export':
+                $data['data'] = $this->report_model->getReportData('ecct', 'osc');
+                $this->exportReportData($data['data'], 'ECCT_OSC_Report');
+                break;
+                
+            default:
+                break;
+        }
+        
+        $this->load_bot($data, "no_view");
+    }
+    
+    private function exportReportData($data, $filename) {
+        // Simple CSV export
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '_' . date('Y-m-d') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        
+        // Header
+        fputcsv($output, array('ID', 'Device Code', 'Device Name', 'Status'));
+        
+        // Data
+        foreach ($data as $row) {
+            fputcsv($output, array(
+                $row['id_dvc'],
+                $row['dvc_code'],
+                $row['dvc_name'],
+                $row['status']
+            ));
+        }
+        
+        fclose($output);
+        exit;
+    }
+    
+    // Add these methods to your inventory controller
+
+public function save_needs_data() {
+    $data = array(
+        'id_dvc' => $this->input->post('id_dvc'),
+        'dvc_size' => $this->input->post('dvc_size'),
+        'dvc_col' => $this->input->post('dvc_col'),
+        'dvc_qc' => $this->input->post('dvc_qc'),
+        'needs_qty' => $this->input->post('needs_qty')
+    );
+    
+    // Check if record exists
+    $existing = $this->report_model->getNeedsData(
+        $data['id_dvc'], 
+        $data['dvc_size'], 
+        $data['dvc_col'], 
+        $data['dvc_qc']
+    );
+    
+    if ($existing) {
+        // Update existing record
+        $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $data['needs_qty']));
+    } else {
+        // Insert new record
+        $result = $this->report_model->saveNeedsData($data);
+    }
+    
+    echo json_encode(array('success' => $result));
+}
+
+public function save_all_needs_data() {
+    $data = $this->input->post('data');
+    $success_count = 0;
+    
+    foreach ($data as $item) {
+        // Check if record exists
+        $existing = $this->report_model->getNeedsData(
+            $item['id_dvc'], 
+            $item['dvc_size'], 
+            $item['dvc_col'], 
+            $item['dvc_qc']
+        );
+        
+        if ($existing) {
+            // Update existing record
+            $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $item['needs_qty']));
+        } else {
+            // Insert new record
+            $result = $this->report_model->saveNeedsData($item);
+        }
+        
+        if ($result) {
+            $success_count++;
+        }
+    }
+    
+    echo json_encode(array('success' => $success_count, 'total' => count($data)));
+}
+
 
     function load_top($data = "", $view = "", $access = "") {
         $this->load->model("load_model");
