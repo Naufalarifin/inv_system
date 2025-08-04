@@ -5,24 +5,28 @@
             <h3 class="card-title" style="width: 100%;">
                 Inventory Report Needs
                 
-                <!-- Toggle Buttons -->
-                <div style="float: right; margin-left: 20px;">
-                    <div class="btn-group" style="margin-right: 10px;">
+                <!-- Toggle Buttons - Horizontal Layout -->
+                <div style="float: right; display: flex; align-items: center; gap: 15px;">
+                    <!-- ECBS/ECCT Group -->
+                    <div class="btn-group">
                         <button class="btn btn-sm btn-primary" id="btn_ecbs" onclick="selectTech('ecbs')">ECBS</button>
                         <button class="btn btn-sm btn-light" id="btn_ecct" onclick="selectTech('ecct')">ECCT</button>
                     </div>
+                    
+                    <!-- APP/OSC Group -->
                     <div class="btn-group">
                         <button class="btn btn-sm btn-primary" id="btn_app" onclick="selectType('app')">APP</button>
                         <button class="btn btn-sm btn-light" id="btn_osc" onclick="selectType('osc')">OSC</button>
                     </div>
+                    
+                    <!-- Export Button -->
+                    <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportData();">
+                        <i class="ki-filled ki-exit-down !text-base"></i>Export
+                    </a>
                 </div>
-                
-                <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportData();" style="float: right; margin-right: 10px;">
-                    <i class="ki-filled ki-exit-down !text-base"></i>Export
-                </a>
             </h3>
         </div>
-        <div id="show_data"></div>
+        <div id="show_data">Loading...</div>
     </div>
 </div>
 
@@ -51,15 +55,14 @@
     }
     
     function showData() {
-        var loading = document.getElementById('loading').innerHTML;
-        var link = "<?php echo $config['url_menu']; ?>report/report_" + selectedTech + "_" + selectedType + "_show";
+        var link = "<?php echo base_url(); ?>inventory/report/report_" + selectedTech + "_" + selectedType + "_show";
         
-        document.getElementById('show_data').innerHTML = loading;
+        document.getElementById('show_data').innerHTML = '<div style="text-align: center; padding: 20px;">Loading data...</div>';
         $("#show_data").load(link);
     }
     
     function exportData() {
-        var link = "<?php echo $config['url_menu']; ?>report/report_" + selectedTech + "_" + selectedType + "_export";
+        var link = "<?php echo base_url(); ?>inventory/report/report_" + selectedTech + "_" + selectedType + "_export";
         window.open(link, '_blank').focus();
     }
     
