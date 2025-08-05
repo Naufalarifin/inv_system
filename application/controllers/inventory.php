@@ -375,18 +375,18 @@ class Inventory extends CI_Controller {
             } else {
                 $data = array();
             }
-
+            
             $report_map = array(
                 'report_ecbs_app' => array('tech' => 'ecbs', 'type' => 'app', 'view' => 'report/needs/report_app_show', 'export_filename' => 'ECBS_APP_Report'),
                 'report_ecct_app' => array('tech' => 'ecct', 'type' => 'app', 'view' => 'report/needs/report_app_show', 'export_filename' => 'ECCT_APP_Report'),
                 'report_ecbs_osc' => array('tech' => 'ecbs', 'type' => 'osc', 'view' => 'report/needs/report_osc_show', 'export_filename' => 'ECBS_OSC_Report'),
                 'report_ecct_osc' => array('tech' => 'ecct', 'type' => 'osc', 'view' => 'report/needs/report_osc_show', 'export_filename' => 'ECCT_OSC_Report'),
             );
-
+            
             // Use strpos for PHP 5 compatibility
             $base_type = str_replace(array('_show', '_export'), '', $type);
             $action = (strpos($type, '_export') !== false) ? 'export' : 'show';
-
+            
             if (isset($report_map[$base_type])) {
                 $config = $report_map[$base_type];
                 $data['data'] = $this->report_model->getReportData($config['tech'], $config['type']);
@@ -438,63 +438,11 @@ class Inventory extends CI_Controller {
         exit;
     }
     
-    public function save_needs_data() {
-        try {
-            $this->load->model('report_model');
-            
-            $data = array(
-                'id_dvc' => $this->input->post('id_dvc'),
-                'dvc_size' => $this->input->post('dvc_size'),
-                'dvc_col' => $this->input->post('dvc_col'),
-                'dvc_qc' => $this->input->post('dvc_qc'),
-                'needs_qty' => $this->input->post('needs_qty')
-            );
-            
-            // Validate required fields
-            if (empty($data['id_dvc']) || $data['id_dvc'] == '0') {
-                echo json_encode(array('success' => false, 'message' => 'Invalid device ID'));
-                return;
-            }
-            
-            // If quantity is 0 or empty, delete the record
-            if (empty($data['needs_qty']) || $data['needs_qty'] <= 0) {
-                $result = $this->report_model->deleteNeedsData(
-                    $data['id_dvc'], 
-                    $data['dvc_size'], 
-                    $data['dvc_col'], 
-                    $data['dvc_qc']
-                );
-                echo json_encode(array('success' => $result, 'action' => 'deleted'));
-                return;
-            }
-            
-            // Check if record exists
-            $existing = $this->report_model->getNeedsData(
-                $data['id_dvc'], 
-                $data['dvc_size'], 
-                $data['dvc_col'], 
-                $data['dvc_qc']
-            );
-            
-            if ($existing) {
-                // Update existing record
-                $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $data['needs_qty']));
-                echo json_encode(array('success' => $result, 'action' => 'updated'));
-            } else {
-                // Insert new record
-                $result = $this->report_model->saveNeedsData($data);
-                echo json_encode(array('success' => $result, 'action' => 'inserted'));
-            }
-        } catch (Exception $e) {
-            log_message('error', 'Save needs data error: ' . $e->getMessage());
-            echo json_encode(array('success' => false, 'message' => 'An error occurred while saving data'));
-        }
-    }
-
     public function save_all_needs_data() {
         try {
             $this->load->model('report_model');
             
+            // Get the raw POST data
             $data = $this->input->post('data');
             $success_count = 0;
             $actions = array();
@@ -505,11 +453,42 @@ class Inventory extends CI_Controller {
             }
             
             foreach ($data as $item) {
+                // Ensure all required keys exist with default values
+                $item = array_merge(array(
+                    'id_dvc' => '',
+                    'dvc_size' => '',
+                    'dvc_col' => '',
+                    'dvc_qc' => '',
+                    'needs_qty' => 0,
+                    'original_qty' => 0
+                ), $item);
+                
+                // Validate required fields
                 if (empty($item['id_dvc']) || $item['id_dvc'] == '0') {
                     continue;
                 }
                 
-                if (empty($item['needs_qty']) || $item['needs_qty'] <= 0) {
+                // Convert quantities to integer
+                $item['needs_qty'] = intval($item['needs_qty']);
+                $item['original_qty'] = intval($item['original_qty']);
+                
+                // Skip if values are the same (no actual change)
+                if ($item['needs_qty'] === $item['original_qty']) {
+                    $actions[] = 'unchanged';
+                    continue;
+                }
+                
+                // Prepare data for database (exclude original_qty)
+                $db_data = array(
+                    'id_dvc' => $item['id_dvc'],
+                    'dvc_size' => $item['dvc_size'],
+                    'dvc_col' => $item['dvc_col'],
+                    'dvc_qc' => $item['dvc_qc'],
+                    'needs_qty' => $item['needs_qty']
+                );
+                
+                // If quantity is 0 or empty, delete the record
+                if ($item['needs_qty'] <= 0) {
                     $result = $this->report_model->deleteNeedsData(
                         $item['id_dvc'], 
                         $item['dvc_size'], 
@@ -533,14 +512,17 @@ class Inventory extends CI_Controller {
                 
                 if ($existing) {
                     // Update existing record
-                    $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $item['needs_qty']));
+                    $result = $this->report_model->updateNeedsData(
+                        $existing['id_needs'], 
+                        array('needs_qty' => $item['needs_qty'])
+                    );
                     if ($result) {
                         $success_count++;
                         $actions[] = 'updated';
                     }
                 } else {
-                    // Insert new record
-                    $result = $this->report_model->saveNeedsData($item);
+                    // Insert new record (only fields that exist in database)
+                    $result = $this->report_model->saveNeedsData($db_data);
                     if ($result) {
                         $success_count++;
                         $actions[] = 'inserted';
@@ -549,7 +531,7 @@ class Inventory extends CI_Controller {
             }
             
             echo json_encode(array(
-                'success' => $success_count, 
+                'success' => $success_count,
                 'total' => count($data),
                 'actions' => array_count_values($actions)
             ));
@@ -558,7 +540,7 @@ class Inventory extends CI_Controller {
             echo json_encode(array('success' => false, 'message' => 'An error occurred while saving data'));
         }
     }
-
+    
     // Helper methods
     protected function _get_json_input() {
         $json = file_get_contents('php://input');

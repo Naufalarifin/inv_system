@@ -1,97 +1,163 @@
 <script type="text/javascript">
-var currentEditMode = false; // true for edit mode, false for view-only mode
+var editMode = false;
 
-// Function to set the edit mode explicitly
-function setEditMode(mode) {
-    currentEditMode = mode; // Update the global mode variable
-
-    // Enable/disable inputs based on the mode
-    $('.needs-input').prop('disabled', !currentEditMode);
-
-    // Always show the Edit button
-    $('#editModeBtn').show();
-
-    // Show/hide Save All Data button based on the mode
-    if (currentEditMode) {
-        $('#saveAllDataBtn').show();
-    } else {
-        $('#saveAllDataBtn').hide();
-    }
-    calculateTotals(); // Recalculate totals to ensure display is correct
+function showToast(msg, type = 'success') {
+    var t = document.getElementById('toast') || document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:6px;color:white;z-index:9999;transition:all 0.3s;';
+    t.style.backgroundColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
 }
 
-// Function to toggle the edit mode
 function toggleEditMode() {
-    setEditMode(!currentEditMode); // Simply toggle the current mode
+    if (editMode && hasChanges() && !confirm('Discard changes?')) return;
+    
+    editMode = !editMode;
+    $('.needs-input').prop('disabled', !editMode);
+    
+    var $btn = $('#editModeBtn');
+    var $save = $('#saveAllDataBtn');
+    
+    if (editMode) {
+        $btn.text('Cancel').removeClass('btn-primary').addClass('btn-secondary');
+        $save.show();
+        $('.needs-input').each(function() { $(this).data('orig', $(this).val()); });
+    } else {
+        $btn.text('Edit').removeClass('btn-secondary').addClass('btn-primary');
+        $save.hide();
+        if (hasChanges()) {
+            $('.needs-input').each(function() { $(this).val($(this).data('orig') || 0); });
+            calculateTotals();
+        }
+    }
+}
+
+function hasChanges() {
+    var changed = false;
+    $('.needs-input').each(function() {
+        if (($(this).data('orig') || 0) != ($(this).val() || 0)) {
+            changed = true;
+            return false;
+        }
+    });
+    return changed;
 }
 
 function calculateTotals() {
     var sizes = ['xs', 's', 'm', 'l', 'xl', 'xxl', '3xl', 'all', 'cus'];
-    var grandTotal = 0;
-    var rowSubtotals = {};
-
+    var grand = 0, rowTotals = {};
+    
     $('.needs-input').each(function() {
-        var idDvc = $(this).data('id-dvc');
-        var color = $(this).data('color');
-        var rowKey = idDvc + '_' + color;
-        rowSubtotals[rowKey] = (rowSubtotals[rowKey] || 0) + (parseInt($(this).val()) || 0);
+        var key = $(this).data('id-dvc') + '_' + $(this).data('color');
+        rowTotals[key] = (rowTotals[key] || 0) + (parseInt($(this).val()) || 0);
     });
-
-    for (var rowKey in rowSubtotals) {
-        if (rowSubtotals.hasOwnProperty(rowKey)) {
-            $('#subtotal_' + rowKey).text(rowSubtotals[rowKey]);
-            grandTotal += rowSubtotals[rowKey];
-        }
+    
+    for (var key in rowTotals) {
+        $('#subtotal_' + key).text(rowTotals[key]);
+        grand += rowTotals[key];
     }
-
-    $('#grand_total').text(grandTotal);
-
+    
+    $('#grand_total').text(grand);
+    
     sizes.forEach(function(size) {
-        var sizeTotal = 0;
+        var total = 0;
         $('.needs-input[data-size="' + size + '"]').each(function() {
-            sizeTotal += parseInt($(this).val()) || 0;
+            total += parseInt($(this).val()) || 0;
         });
-        $('#total_' + size).text(sizeTotal);
-        $('#percent_' + size).text(grandTotal > 0 ? Math.round((sizeTotal / grandTotal) * 100 * 10) / 10 : 0);
+        $('#total_' + size).text(total);
+        $('#percent_' + size).text(grand > 0 ? Math.round(total / grand * 1000) / 10 : 0);
     });
-
-    for (var rowKey in rowSubtotals) {
-        if (rowSubtotals.hasOwnProperty(rowKey)) {
-            $('#percentage_' + rowKey).text(grandTotal > 0 ? Math.round((rowSubtotals[rowKey] / grandTotal) * 100 * 10) / 10 : 0);
-        }
+    
+    for (var key in rowTotals) {
+        $('#percentage_' + key).text(grand > 0 ? Math.round(rowTotals[key] / grand * 1000) / 10 : 0);
     }
 }
 
 function saveAllData() {
-    var allData = [];
-    $('.needs-input').each(function() {
-        allData.push({
-            id_dvc: $(this).data('id-dvc'),
-            dvc_size: $(this).data('size'),
-            dvc_col: $(this).data('color'),
-            dvc_qc: $(this).data('qc'),
-            needs_qty: parseInt($(this).val()) || 0
-        });
-    });
+    var data = [], changes = 0;
     
-    $.ajax({
-        url: '<?php echo base_url(); ?>inventory/save_all_needs_data',
-        type: 'POST',
-        data: {data: allData},
-        success: function(response) {
-            alert('All data saved successfully!');
-            calculateTotals(); 
-            setEditMode(false); // Revert to view-only mode after saving
-        },
-        error: function() {
-            alert('Failed to save all data.');
+    $('.needs-input').each(function() {
+        var qty = parseInt($(this).val()) || 0;
+        var orig = parseInt($(this).data('orig')) || 0;
+        
+        if (qty > 0 || orig > 0) {
+            if (qty !== orig) changes++;
+            data.push({
+                id_dvc: $(this).data('id-dvc'),
+                dvc_size: $(this).data('size'),
+                dvc_col: $(this).data('color'),
+                dvc_qc: $(this).data('qc'),
+                needs_qty: qty,
+                original_qty: orig
+            });
         }
     });
+    
+    if (!changes) {
+        showToast(data.length ? 'No changes detected' : 'No data to save', 'warning');
+        return;
+    }
+    
+    var $btn = $('#saveAllDataBtn');
+    $btn.prop('disabled', true).text('Saving...');
+    
+    // Split batches if needed
+    var batches = [];
+    for (var i = 0; i < data.length; i += 100) {
+        batches.push(data.slice(i, i + 100));
+    }
+    
+    var actions = {inserted: 0, updated: 0, deleted: 0};
+    
+    function processBatch(idx) {
+        if (idx >= batches.length) {
+            $btn.prop('disabled', false).text('Save All Data');
+            var msgs = [];
+            if (actions.inserted) msgs.push(actions.inserted + ' added');
+            if (actions.updated) msgs.push(actions.updated + ' updated');
+            if (actions.deleted) msgs.push(actions.deleted + ' removed');
+            
+            showToast('Saved' + (msgs.length ? ' (' + msgs.join(', ') + ')' : ''));
+            $('.needs-input').each(function() { $(this).data('orig', $(this).val()); });
+            setTimeout(toggleEditMode, 500);
+            return;
+        }
+        
+        $.post('<?php echo base_url(); ?>inventory/save_all_needs_data', {data: batches[idx]}, function(res) {
+            if (res.success !== false && res.actions) {
+                Object.keys(actions).forEach(k => actions[k] += res.actions[k] || 0);
+                processBatch(idx + 1);
+            } else {
+                $btn.prop('disabled', false).text('Save All Data');
+                showToast('Save failed', 'error');
+            }
+        }, 'json').fail(function() {
+            $btn.prop('disabled', false).text('Save All Data');
+            showToast('Save failed', 'error');
+        });
+    }
+    
+    processBatch(0);
 }
 
-$(document).ready(function() {
+$(function() {
     calculateTotals();
-    // Set mode awal ke "view-only" saat halaman dimuat
-    setEditMode(false); 
+    
+    // Set initial state: view-only mode (disabled inputs)
+    editMode = false;
+    $('.needs-input').prop('disabled', true);
+    $('#editModeBtn').text('Edit').removeClass('btn-secondary').addClass('btn-primary');
+    $('#saveAllDataBtn').hide();
+    
+    $(document).on('input', '.needs-input', calculateTotals);
+    $(document).keydown(function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.keyCode === 83) {
+            e.preventDefault();
+            if (editMode) saveAllData();
+        }
+        if (e.keyCode === 27 && editMode) toggleEditMode();
+    });
 });
 </script>

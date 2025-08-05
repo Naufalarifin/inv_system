@@ -13,7 +13,7 @@ class Report_model extends CI_Model {
         $this->db->where('status', '0');
         $this->db->where('dvc_tech', $tech);
         $this->db->where('dvc_type', $type);
-        $this->db->order_by('dvc_name', 'ASC');
+        $this->db->order_by('dvc_priority', 'ASC');
         
         $query = $this->db->get();
         return $query->result_array();
@@ -34,19 +34,21 @@ class Report_model extends CI_Model {
         }
         
         // id_needs akan di-generate otomatis oleh database (AUTO_INCREMENT)
+        // dvc_col seharusnya sudah disanitasi dari frontend
         return $this->db->insert('inv_needs', $data);
     }
     
     public function updateNeedsData($id, $data) {
         $this->db->where('id_needs', $id);
-        // Pastikan id_needs tidak diupdate
         if (isset($data['id_needs'])) {
             unset($data['id_needs']);
         }
+        // dvc_col seharusnya sudah disanitasi dari frontend
         return $this->db->update('inv_needs', $data);
     }
     
     public function getNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
+        // dvc_col yang diterima di sini seharusnya sudah disanitasi dari frontend
         $this->db->where('id_dvc', $id_dvc);
         $this->db->where('dvc_size', $dvc_size);
         $this->db->where('dvc_col', $dvc_col);
@@ -277,20 +279,14 @@ class Report_model extends CI_Model {
         // Convert to associative array for easy lookup
         $needs_data = array();
         foreach ($result as $row) {
-            $key = $row['id_dvc'] . '_' . $row['dvc_size'] . '_' . $row['dvc_col'] . '_' . $row['dvc_qc'];
+            // Sanitize dvc_col from database before creating the key for lookup
+            // This handles cases where dvc_col might be stored with spaces (e.g., "Dark Gray")
+            $sanitized_db_color = str_replace(' ', '-', strtolower($row['dvc_col']));
+            $key = $row['id_dvc'] . '_' . $row['dvc_size'] . '_' . $sanitized_db_color . '_' . $row['dvc_qc'];
             $needs_data[$key] = $row['needs_qty'];
         }
         
         return $needs_data;
-    }
-    
-    private function _generateNewNeedsId() {
-        $this->db->select_max('id_needs');
-        $query = $this->db->get('inv_needs');
-        $result = $query->row();
-        
-        $last_id = $result->id_needs ? $result->id_needs : 0;
-        return $last_id + 1;
     }
 }
 ?>

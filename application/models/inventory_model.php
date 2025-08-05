@@ -95,9 +95,7 @@ class inventory_model extends CI_Model {
         }
         $result_data = array();
         $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_priority FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' AND UPPER(dvc.dvc_type) = 'APP' ";
-        if ($tech === 'ecct') {
-            $sql .= "AND dvc.status = 0 ";
-        }
+        $sql .= "AND dvc.status = 0 ";
         if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
@@ -232,7 +230,6 @@ class inventory_model extends CI_Model {
             return $data[$col];
         }
     }
-    
 
     public function processInventoryIn($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';
@@ -520,7 +517,10 @@ class inventory_model extends CI_Model {
         $color = null;
 
         if ($char_5 === 'T') {
-            $color = 'Dark Grey';
+            $combined_78 = intval($char_7 . $char_8);
+            if ($combined_78 <= 50 && strlen($serial_number) == 15) {
+                $color = 'Dark Grey';
+            }
             if (strlen($serial_number) > 9) {
                 $size_char = substr($serial_number, 9, 1);
                 $size = $this->_getSizeFromChar($size_char);
