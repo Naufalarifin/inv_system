@@ -520,7 +520,10 @@ class inventory_model extends CI_Model {
         $color = null;
 
         if ($char_5 === 'T') {
-            $color = 'Dark Grey';
+            $combined_78 = intval($char_7 . $char_8);
+            if ($combined_78 <= 50 && strlen($serial_number) == 15) {
+                $color = 'Dark Grey';
+            }
             if (strlen($serial_number) > 9) {
                 $size_char = substr($serial_number, 9, 1);
                 $size = $this->_getSizeFromChar($size_char);

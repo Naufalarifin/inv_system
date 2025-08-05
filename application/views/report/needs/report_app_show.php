@@ -39,7 +39,10 @@ function getExistingValue($existing_needs, $id_dvc, $size, $color, $qc) {
                     $row_display_no = 1;
                     foreach ($model_data as $item) {
                         if ($is_ecbs && (stripos($item['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($item['dvc_code'], 'VOH') === 0)) {
-                            foreach ($voh_colors as $color_idx => $color_info) { ?>
+                            foreach ($voh_colors as $color_idx => $color_info) {
+                                // Sanitize color name for use in IDs and data attributes
+                                $sanitized_color_name = str_replace(' ', '-', strtolower($color_info['name']));
+                            ?>
                                 <tr>
                                     <?php if ($color_idx == 0) { ?>
                                         <td align="center" rowspan="<?php echo count($voh_colors); ?>"><?php echo $row_display_no; ?></td>
@@ -54,8 +57,9 @@ function getExistingValue($existing_needs, $id_dvc, $size, $color, $qc) {
                                         <?php } ?>
                                     </td>
                                     <?php foreach ($sizes as $sz) { 
-                                        $input_id = $item['dvc_code'] . '_' . $sz . '_' . strtolower($color_info['name']) . '_' . $item['id_dvc'];
-                                        $existing_value = getExistingValue($existing_needs, $item['id_dvc'], $sz, strtolower($color_info['name']), $item['id_dvc']);
+                                        $input_id = $item['dvc_code'] . '_' . $sz . '_' . $sanitized_color_name . '_' . $item['id_dvc'];
+                                        // Pass the sanitized color name to getExistingValue for correct lookup
+                                        $existing_value = getExistingValue($existing_needs, $item['id_dvc'], $sz, $sanitized_color_name, $item['id_dvc']);
                                     ?>
                                         <td align="center">
                                             <input type="number" 
@@ -66,13 +70,13 @@ function getExistingValue($existing_needs, $id_dvc, $size, $color, $qc) {
                                                    style="width: 60px; text-align: center;"
                                                    data-id-dvc="<?php echo $item['id_dvc']; ?>"
                                                    data-size="<?php echo $sz; ?>"
-                                                   data-color="<?php echo strtolower($color_info['name']); ?>"
+                                                   data-color="<?php echo $sanitized_color_name; ?>"
                                                    data-qc="<?php echo $item['id_dvc']; ?>"
                                                    onchange="calculateTotals()">
                                         </td>
                                     <?php } ?>
-                                    <td align="center"><strong><span id="subtotal_<?php echo $item['id_dvc']; ?>_<?php echo strtolower($color_info['name']); ?>">0</span></strong></td>
-                                    <td align="center"><span id="percentage_<?php echo $item['id_dvc']; ?>_<?php echo strtolower($color_info['name']); ?>">0</span>%</td>
+                                    <td align="center"><strong><span id="subtotal_<?php echo $item['id_dvc']; ?>_<?php echo $sanitized_color_name; ?>">0</span></strong></td>
+                                    <td align="center"><span id="percentage_<?php echo $item['id_dvc']; ?>_<?php echo $sanitized_color_name; ?>">0</span>%</td>
                                 </tr>
                             <?php }
                             $row_display_no++;

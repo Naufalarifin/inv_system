@@ -3,7 +3,7 @@ var currentEditMode = false; // true for edit mode, false for view-only mode
 
 // Function to set the edit mode explicitly
 function setEditMode(mode) {
-    currentEditMode = mode; // Update the global mode variable
+    currentEditMode = mode;
 
     // Enable/disable inputs based on the mode
     $('.needs-input').prop('disabled', !currentEditMode);
@@ -17,12 +17,11 @@ function setEditMode(mode) {
     } else {
         $('#saveAllDataBtn').hide();
     }
-    calculateTotals(); // Recalculate totals to ensure display is correct
+    calculateTotals();
 }
 
-// Function to toggle the edit mode
 function toggleEditMode() {
-    setEditMode(!currentEditMode); // Simply toggle the current mode
+    setEditMode(!currentEditMode);
 }
 
 function calculateTotals() {
@@ -80,8 +79,8 @@ function saveAllData() {
         data: {data: allData},
         success: function(response) {
             alert('All data saved successfully!');
-            calculateTotals(); 
-            setEditMode(false); // Revert to view-only mode after saving
+            calculateTotals();
+            setEditMode(false);
         },
         error: function() {
             alert('Failed to save all data.');
