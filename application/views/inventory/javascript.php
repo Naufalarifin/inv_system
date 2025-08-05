@@ -12,6 +12,9 @@ var currentType = "app" // app atau osc
 var inventoryType = "" // 'ECBS' atau 'ECCT'
 var CONFIG = window.CONFIG || {} // Declare CONFIG variable
 var inputMode = "singular" // "singular" atau "massive"
+var currentPage = "" // Current page context (inv_ecct, inv_ecbs, inv_week, etc.)
+var currentYear = new Date().getFullYear()
+var currentMonth = new Date().getMonth() + 1
 
 // Debug: log CONFIG object
 console.log("CONFIG:", CONFIG)
@@ -28,12 +31,42 @@ document.addEventListener("DOMContentLoaded", () => {
     currentTable = "ecct"
   }
 
+  // Detect current page from URL or page context
+  detectCurrentPage()
+
   // Initialize
   initializeEventListeners()
   renderToolbar()
-  showMainData()
-  showInputTab("in")
+  
+  // Only show main data and input tab if not on inv_week page
+  if (currentPage !== "inv_week") {
+    showMainData()
+    showInputTab("in")
+  } else {
+    // For inv_week page, load the weekly data
+    showInvWeekData()
+  }
 })
+
+// =================== PAGE DETECTION ===================
+function detectCurrentPage() {
+  // Try to detect from URL first
+  const pathname = window.location.pathname
+  
+  if (pathname.includes('inv_week')) {
+    currentPage = "inv_week"
+  } else if (pathname.includes('inv_ecct')) {
+    currentPage = "inv_ecct"
+  } else if (pathname.includes('inv_ecbs')) {
+    currentPage = "inv_ecbs"
+  } else {
+    // Fallback: try to detect from page elements
+    const invWeekElements = document.querySelectorAll('[onclick*="openModal(\'modal_input_period\')"]')
+    if (invWeekElements.length > 0) {
+      currentPage = "inv_week"
+    }
+  }
+}
 
 // =================== MODAL UTILITIES ===================
 function openModal(modalId) {
@@ -46,8 +79,14 @@ function openModal(modalId) {
 
     // Initialize auto-submit listeners when modal opens
     if (modalId === "modal_input_all") {
-      initializeAutoSubmitListeners()
-      renderInputMode()
+      if (currentPage === "inv_week") {
+        // For inv_week page, render the period generator interface
+        renderInvWeekInputMode()
+      } else {
+        // For other pages, use the normal input interface
+        initializeAutoSubmitListeners()
+        renderInputMode()
+      }
     }
   }
 }
@@ -310,45 +349,61 @@ function renderToolbar() {
   var toolbarLeft = ""
   var toolbarRight = ""
 
-  const isMainTable =
-    (inventoryType === "ECBS" && currentTable === "ecbs") || (inventoryType === "ECCT" && currentTable === "ecct")
-
-  if (isMainTable) {
-    // Untuk main table (ECBS/ECCT), semua di kanan
-    toolbarRight += '<div class="btn-group mr-2">'
-    toolbarRight +=
-      '<button id="btn_app" class="btn btn-sm ' +
-      (currentType === "app" ? "btn-primary" : "btn-light") +
-      '" onclick="switchMainType(\'app\')">APP</button>'
-    toolbarRight +=
-      '<button id="btn_osc" class="btn btn-sm ' +
-      (currentType === "osc" ? "btn-primary" : "btn-light") +
-      '" onclick="switchMainType(\'osc\')">OSC</button>'
-    toolbarRight += "</div>"
-    toolbarRight +=
-      '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showMainData(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>'
-  } else {
-    // Untuk activity/allitem, tombol Input di kiri
+  // Special handling for inv_week page
+  if (currentPage === "inv_week") {
+    // For inv_week page, show Input button with month/date generator functionality
     toolbarLeft +=
       '<button class="btn btn-sm" style="background: #28a745; color: white;" onclick="openModal(\'modal_input_all\')" id="input_btn" type="button">Input</button>'
+    
+    // Export button on the right
+    toolbarRight +=
+      '<a class="btn btn-sm btn-icon-lg btn-light" onclick="exportInvWeekData();" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>'
+  } else {
+    const isMainTable =
+      (inventoryType === "ECBS" && currentTable === "ecbs") || (inventoryType === "ECCT" && currentTable === "ecct")
 
-    // Search, Filter, dan Export di kanan
-    toolbarRight += '<div class="input-group input-sm">'
-    toolbarRight +=
-      '<input class="input input-sm" placeholder="Search SN or Device Code..." type="text" id="key_activity" />'
-    toolbarRight += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>'
-    toolbarRight += '<span class="btn btn-primary btn-sm" onclick="showSecondaryData();">Search</span>'
-    toolbarRight += "</div>"
-    toolbarRight +=
-      '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showSecondaryData(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>'
+    if (isMainTable) {
+      // Untuk main table (ECBS/ECCT), tombol Input di kiri, APP/OSC dan Export di kanan
+      toolbarLeft +=
+        '<button class="btn btn-sm" style="background: #28a745; color: white;" onclick="openModal(\'modal_input_all\')" id="input_btn" type="button">Input</button>'
+      
+      toolbarRight += '<div class="btn-group mr-2">'
+      toolbarRight +=
+        '<button id="btn_app" class="btn btn-sm ' +
+        (currentType === "app" ? "btn-primary" : "btn-light") +
+        '" onclick="switchMainType(\'app\')">APP</button>'
+      toolbarRight +=
+        '<button id="btn_osc" class="btn btn-sm ' +
+        (currentType === "osc" ? "btn-primary" : "btn-light") +
+        '" onclick="switchMainType(\'osc\')">OSC</button>'
+      toolbarRight += "</div>"
+      toolbarRight +=
+        '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showMainData(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>'
+    } else {
+      // Untuk activity/allitem, tombol Input di kiri
+      toolbarLeft +=
+        '<button class="btn btn-sm" style="background: #28a745; color: white;" onclick="openModal(\'modal_input_all\')" id="input_btn" type="button">Input</button>'
+
+      // Search, Filter, dan Export di kanan
+      toolbarRight += '<div class="input-group input-sm">'
+      toolbarRight +=
+        '<input class="input input-sm" placeholder="Search SN or Device Code..." type="text" id="key_activity" />'
+      toolbarRight += '<span class="btn btn-light btn-sm" onclick="openModal(\'modal_filter_item\')">Filter</span>'
+      toolbarRight += '<span class="btn btn-primary btn-sm" onclick="showSecondaryData();">Search</span>'
+      toolbarRight += "</div>"
+      toolbarRight +=
+        '<a class="btn btn-sm btn-icon-lg btn-light" onclick="showSecondaryData(\'export\');" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>'
+    }
   }
 
   // Update kedua div
   document.getElementById("toolbar_left").innerHTML = toolbarLeft
   document.getElementById("toolbar_right").innerHTML = toolbarRight
   
-  // Setup auto search setelah toolbar di-render
-  setupAutoSearch()
+  // Setup auto search setelah toolbar di-render (only for non-inv_week pages)
+  if (currentPage !== "inv_week") {
+    setupAutoSearch()
+  }
 }
 
 function setupAutoSearch() {
@@ -893,5 +948,233 @@ document.addEventListener('DOMContentLoaded', function() {
       new SearchableDropdown('dvc_code_dropdown', window.deviceCodes, 'dvc_code');
   }
 });
+
+// =================== INV_WEEK SPECIFIC FUNCTIONS ===================
+function showInvWeekData() {
+    // Use global currentYear and currentMonth variables
+    if (currentYear && currentMonth) {
+        console.log('Loading data for:', currentYear, currentMonth);
+        loadInvWeekData(currentYear, currentMonth);
+    } else {
+        console.log('No year/month set, showing empty state');
+        document.getElementById("show_data").innerHTML = '<div class="no-data"><p>Silakan klik tombol <strong>Input</strong> untuk generate periode mingguan.</p><p>Pilih tahun dan bulan, lalu klik Generate Periode.</p></div>';
+    }
+}
+
+function loadInvWeekData(year, month) {
+    const link = window.location.origin + '/cdummy/inventory/data/data_inv_week_show/' + year + '?month=' + month;
+    console.log('Loading data from:', link);
+    loadData(link);
+}
+
+function loadData(link) {
+    console.log('loadData called with link:', link);
+    
+    // Show loading indicator
+    document.getElementById("show_data").innerHTML = '<div style="padding: 20px; text-align: center;"><div class="loading-spinner"></div> Loading data...</div>';
+    
+    if (typeof window.$ !== "undefined") {
+        console.log('Using jQuery load');
+        window.$("#show_data").load(link, function(response, status, xhr) {
+            if (status === "error") {
+                console.error('jQuery load error:', xhr.status, xhr.statusText);
+                document.getElementById("show_data").innerHTML = 
+                    '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + xhr.statusText + '</div>';
+            }
+        });
+    } else {
+        console.log('Using fetch');
+        fetch(link)
+            .then((response) => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                return response.text();
+            })
+            .then((data) => {
+                console.log('Data loaded successfully, length:', data.length);
+                if (data.trim() === '') {
+                    document.getElementById("show_data").innerHTML = 
+                        '<div class="no-data"><p>Tidak ada data periode untuk bulan dan tahun yang dipilih.</p><p>Silakan generate periode terlebih dahulu.</p></div>';
+                } else {
+                    document.getElementById("show_data").innerHTML = data;
+                }
+            })
+            .catch((error) => {
+                console.error('Error loading data:', error);
+                document.getElementById("show_data").innerHTML =
+                    '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + error.message + '</div>';
+            });
+    }
+}
+
+function generateInvWeekPeriods() {
+    const year = document.getElementById('year').value;
+    const month = document.getElementById('month').value;
+    const loadingSpinner = document.getElementById('generate_loading_spinner');
+    const modalResultDiv = document.getElementById('modal_result_message');
+    
+    console.log('generateInvWeekPeriods called with year:', year, 'month:', month);
+    
+    if (!year || !month) {
+        showModalMessage('Pilih tahun dan bulan terlebih dahulu', 'error');
+        return;
+    }
+    
+    // Show loading
+    loadingSpinner.style.display = 'inline-block';
+    showModalMessage('Generating periods dengan logika 27-26, waktu 08:00-17:00, dan minggu kerja Senin-Jumat...', 'success');
+    
+    const requestData = {
+        year: parseInt(year),
+        month: parseInt(month)
+    };
+    
+    console.log('Sending request data:', requestData);
+    
+    fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('Generate response status:', response.status);
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Generate response data:', data);
+        loadingSpinner.style.display = 'none';
+        
+        if (data.success) {
+            showModalMessage('Periode berhasil di-generate dengan waktu 08:00-17:00 dan minggu kerja Senin-Jumat', 'success');
+            currentYear = year;
+            currentMonth = month;
+            
+            // Reload data after successful generation
+            setTimeout(() => {
+                loadInvWeekData(year, month);
+            }, 1000);
+            
+            // Auto close modal after 3 seconds
+            setTimeout(() => {
+                closeModal('modal_input_all');
+            }, 3000);
+        } else {
+            showModalMessage(data.message || 'Gagal generate periode', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Generate error:', error);
+        loadingSpinner.style.display = 'none';
+        showModalMessage('Error: ' + error.message, 'error');
+    });
+}
+
+function exportInvWeekData() {
+    const year = currentYear || new Date().getFullYear();
+    const month = currentMonth || (new Date().getMonth() + 1);
+    
+    if (!currentYear || !currentMonth) {
+        showMessage('Generate periode terlebih dahulu sebelum export', 'error');
+        return;
+    }
+    
+    window.open(window.location.origin + '/cdummy/inventory/export_inv_week?year=' + year + '&month=' + month, '_blank');
+}
+
+function showMessage(message, type) {
+    const element = document.getElementById('result_message');
+    if (element) {
+        element.textContent = message;
+        element.className = 'input-result-message ' + type;
+        element.style.display = 'block';
+        
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, 5000);
+    }
+}
+
+function showModalMessage(message, type) {
+    const element = document.getElementById('modal_result_message');
+    if (element) {
+        element.textContent = message;
+        element.className = 'input-result-message ' + type;
+        element.style.display = 'block';
+    }
+}
+
+function renderInvWeekInputMode() {
+    // Get the modal body
+    const modalBody = document.querySelector('#modal_input_all .modal-body');
+    if (!modalBody) return;
+    
+    // Render the inv_week period generator interface
+    modalBody.innerHTML = `
+        <div class="form-group">
+            <span class="form-hint">Tahun</span>
+            <select class="select" id="year">
+                <option value="">Pilih Tahun</option>
+                ${generateYearOptions()}
+            </select>
+        </div>
+        <div class="form-group">
+            <span class="form-hint">Bulan</span>
+            <select class="select" id="month">
+                <option value="">Pilih Bulan</option>
+                ${generateMonthOptions()}
+            </select>
+        </div>
+        <div id="modal_result_message" class="input-result-message"></div>
+    `;
+    
+    // Update modal title and footer
+    const modalTitle = document.querySelector('#modal_input_all .modal-title');
+    if (modalTitle) {
+        modalTitle.textContent = 'Generate Periode Mingguan';
+    }
+    
+    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
+    if (modalFooter) {
+        modalFooter.innerHTML = `
+            <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
+            <button class="btn btn-primary" onclick="generateInvWeekPeriods()">
+                Generate Periode <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
+            </button>
+        `;
+    }
+}
+
+function generateYearOptions() {
+    const currentYear = new Date().getFullYear();
+    let options = '';
+    for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+        const selected = i === currentYear ? 'selected' : '';
+        options += `<option value="${i}" ${selected}>${i}</option>`;
+    }
+    return options;
+}
+
+function generateMonthOptions() {
+    const currentMonth = new Date().getMonth() + 1;
+    const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    let options = '';
+    months.forEach((month, index) => {
+        const monthNumber = index + 1;
+        const selected = monthNumber === currentMonth ? 'selected' : '';
+        options += `<option value="${monthNumber}" ${selected}>${month}</option>`;
+    });
+    return options;
+}
 
 </script>

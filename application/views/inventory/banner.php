@@ -22,9 +22,15 @@
                     } elseif ($config['hal_sub'] == 'inv_ecbs') {
                         $breadcrumb_last = 'ECBS';
                         $breadcrumb_link = $config['base_url'] . 'inventory/inv_ecbs';
+                    } elseif ($config['hal_sub'] == 'inv_week') {
+                        $breadcrumb_last = 'Weekly Period';
+                        $breadcrumb_link = $config['base_url'] . 'inventory/inv_week';
                     } elseif ($config['hal_sub'] == 'massive_input') {
                         $breadcrumb_last = 'Massive Input';
                         $breadcrumb_link = $config['base_url'] . 'inventory/massive_input';
+                    }elseif ($config['hal_sub'] == 'inv_report_needs') {
+                        $breadcrumb_last = 'Needs';
+                        $breadcrumb_link = $config['base_url'] . 'inventory/inv_report_needs';
                     }
                 }
                 ?>
@@ -84,6 +90,27 @@
                     </div>
                 </div>
                 
+            <?php elseif ($current_page == 'inv_week' || $current_page == 'inv_report_needs'): ?>
+                <!-- Weekly Period Menu -->
+                <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
+                    <div class="menu-item">
+                        <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_week">
+                            <span class="menu-icon">
+                                <i class="ki-filled ki-calendar"></i>
+                            </span>
+                            <span class="menu-title">Weekly Period</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_report_needs">
+                            <span class="menu-icon">
+                                <i class="ki-filled ki-calendar"></i>
+                            </span>
+                            <span class="menu-title">Needs</span>
+                        </a>
+                    </div>
+                </div>
+                
             <?php else: ?>
                 <!-- Default Menu (Other pages) -->
                 <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
@@ -101,6 +128,14 @@
                                 <i class="ki-filled ki-chart-simple"></i>
                             </span>
                             <span class="menu-title">ECBS</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_week">
+                            <span class="menu-icon">
+                                <i class="ki-filled ki-calendar"></i>
+                            </span>
+                            <span class="menu-title">Weekly Period</span>
                         </a>
                     </div>
                 </div>

@@ -95,9 +95,7 @@ class inventory_model extends CI_Model {
         }
         $result_data = array();
         $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_priority FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' AND UPPER(dvc.dvc_type) = 'APP' ";
-        if ($tech === 'ecct') {
-            $sql .= "AND dvc.status = 0 ";
-        }
+        $sql .= "AND dvc.status = 0 ";
         if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
@@ -232,7 +230,6 @@ class inventory_model extends CI_Model {
             return $data[$col];
         }
     }
-    
 
     public function processInventoryIn($data) {
         $serial_number = isset($data['serial_number']) ? trim($data['serial_number']) : '';

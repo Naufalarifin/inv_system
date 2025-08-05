@@ -97,10 +97,8 @@ class Data_model extends CI_Model {
             $filter['first'] = 0;
         }
         $result_data = array();
-        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_priority FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' AND UPPER(dvc.dvc_type) = 'APP' ";
-        if ($tech === 'ecct') {
-            $sql .= "AND dvc.status = 0 ";
-        }
+        $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_priority FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' AND UPPER(dvc.dvc_type) = 'APP'";
+
         if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
@@ -187,22 +185,17 @@ class Data_model extends CI_Model {
         $sql = "SELECT dvc.id_dvc, dvc.dvc_name, dvc.dvc_code, dvc.dvc_tech, dvc.dvc_type, " .
             "(SELECT COUNT(*) FROM inv_act WHERE id_dvc = dvc.id_dvc AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00') AND dvc_qc = '0') as ln_count, " .
             "(SELECT COUNT(*) FROM inv_act WHERE id_dvc = dvc.id_dvc AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00') AND dvc_qc = '1') as dn_count " .
-            "FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' ";
-        if ($tech === 'ecct') {
-            $sql .= "AND dvc.status = 0 ";
-        } else if ($tech === 'ecbs') {
-            $sql .= "AND UPPER(dvc.dvc_type) = 'OSC' ";
-        }
+            "FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' ".
+            "AND dvc.status = 0 ".
+            "AND UPPER(dvc.dvc_type) = 'OSC' ";
+
         if (isset($filter['all'])) {
             $sql .= " " . $filter['all'] . " ";
         }
         $sql .= " " . $sort . " ";
-        $count_sql = "SELECT COUNT(*) as total FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' ";
-        if ($tech === 'ecct') {
-            $count_sql .= "AND dvc.status = 0";
-        } else if ($tech === 'ecbs') {
-            $count_sql .= "AND UPPER(dvc.dvc_type) = 'OSC'";
-        }
+        $count_sql = "SELECT COUNT(*) as total FROM inv_dvc dvc WHERE LOWER(dvc.dvc_tech) = '".$tech."' ".
+                    "AND dvc.status = 0".
+                    "AND UPPER(dvc.dvc_type) = 'OSC'";
         $count_query = $this->db->query($count_sql);
         $total_records = $count_query ? $count_query->row()->total : 0;
         $limit = "LIMIT " . $filter['first'] . ", " . $show . " ";
