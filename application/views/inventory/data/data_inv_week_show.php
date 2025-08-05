@@ -68,10 +68,8 @@
         </p>
         <p style="margin: 5px 0; font-size: 14px; color: #666;">
             <strong>Periode Penuh:</strong> 
-            <?php if (!empty($data)): ?>
-                <?= (new DateTime($data[0]['date_start']))->format('d/m/Y H:i') ?> - 
-                <?= (new DateTime(end($data)['date_finish']))->format('d/m/Y H:i') ?>
-            <?php endif; ?>
+            <?= (new DateTime($data[0]['date_start']))->format('d/m/Y H:i') ?> - 
+            <?= (new DateTime(end($data)['date_finish']))->format('d/m/Y H:i') ?>
         </p>
         <p style="margin: 5px 0; font-size: 14px; color: #666;">
             <strong>Catatan:</strong> Periode dimulai dari tanggal 27 bulan sebelumnya (08:00) hingga tanggal 26 bulan ini (17:00)
@@ -93,7 +91,7 @@ function getMonthName($month) {
         5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
         9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
     ];
-    return $months[$month] ?? $month;
+    return isset($months[$month]) ? $months[$month] : $month;
 }
 
 function getDayName($dayNumber) {
@@ -101,7 +99,7 @@ function getDayName($dayNumber) {
         1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis',
         5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'
     ];
-    return $days[$dayNumber] ?? '';
+    return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
 }
 ?>
     
