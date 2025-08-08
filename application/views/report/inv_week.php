@@ -1,322 +1,34 @@
-<style>
-/* Ultra Simplified CSS - Matching inv_ecct.php exactly with improved fonts */
-:root { 
-    --primary: #0074d9; 
-    --border: #e5e5e5; 
-    --bg: #f8f9fa; 
-    --radius: 8px; 
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998; }
-.modal-container { 
-    display: none; 
-    position: fixed; 
-    top: 50%; 
-    left: 50%; 
-    transform: translate(-50%,-50%); 
-    background: white; 
-    border-radius: var(--radius); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
-    z-index: 9999; 
-    min-width: 350px; 
-    max-width: 600px; 
-    width: 90%; 
-    max-height: 90vh; 
-    overflow-y: auto; 
-    font-family: var(--font-family);
-}
-.modal-header, .modal-footer { 
-    padding: 20px; 
-    background: var(--bg); 
-    border: 1px solid var(--border); 
-    display: flex; 
-    align-items: center; 
-}
-.modal-header { 
-    justify-content: space-between; 
-    border-bottom: 1px solid var(--border); 
-    border-radius: var(--radius) var(--radius) 0 0; 
-}
-.modal-footer { 
-    justify-content: flex-end; 
-    gap: 10px; 
-    border-top: 1px solid var(--border); 
-    border-radius: 0 0 var(--radius) var(--radius); 
-}
-.modal-title { 
-    margin: 0; 
-    font: 600 20px/1.3 var(--font-family); 
-    color: #333; 
-}
-.modal-body { 
-    padding: 20px; 
-    font-family: var(--font-family);
-}
-.btn-close { 
-    background: none; 
-    border: none; 
-    font-size: 24px; 
-    cursor: pointer; 
-    color: #666; 
-    transition: color 0.2s; 
-}
-.btn-close:hover { color: #000; }
-
-.input-tab-btn, .input-mode-btn { 
-    background: white; 
-    color: var(--primary); 
-    border: 1px solid var(--primary); 
-    font: 600 14px/1.4 var(--font-family); 
-    cursor: pointer; 
-    transition: all 0.2s; 
-}
-.input-tab-btn { border-radius: 4px 4px 0 0; padding: 6px 24px; margin-right: 4px; }
-.input-mode-btn { border-radius: 4px; padding: 4px 12px; margin-right: 4px; font-size: 13px; }
-.input-tab-btn.active, .input-mode-btn.active { background: var(--primary); color: white; }
-
-.input-form-label { 
-    font: 600 15px/1.4 var(--font-family); 
-    margin-bottom: 4px; 
-    display: block; 
-}
-.input-result-message { 
-    margin-top: 10px; 
-    padding: 12px; 
-    border-radius: 4px; 
-    font: 400 14px/1.5 var(--font-family); 
-    display: none; 
-    white-space: pre-wrap; 
-}
-.input-result-message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-.input-result-message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-.activity-date-section { padding-top: 20px; }
-.activity-date-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-.activity-date-column { text-align: center; font-size: 12px; }
-.activity-date-label { 
-    font: 600 12px/1.3 var(--font-family); 
-    margin-bottom: 2px; 
-    background: rgb(247,245,245); 
-}
-
-.auto-submit-info { 
-    font: italic 12px/1.4 var(--font-family); 
-    color: #666; 
-    margin-top: 5px; 
-}
-.massive-textarea { 
-    min-height: 120px; 
-    resize: vertical; 
-    font: 400 14px/1.5 'Consolas', 'Monaco', monospace; 
-}
-.loading-spinner { 
-    display: inline-block; 
-    width: 20px; 
-    height: 20px; 
-    border: 3px solid #f3f3f3; 
-    border-top: 3px solid #1677ff; 
-    border-radius: 50%; 
-    animation: spin 1s linear infinite; 
-    vertical-align: middle; 
-    margin-left: 8px; 
-}
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-.searchable-dropdown { position: relative; }
-.searchable-dropdown .select-display { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-.searchable-dropdown .dropdown-arrow { font-size: 12px; color: #666; }
-.searchable-dropdown .dropdown-content { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; }
-.searchable-dropdown .search-input { width: 100%; padding: 8px 12px; border: none; border-bottom: 1px solid #eee; outline: none; font: 400 14px/1.4 var(--font-family); }
-.searchable-dropdown .dropdown-option { padding: 8px 12px; cursor: pointer; font: 400 14px/1.4 var(--font-family); transition: background 0.2s; }
-.searchable-dropdown .dropdown-option:hover { background: #f5f5f5; }
-.searchable-dropdown .dropdown-option.selected { background: #007bff; color: white; }
-.searchable-dropdown .no-results { padding: 8px 12px; color: #999; font: italic 14px/1.4 var(--font-family); }
-.searchable-dropdown.active .dropdown-content { display: block; }
-.searchable-dropdown.active .select-display { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-
-/* Additional styles for inv_week specific elements */
-.edit-icon { cursor: pointer; color: #0074d9; font-size: 18px; }
-.edit-icon:hover { color: #0056b3; }
-.edit-icon.disabled { color: #ccc; cursor: not-allowed; }
-
-.form-group { margin-bottom: 15px; }
-.form-hint { 
-    display: block; 
-    margin-bottom: 6px; 
-    font: 600 14px/1.4 var(--font-family); 
-    color: #333; 
-}
-.select, .input { 
-    width: 100%; 
-    padding: 10px 12px; 
-    border: 1px solid #ddd; 
-    border-radius: 4px; 
-    font: 400 14px/1.4 var(--font-family); 
-    transition: border-color 0.2s;
-}
-.select:focus, .input:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-.btn { 
-    padding: 10px 20px; 
-    border: none; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font: 600 14px/1.4 var(--font-family); 
-    transition: all 0.2s; 
-}
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: #0056b3; }
-.btn-secondary { background: #6c757d; color: white; }
-.btn-secondary:hover { background: #545b62; }
-
-.table-container { margin-top: 20px; }
-.table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-top: 10px; 
-    font: 400 14px/1.5 var(--font-family); 
-}
-.table th, .table td { 
-    padding: 12px; 
-    text-align: left; 
-    border-bottom: 1px solid #ddd; 
-}
-.table th { 
-    background: #f8f9fa; 
-    font: 600 14px/1.4 var(--font-family); 
-}
-.table tr:hover { background: #f5f5f5; }
-
-.no-data { 
-    text-align: center; 
-    padding: 40px; 
-    color: #666; 
-    font: italic 16px/1.5 var(--font-family); 
-}
-
-/* Custom confirmation dialog styles - Positioned below buttons */
-.confirmation-section { 
-    margin-top: 15px; 
-    padding: 15px 20px; 
-    background:rgb(255, 255, 255); 
-    border: 1px solidrgb(255, 255, 255); 
-    border-radius: 4px; 
-    display: none; 
-}
-.confirmation-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-}
-.confirmation-text { 
-    font: 600 14px/1.4 var(--font-family);
-    color:rgb(93, 93, 93); 
-    flex: 1;
-}
-.confirmation-buttons { 
-    display: flex; 
-    gap: 8px; 
-    flex-shrink: 0;
-}
-.btn-confirm { 
-    background: var(--primary); 
-    color: white; 
-    padding: 8px 16px; 
-    border: none; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font: 600 13px/1.3 var(--font-family);
-    transition: all 0.2s;
-}
-.btn-confirm:hover { 
-    background: #0056b3; 
-}
-.btn-cancel { 
-    background: white; 
-    color: var(--primary); 
-    border: 1px solid var(--primary);
-    padding: 8px 16px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font: 600 13px/1.3 var(--font-family);
-    transition: all 0.2s;
-}
-.btn-cancel:hover { 
-    background: var(--primary);
-    color: white;
-}
-
-/* Improved small text styling */
-small {
-    font: 400 12px/1.4 var(--font-family);
-    color: #666;
-}
-
-/* Better paragraph styling */
-p {
-    font: 400 14px/1.6 var(--font-family);
-    margin-bottom: 12px;
-}
-
-strong {
-    font-weight: 600;
-}
-
-/* Update button styles for modal footer */
-.btn-regenerate { 
-    background: var(--primary); 
-    color: white; 
-    padding: 10px 20px; 
-    border: none; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font: 600 14px/1.4 var(--font-family); 
-    transition: all 0.2s; 
-}
-.btn-regenerate:hover { 
-    background: #0056b3; 
-}
-.btn-lihat-data { 
-    background: white; 
-    color: var(--primary); 
-    border: 1px solid var(--primary);
-    padding: 10px 20px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font: 600 14px/1.4 var(--font-family); 
-    transition: all 0.2s; 
-}
-.btn-lihat-data:hover { 
-    background: #f8f9fa; 
-}
-</style>
-
 <!-- Container -->
 <div class="container-fixed">
   <div class="card min-w-full">
     <div class="card-header flex items-center justify-between">
       <div id="toolbar_left" class="flex items-center gap-2">
-        <!-- Input Button -->
         <button class="btn btn-sm" style="background: #28a745; color: white;" onclick="openModal('modal_input_all')" id="input_btn" type="button">Input</button>
-        <!-- Info Icon -->
         <span class="ki-duotone ki-information-2" onclick="openModal('modal_period_info')" title="Klik untuk melihat informasi periode kantor" style="cursor: pointer; font-size: 20px; color: #0074d9;"></span>
       </div>
       <div id="toolbar_right" class="flex items-center gap-2">
-        <!-- Export button -->
+        <div class="input-group input-sm">
+          <select class="select" id="month_filter" style="min-height: 35px; height: 35px; line-height: 1.2; padding: 8px 12px; font-size: 14px;">
+            <option value="">Pilih Bulan</option>
+            <option value="1">Januari</option>
+            <option value="2">Februari</option>
+            <option value="3">Maret</option>
+            <option value="4">April</option>
+            <option value="5">Mei</option>
+            <option value="6">Juni</option>
+            <option value="7">Juli</option>
+            <option value="8">Agustus</option>
+            <option value="9">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+            <option value="12">Desember</option>
+          </select>
+          <span class="btn btn-primary btn-sm" onclick="searchByMonth();">Search</span>
+        </div>
         <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportInvWeekData();" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
       </div>
     </div>
-    
-    <!-- Main Content -->
-    <div class="card-body" style="padding: 20px;">
-      <div id="result_message" class="input-result-message"></div>
-    </div>
-    
-    <!-- Table -->
+    <div id="result_message" class="input-result-message"></div>
     <div id="show_data"></div>
   </div>
 </div>
@@ -324,16 +36,14 @@ strong {
 <!-- Modal Overlay -->
 <div id="modal_overlay" class="modal-overlay"></div>
 
-<!-- Modal Input All - Unified modal system -->
+<!-- Modal Input All -->
 <div id="modal_input_all" class="modal-container" style="min-width:500px; max-width: 650px;">
   <div class="modal-header">
     <h3 class="modal-title">Generate Periode Mingguan</h3>
     <button class="btn-close" onclick="closeModal('modal_input_all')" style="font-size: 24px;">&times;</button>
   </div>
-  <div class="modal-body">
-  </div>
-  <div class="modal-footer">
-  </div>
+  <div class="modal-body"></div>
+  <div class="modal-footer"></div>
 </div>
 
 <!-- Modal Edit -->
@@ -378,665 +88,227 @@ strong {
   </div>
 </div>
 
-<script type="text/javascript">
-// Set inventory type untuk universal script
-window.INVENTORY_TYPE = 'INV_WEEK';
-
-// CONFIG object untuk universal script
-window.CONFIG = {
-  urlMenu: '<?php echo $config['url_menu']; ?>'
-};
-
-// Global variables for inv_week
-let currentYear = '';
-let currentMonth = '';
-
-// Modal functions
-function openModal(modalId) {
-  const overlay = document.getElementById("modal_overlay")
-  const modal = document.getElementById(modalId)
-
-  if (overlay && modal) {
-    overlay.style.display = "block"
-    modal.style.display = "block"
-    
-    // If opening modal_input_all, render the inv_week input mode
-    if (modalId === 'modal_input_all') {
-      renderInvWeekInputMode();
-    }
-  }
-}
-
-function closeModal(modalId) {
-  const overlay = document.getElementById("modal_overlay")
-  const modal = document.getElementById(modalId)
-
-  if (overlay && modal) {
-    overlay.style.display = "none"
-    modal.style.display = "none"
-  }
-
-  // Clear modal result message when closing
-  if (modalId === 'modal_input_all') {
-    const modalResultDiv = document.getElementById('modal_result_message');
-    if (modalResultDiv) {
-      modalResultDiv.style.display = 'none';
-      modalResultDiv.textContent = '';
-    }
-  }
-}
-
-// Data loading functions
-function showInvWeekData() {
-    if (currentYear && currentMonth) {
-        console.log('Loading data for year:', currentYear, 'month:', currentMonth);
-        loadInvWeekData(currentYear, currentMonth);
-    } else {
-        console.log('No year/month set, showing empty state');
-        document.getElementById("show_data").innerHTML = '<div class="no-data"><p>Silakan klik tombol <strong>Input</strong> untuk generate periode mingguan.</p><p>Pilih tahun dan bulan, lalu klik Generate Periode.</p></div>';
-    }
-}
-
-function loadInvWeekData(year, month) {
-    const link = window.location.origin + '/cdummy/inventory/data/data_inv_week_show/' + year + '?month=' + month;
-    console.log('Loading data from:', link);
-    loadData(link);
-}
-
-function loadData(link) {
-    console.log('loadData called with link:', link);
-    
-    // Show loading indicator
-    document.getElementById("show_data").innerHTML = '<div style="padding: 20px; text-align: center;"><div class="loading-spinner"></div> Loading data...</div>';
-    
-    if (typeof window.$ !== "undefined") {
-        console.log('Using jQuery load');
-        window.$("#show_data").load(link, function(response, status, xhr) {
-            if (status === "error") {
-                console.error('jQuery load error:', xhr.status, xhr.statusText);
-                document.getElementById("show_data").innerHTML = 
-                    '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + xhr.statusText + '</div>';
-            }
-        });
-    } else {
-        console.log('Using fetch');
-        fetch(link)
-            .then((response) => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-                }
-                return response.text();
-            })
-            .then((data) => {
-                console.log('Data loaded successfully, length:', data.length);
-                if (data.trim() === '') {
-                    document.getElementById("show_data").innerHTML = 
-                        '<div class="no-data"><p>Tidak ada data periode untuk bulan dan tahun yang dipilih.</p><p>Silakan generate periode terlebih dahulu.</p></div>';
-                } else {
-                    document.getElementById("show_data").innerHTML = data;
-                }
-            })
-            .catch((error) => {
-                console.error('Error loading data:', error);
-                document.getElementById("show_data").innerHTML =
-                    '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + error.message + '</div>';
-            });
-    }
-}
-
-// Period generation functions
-function generateInvWeekPeriods() {
-    const year = document.getElementById('year').value;
-    const month = document.getElementById('month').value;
-    
-    // FIX: Safely get loading spinner element with null check
-    const loadingSpinner = document.getElementById('generate_loading_spinner');
-    const modalResultDiv = document.getElementById('modal_result_message');
-    
-    console.log('generateInvWeekPeriods called with year:', year, 'month:', month);
-    
-    if (!year || !month) {
-        showModalMessage('Pilih tahun dan bulan terlebih dahulu', 'error');
-        return;
-    }
-    
-    // FIX: Only show loading spinner if element exists
-    if (loadingSpinner) {
-        loadingSpinner.style.display = 'inline-block';
-    }
-    
-    showModalMessage('Generating periods dengan logika 27-26, waktu 08:00-17:00, dan minggu kerja Senin-Jumat...', 'success');
-    
-    const requestData = {
-        year: parseInt(year),
-        month: parseInt(month)
-    };
-    
-    console.log('Sending request data:', requestData);
-    
-    fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => {
-        console.log('Generate response status:', response.status);
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Generate response data:', data);
-        
-        // FIX: Hide loading spinner safely
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        
-        if (data.success) {
-            showModalMessage('Periode berhasil di-generate dengan waktu 08:00-17:00 dan minggu kerja Senin-Jumat', 'success');
-            currentYear = year;
-            currentMonth = month;
-            
-            // Reload data after successful generation
-            setTimeout(() => {
-                loadInvWeekData(year, month);
-            }, 1000);
-            
-            // Auto close modal after 3 seconds
-            setTimeout(() => {
-                closeModal('modal_input_all');
-            }, 3000);
-        } else {
-            // Check if the error is about existing periods
-            if (data.message && data.message.includes('sudah ada')) {
-                showModalMessage(data.message + '\n\nKlik "Lihat Data" untuk menampilkan periode yang sudah ada.', 'error');
-                
-                // Update modal footer to show "Lihat Data" button
-                const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-                if (modalFooter) {
-                    modalFooter.innerHTML = `
-                        <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-                        <button class="btn btn-lihat-data" onclick="viewExistingData(${year}, ${month})">Lihat Data</button>
-                        <button class="btn btn-regenerate" onclick="regeneratePeriods(${year}, ${month})">
-                            Regenerate
-                        </button>
-                    `;
-                }
-            } else {
-                showModalMessage(data.message || 'Gagal generate periode', 'error');
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Generate error:', error);
-        
-        // FIX: Hide loading spinner safely on error
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        
-        showModalMessage('Error: ' + error.message, 'error');
-    });
-}
-
-// View existing data function
-function viewExistingData(year, month) {
-    currentYear = year;
-    currentMonth = month;
-    
-    // Close modal
-    closeModal('modal_input_all');
-    
-    // Show message
-    showMessage(`Menampilkan data periode untuk tahun ${year} bulan ${getMonthName(month)}`, 'success');
-    
-    // Load existing data
-    setTimeout(() => {
-        loadInvWeekData(year, month);
-    }, 500);
-}
-
-// Regenerate periods function - UPDATED to show custom confirmation
-function regeneratePeriods(year, month) {
-    // Show custom confirmation dialog instead of native confirm
-    showRegenerateConfirmation(year, month);
-}
-
-// NEW: Show custom regenerate confirmation - UPDATED to prevent duplicates
-function showRegenerateConfirmation(year, month) {
-    // Check if confirmation dialog already exists
-    const existingConfirmation = document.getElementById('regenerate_confirmation');
-    if (existingConfirmation) {
-        return; // Don't create another one if it already exists
-    }
-    
-    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-    if (!modalFooter) return;
-    
-    // Add confirmation section after modal footer
-    const confirmationHtml = `
-        <div id="regenerate_confirmation" class="confirmation-section" style="display: block;">
-            <div class="confirmation-content">
-                <div class="confirmation-text">
-                    Apakah Anda yakin untuk generate ulang? Tindakan ini akan menghapus data yang sudah ada dan membuat ulang.
-                </div>
-                <div class="confirmation-buttons">
-                    <button class="btn-confirm" onclick="confirmRegenerate(${year}, ${month})">YA</button>
-                    <button class="btn-cancel" onclick="cancelRegenerate()">TIDAK</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Insert confirmation section after the modal footer
-    modalFooter.insertAdjacentHTML('afterend', confirmationHtml);
-}
-
-// NEW: Confirm regenerate action
-function confirmRegenerate(year, month) {
-    // Remove confirmation dialog
-    const confirmationSection = document.getElementById('regenerate_confirmation');
-    if (confirmationSection) {
-        confirmationSection.remove();
-    }
-    
-    // Proceed with regeneration
-    executeRegenerate(year, month);
-}
-
-// NEW: Cancel regenerate action
-function cancelRegenerate() {
-    // Remove confirmation dialog
-    const confirmationSection = document.getElementById('regenerate_confirmation');
-    if (confirmationSection) {
-        confirmationSection.remove();
-    }
-}
-
-// NEW: Execute the actual regenerate process
-function executeRegenerate(year, month) {
-    // FIX: Safely get loading spinner element
-    const loadingSpinner = document.getElementById('generate_loading_spinner');
-    const modalResultDiv = document.getElementById('modal_result_message');
-    
-    // FIX: Only show loading spinner if element exists
-    if (loadingSpinner) {
-        loadingSpinner.style.display = 'inline-block';
-    }
-    
-    showModalMessage('Regenerating periods dengan logika 27-26, waktu 08:00-17:00, dan minggu kerja Senin-Jumat...', 'success');
-    
-    const requestData = {
-        year: parseInt(year),
-        month: parseInt(month),
-        regenerate: true
-    };
-    
-    fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-        }
-        return response.json();
-    })
-    .then(data => {
-        // FIX: Hide loading spinner safely
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        
-        if (data.success) {
-            showModalMessage('Periode berhasil di-regenerate dengan waktu 08:00-17:00 dan minggu kerja Senin-Jumat', 'success');
-            currentYear = year;
-            currentMonth = month;
-            
-            // Reload data after successful regeneration
-            setTimeout(() => {
-                loadInvWeekData(year, month);
-            }, 1000);
-            
-            // Auto close modal after 3 seconds
-            setTimeout(() => {
-                closeModal('modal_input_all');
-            }, 3000);
-        } else {
-            showModalMessage(data.message || 'Gagal regenerate periode', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Regenerate error:', error);
-        
-        // FIX: Hide loading spinner safely on error
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        
-        showModalMessage('Error: ' + error.message, 'error');
-    });
-}
-
-// Export function
-function exportInvWeekData() {
-    const year = currentYear || new Date().getFullYear();
-    const month = currentMonth || (new Date().getMonth() + 1);
-    
-    if (!currentYear || !currentMonth) {
-        showMessage('Generate periode terlebih dahulu sebelum export', 'error');
-        return;
-    }
-    
-    window.open(window.location.origin + '/cdummy/inventory/export_inv_week?year=' + year + '&month=' + month, '_blank');
-}
-
-// Edit period functions
-function editPeriod(id_week, date_start, date_finish) {
-    document.getElementById('edit_id_week').value = id_week;
-    document.getElementById('edit_date_start').value = formatDateTimeForInput(date_start);
-    document.getElementById('edit_date_finish').value = formatDateTimeForInput(date_finish);
-    
-    openModal('modal_edit');
-}
-
-function updatePeriod() {
-    const id_week = document.getElementById('edit_id_week').value;
-    const date_start = document.getElementById('edit_date_start').value;
-    const date_finish = document.getElementById('edit_date_finish').value;
-    
-    if (!id_week || !date_start || !date_finish) {
-        showMessage('Semua field harus diisi', 'error');
-        return;
-    }
-    
-    if (!confirm('Apakah Anda yakin ingin mengupdate periode ini? Waktu akan otomatis diset ke 08:00-17:00')) {
-        return;
-    }
-    
-    fetch('<?= base_url('inventory/update_inv_week_period') ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            id_week: parseInt(id_week),
-            date_start: date_start,
-            date_finish: date_finish
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showMessage('Periode berhasil diupdate dengan waktu 08:00-17:00', 'success');
-            closeModal('modal_edit');
-            
-            // Reload data after successful update
-            setTimeout(() => {
-                loadInvWeekData(currentYear, currentMonth);
-            }, 1000);
-        } else {
-            showMessage(data.message || 'Gagal update periode', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Update error:', error);
-        showMessage('Error: ' + error.message, 'error');
-    });
-}
-
-// UI rendering functions
-function renderInvWeekInputMode() {
-    // Get the modal body
-    const modalBody = document.querySelector('#modal_input_all .modal-body');
-    if (!modalBody) return;
-    
-    // Render the inv_week period generator interface
-    modalBody.innerHTML = `
-        <div class="form-group">
-            <span class="form-hint">Tahun</span>
-            <select class="select" id="year" onchange="checkPeriodsExist()">
-                <option value="">Pilih Tahun</option>
-                ${generateYearOptions()}
-            </select>
-        </div>
-        <div class="form-group">
-            <span class="form-hint">Bulan</span>
-            <select class="select" id="month" onchange="checkPeriodsExist()">
-                <option value="">Pilih Bulan</option>
-                ${generateMonthOptions()}
-            </select>
-        </div>
-        <div id="modal_result_message" class="input-result-message"></div>
-    `;
-    
-    // Update modal title and footer
-    const modalTitle = document.querySelector('#modal_input_all .modal-title');
-    if (modalTitle) {
-        modalTitle.textContent = 'Generate Periode Mingguan';
-    }
-    
-    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-    if (modalFooter) {
-        modalFooter.innerHTML = `
-            <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-            <button class="btn btn-primary" onclick="generateInvWeekPeriods()" id="generate_btn">
-                Generate Periode <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
-            </button>
-        `;
-    }
-    
-    // Reset modal state when opening
-    resetModalState();
-}
-
-// Debounce function to prevent too many API calls
-let checkPeriodsTimeout = null;
-
-// Reset modal state function
-function resetModalState() {
-    const modalResultDiv = document.getElementById('modal_result_message');
-    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-    
-    // Remove any existing confirmation dialog
-    const confirmationSection = document.getElementById('regenerate_confirmation');
-    if (confirmationSection) {
-        confirmationSection.remove();
-    }
-    
-    // Reset modal footer to default state
-    if (modalFooter) {
-        modalFooter.innerHTML = `
-            <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-            <button class="btn btn-primary" onclick="generateInvWeekPeriods()" id="generate_btn">
-                Generate Periode <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
-            </button>
-        `;
-    }
-    
-    // Reset result message
-    if (modalResultDiv) {
-        modalResultDiv.style.display = 'none';
-        modalResultDiv.innerHTML = '';
-        modalResultDiv.className = 'input-result-message';
-    }
-}
-
-// Check if periods exist for selected year/month
-function checkPeriodsExist() {
-    const year = document.getElementById('year').value;
-    const month = document.getElementById('month').value;
-    const generateBtn = document.getElementById('generate_btn');
-    const modalResultDiv = document.getElementById('modal_result_message');
-    
-    // Clear any existing timeout
-    if (checkPeriodsTimeout) {
-        clearTimeout(checkPeriodsTimeout);
-    }
-    
-    // Always reset to default state first
-    resetModalState();
-    
-    // If either year or month is not selected, stay in default state
-    if (!year || !month) {
-        return;
-    }
-    
-    // Debounce the API call to prevent too many requests
-    checkPeriodsTimeout = setTimeout(() => {
-        // Check if periods exist
-        fetch(window.location.origin + '/cdummy/inventory/check_inv_week_periods?year=' + year + '&month=' + month)
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    // Update modal footer for existing periods
-                    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-                    if (modalFooter) {
-                        modalFooter.innerHTML = `
-                            <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-                            <button class="btn btn-lihat-data" onclick="viewExistingData(${year}, ${month})">Lihat Data</button>
-                            <button class="btn btn-regenerate" onclick="regeneratePeriods(${year}, ${month})">
-                                Regenerate
-                            </button>
-                        `;
-                    }
-                    
-                    if (modalResultDiv) {
-                        modalResultDiv.innerHTML = `
-                            <div style="margin-bottom: 10px;">
-                                <strong>Periode untuk tahun ${year} bulan ${getMonthName(month)} sudah ada.</strong><br>
-                                • Klik "Lihat Data" untuk menampilkan data yang sudah ada<br>
-                                • Atau klik "Regenerate" untuk membuat ulang periode (akan menghapus data lama)
-                            </div>
-                        `;
-                        modalResultDiv.className = 'input-result-message error';
-                        modalResultDiv.style.display = 'block';
-                    }
-                } else {
-                    // Periods don't exist, ensure we're in default state
-                    // This will be handled by the resetModalState() call above
-                    console.log('No existing periods found, staying in default state');
-                }
-            })
-            .catch(error => {
-                console.error('Error checking periods:', error);
-                // On error, ensure we're in default state
-                resetModalState();
-            });
-    }, 300); // 300ms debounce delay
-}
-
-// Helper functions
-function generateYearOptions() {
-    const currentYear = new Date().getFullYear();
-    let options = '';
-    for (let i = currentYear - 2; i <= currentYear + 2; i++) {
-        const selected = i === currentYear ? 'selected' : '';
-        options += `<option value="${i}" ${selected}>${i}</option>`;
-    }
-    return options;
-}
-
-function generateMonthOptions() {
-    const currentMonth = new Date().getMonth() + 1;
-    const months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-    
-    let options = '';
-    months.forEach((month, index) => {
-        const monthNumber = index + 1;
-        const selected = monthNumber === currentMonth ? 'selected' : '';
-        options += `<option value="${monthNumber}" ${selected}>${month}</option>`;
-    });
-    return options;
-}
-
-function getMonthName(month) {
-    const months = [
-        '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-    return months[month] || month;
-}
-
-function formatDateTime(dateTimeStr) {
-    const date = new Date(dateTimeStr);
-    return date.toLocaleDateString('id-ID') + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'});
-}
-
-function formatDateTimeForInput(dateTimeStr) {
-    const date = new Date(dateTimeStr);
-    return date.toISOString().slice(0, 16);
-}
-
-// Message functions
-function showMessage(message, type) {
-    const element = document.getElementById('result_message');
-    element.textContent = message;
-    element.className = 'input-result-message ' + type;
-    element.style.display = 'block';
-    
-    setTimeout(() => {
-        element.style.display = 'none';
-    }, 5000);
-}
-
-function showModalMessage(message, type) {
-    const element = document.getElementById('modal_result_message');
-    element.textContent = message;
-    element.className = 'input-result-message ' + type;
-    element.style.display = 'block';
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize current year and month
-    currentYear = new Date().getFullYear();
-    currentMonth = new Date().getMonth() + 1;
-    
-    // Try to load existing data for current year/month
-    showInvWeekData();
-});
-
-// Close modal when clicking overlay
-document.getElementById('modal_overlay').addEventListener('click', function(event) {
-    if (event.target === document.getElementById('modal_overlay')) {
-        // Close any open modal
-        const modals = ['modal_input_all', 'modal_edit', 'modal_period_info'];
-        modals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal && modal.style.display === 'block') {
-                closeModal(modalId);
-            }
-        });
-    }
-});
-
-// ESC key untuk menutup modal
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        const modals = ['modal_input_all', 'modal_edit', 'modal_period_info'];
-        modals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal && modal.style.display === 'block') {
-                closeModal(modalId);
-            }
-        });
-    }
-});
-</script>
+<style>
+:root { --primary: #0074d9; --border: #e5e5e5; --bg: #f8f9fa; --radius: 8px; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998; }
+.modal-container { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 9999; min-width: 350px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
+.modal-header, .modal-footer { padding: 20px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; }
+.modal-header { justify-content: space-between; border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; }
+.modal-footer { justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); }
+.modal-title { margin: 0; font: 600 20px/1 sans-serif; color: #333; }
+.modal-body { padding: 20px; }
+.btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; transition: color 0.2s; }
+.btn-close:hover { color: #000; }
+.form-group { margin-bottom: 15px; }
+.form-hint { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #333; }
+.select, .input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; min-height: 40px; line-height: 1.4; }
+.select:focus, .input:focus { outline: none; border-color: var(--primary); }
+.select option { padding: 8px 12px; }
+#year, #month { width: 100% !important; max-width: none !important; }
+#month { min-height: 35px !important; height: 35px !important; line-height: 1.2 !important; padding: 8px 12px !important; vertical-align: middle !important; font-size: 13px !important; }
+#month option { white-space: nowrap !important; padding: 8px 12px !important; line-height: 1.2 !important; font-size: 13px !important; height: auto !important; min-height: 20px !important; }
+select.select { text-overflow: unset !important; overflow: visible !important; }
+.input-group { display: flex; align-items: center; gap: 5px; }
+.input-group .select { flex: 1; min-width: 150px; }
+.input-group .btn { white-space: nowrap; }
+#month_filter { min-height: 35px !important; height: 35px !important; line-height: 1.2 !important; padding: 8px 12px !important; font-size: 13px !important; font-weight: 500 !important; background-color: var(--tw-light-active) !important; border-radius: 0.375rem !important; border: 1px solid var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
+#month_filter:hover { border-color: var(--tw-gray-400) !important; }
+#month_filter:focus { border-color: var(--tw-primary) !important; box-shadow: var(--tw-input-focus-box-shadow) !important; color: var(--tw-gray-700) !important; }
+#month_filter option { font-size: 13px !important; font-weight: 500 !important; padding: 8px 12px !important; }
+.btn { display: inline-flex !important; align-items: center !important; cursor: pointer !important; line-height: 1 !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 1rem !important; padding-inline-end: 1rem !important; gap: 0.375rem !important; border: 1px solid transparent !important; font-weight: 500 !important; font-size: 0.8125rem !important; outline: none !important; }
+.btn-sm { height: 2rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; font-weight: 500 !important; font-size: 0.75rem !important; gap: 0.275rem !important; }
+.btn i { font-size: 1.125rem !important; line-height: 0 !important; }
+.btn-sm i { font-size: 0.875rem !important; }
+.input { display: block !important; width: 100% !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; box-shadow: none !important; outline: none !important; font-weight: 500 !important; font-size: 0.8125rem !important; line-height: 1 !important; background-color: var(--tw-light-active) !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; border: 1px solid var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
+.input:hover { border-color: var(--tw-gray-400) !important; }
+.input:focus { border-color: var(--tw-primary) !important; box-shadow: var(--tw-input-focus-box-shadow) !important; color: var(--tw-gray-700) !important; }
+.select { font-weight: 500 !important; font-size: 0.8125rem !important; line-height: 1 !important; background-color: var(--tw-light-active) !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; border: 1px solid var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
+.select:hover { border-color: var(--tw-gray-400) !important; }
+.select:focus { border-color: var(--tw-primary) !important; box-shadow: var(--tw-input-focus-box-shadow) !important; color: var(--tw-gray-700) !important; }
+.select-sm { font-weight: 500 !important; font-size: 0.75rem !important; height: 2rem !important; padding-inline-start: 0.625rem !important; padding-inline-end: 0.625rem !important; background-size: 14px 10px !important; background-position: inset-inline-end 0.55rem center !important; }
+.card-header { padding: 1rem 1.5rem !important; border-bottom: 1px solid var(--tw-gray-200) !important; background-color: var(--tw-white) !important; }
+.card-header .btn { margin: 0 !important; }
+.card-header .btn-success { background-color: #28a745 !important; border-color: #28a745 !important; color: white !important; }
+.card-header .btn-success:hover { background-color: #218838 !important; border-color: #1e7e34 !important; }
+.card-header .btn-light { background-color: var(--tw-gray-100) !important; border-color: var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
+.card-header .btn-light:hover { background-color: var(--tw-gray-200) !important; border-color: var(--tw-gray-400) !important; }
+.card-body { padding: 1.5rem !important; }
+.table { font-size: 0.875rem !important; }
+.table th { font-weight: 600 !important; font-size: 0.875rem !important; padding: 0.75rem !important; }
+.table td { font-size: 0.875rem !important; padding: 0.75rem !important; }
+.form-label { font-weight: 500 !important; font-size: 0.875rem !important; color: var(--tw-gray-700) !important; margin-bottom: 0.5rem !important; }
+.form-hint { font-size: 0.75rem !important; color: var(--tw-gray-500) !important; margin-top: 0.25rem !important; }
+.modal-header { padding: 1rem 1.5rem !important; border-bottom: 1px solid var(--tw-gray-200) !important; }
+.modal-title { font-weight: 600 !important; font-size: 1.125rem !important; color: var(--tw-gray-900) !important; }
+.modal-body { padding: 1.5rem !important; }
+.modal-footer { padding: 1rem 1.5rem !important; border-top: 1px solid var(--tw-gray-200) !important; }
+.text-muted { color: var(--tw-gray-500) !important; }
+.text-success { color: #28a745 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+.badge { font-size: 0.75rem !important; font-weight: 500 !important; padding: 0.25rem 0.5rem !important; border-radius: 0.25rem !important; }
+.badge-success { background-color: #28a745 !important; color: white !important; }
+.badge-danger { background-color: #dc3545 !important; color: white !important; }
+.badge-warning { background-color: #ffc107 !important; color: #212529 !important; }
+.badge-info { background-color: #17a2b8 !important; color: white !important; }
+.alert { padding: 0.75rem 1rem !important; margin-bottom: 1rem !important; border: 1px solid transparent !important; border-radius: 0.375rem !important; }
+.alert-success { background-color: #d4edda !important; border-color: #c3e6cb !important; color: #155724 !important; }
+.alert-danger { background-color: #f8d7da !important; border-color: #f5c6cb !important; color: #721c24 !important; }
+.alert-warning { background-color: #fff3cd !important; border-color: #ffeaa7 !important; color: #856404 !important; }
+.alert-info { background-color: #d1ecf1 !important; border-color: #bee5eb !important; color: #0c5460 !important; }
+.btn-group { display: inline-flex !important; }
+.btn-group .btn { border-radius: 0 !important; }
+.btn-group .btn:first-child { border-top-left-radius: 0.375rem !important; border-bottom-left-radius: 0.375rem !important; }
+.btn-group .btn:last-child { border-top-right-radius: 0.375rem !important; border-bottom-right-radius: 0.375rem !important; }
+.dropdown-menu { font-size: 0.875rem !important; }
+.dropdown-item { font-size: 0.875rem !important; padding: 0.5rem 1rem !important; }
+.pagination { font-size: 0.875rem !important; }
+.page-link { font-size: 0.875rem !important; padding: 0.5rem 0.75rem !important; }
+.progress { height: 0.5rem !important; font-size: 0.75rem !important; }
+.list-group-item { font-size: 0.875rem !important; padding: 0.75rem 1rem !important; }
+.nav-tabs .nav-link { font-size: 0.875rem !important; padding: 0.75rem 1rem !important; }
+.nav-pills .nav-link { font-size: 0.875rem !important; padding: 0.75rem 1rem !important; }
+.tooltip { font-size: 0.75rem !important; }
+.popover { font-size: 0.875rem !important; }
+.modal-dialog { font-size: 0.875rem !important; }
+.form-control { font-size: 0.875rem !important; }
+.form-select { font-size: 0.875rem !important; }
+.form-check-label { font-size: 0.875rem !important; }
+.form-check-input { font-size: 0.875rem !important; }
+.input-group-text { font-size: 0.875rem !important; }
+.btn-close { font-size: 0.875rem !important; }
+.accordion-button { font-size: 0.875rem !important; }
+.accordion-body { font-size: 0.875rem !important; }
+.carousel-caption { font-size: 0.875rem !important; }
+.toast { font-size: 0.875rem !important; }
+.toast-header { font-size: 0.875rem !important; }
+.toast-body { font-size: 0.875rem !important; }
+.offcanvas-title { font-size: 1.125rem !important; }
+.offcanvas-body { font-size: 0.875rem !important; }
+/* Additional styles for complete consistency */
+.container-fixed { max-width: 1280px !important; margin: 0 auto !important; padding: 0 1rem !important; }
+@media (min-width: 1280px) { .container-fixed { padding: 0 2rem !important; } }
+.card { background-color: var(--tw-white) !important; border: 1px solid var(--tw-gray-200) !important; border-radius: 0.5rem !important; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; }
+.card-header { background-color: var(--tw-white) !important; border-bottom: 1px solid var(--tw-gray-200) !important; border-top-left-radius: 0.5rem !important; border-top-right-radius: 0.5rem !important; }
+.card-body { background-color: var(--tw-white) !important; }
+.card-footer { background-color: var(--tw-gray-50) !important; border-top: 1px solid var(--tw-gray-200) !important; border-bottom-left-radius: 0.5rem !important; border-bottom-right-radius: 0.5rem !important; }
+.table { width: 100% !important; border-collapse: collapse !important; }
+.table th { background-color: var(--tw-gray-50) !important; border-bottom: 2px solid var(--tw-gray-200) !important; text-align: left !important; font-weight: 600 !important; color: var(--tw-gray-900) !important; }
+.table td { border-bottom: 1px solid var(--tw-gray-200) !important; color: var(--tw-gray-700) !important; }
+.table tbody tr:hover { background-color: var(--tw-gray-50) !important; }
+.table-striped tbody tr:nth-child(odd) { background-color: var(--tw-gray-50) !important; }
+.table-striped tbody tr:nth-child(odd):hover { background-color: var(--tw-gray-100) !important; }
+.table-bordered { border: 1px solid var(--tw-gray-200) !important; }
+.table-bordered th, .table-bordered td { border: 1px solid var(--tw-gray-200) !important; }
+.table-sm th, .table-sm td { padding: 0.5rem !important; }
+.table-responsive { overflow-x: auto !important; }
+.modal { background-color: rgba(0, 0, 0, 0.5) !important; }
+.modal-content { background-color: var(--tw-white) !important; border: 1px solid var(--tw-gray-200) !important; border-radius: 0.5rem !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; }
+.modal-header { border-bottom: 1px solid var(--tw-gray-200) !important; }
+.modal-footer { border-top: 1px solid var(--tw-gray-200) !important; }
+.btn-close { background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat !important; border: 0 !important; border-radius: 0.375rem !important; box-sizing: content-box !important; width: 1em !important; height: 1em !important; padding: 0.25em !important; color: #000 !important; background-color: transparent !important; }
+.btn-close:hover { color: #000 !important; text-decoration: none !important; opacity: 0.75 !important; }
+.btn-close:focus { outline: 0 !important; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; opacity: 1 !important; }
+.dropdown-menu { position: absolute !important; top: 100% !important; left: 0 !important; z-index: 1000 !important; display: none !important; min-width: 10rem !important; padding: 0.5rem 0 !important; margin: 0.125rem 0 0 !important; font-size: 0.875rem !important; color: var(--tw-gray-700) !important; text-align: left !important; list-style: none !important; background-color: var(--tw-white) !important; background-clip: padding-box !important; border: 1px solid var(--tw-gray-200) !important; border-radius: 0.375rem !important; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; }
+.dropdown-menu.show { display: block !important; }
+.dropdown-item { display: block !important; width: 100% !important; padding: 0.5rem 1rem !important; clear: both !important; font-weight: 400 !important; color: var(--tw-gray-700) !important; text-align: inherit !important; text-decoration: none !important; white-space: nowrap !important; background-color: transparent !important; border: 0 !important; }
+.dropdown-item:hover { color: var(--tw-gray-900) !important; background-color: var(--tw-gray-100) !important; }
+.dropdown-item:focus { color: var(--tw-gray-900) !important; background-color: var(--tw-gray-100) !important; }
+.dropdown-item:active { color: var(--tw-white) !important; text-decoration: none !important; background-color: var(--tw-primary) !important; }
+.dropdown-item.disabled { color: var(--tw-gray-500) !important; pointer-events: none !important; background-color: transparent !important; }
+.dropdown-divider { height: 0 !important; margin: 0.5rem 0 !important; overflow: hidden !important; border-top: 1px solid var(--tw-gray-200) !important; }
+.dropdown-header { display: block !important; padding: 0.5rem 1rem !important; margin-bottom: 0 !important; font-size: 0.875rem !important; color: var(--tw-gray-500) !important; white-space: nowrap !important; }
+.dropdown-text { display: block !important; padding: 0.5rem 1rem !important; color: var(--tw-gray-700) !important; }
+.dropdown-menu-end { right: 0 !important; left: auto !important; }
+.dropdown-menu-start { right: auto !important; left: 0 !important; }
+.dropdown-menu-sm-start { right: auto !important; left: 0 !important; }
+.dropdown-menu-sm-end { right: 0 !important; left: auto !important; }
+.dropdown-menu-md-start { right: auto !important; left: 0 !important; }
+.dropdown-menu-md-end { right: 0 !important; left: auto !important; }
+.dropdown-menu-lg-start { right: auto !important; left: 0 !important; }
+.dropdown-menu-lg-end { right: 0 !important; left: auto !important; }
+.dropdown-menu-xl-start { right: auto !important; left: 0 !important; }
+.dropdown-menu-xl-end { right: 0 !important; left: auto !important; }
+.dropdown-menu-xxl-start { right: auto !important; left: 0 !important; }
+.dropdown-menu-xxl-end { right: 0 !important; left: auto !important; }
+.dropdown-menu-center { left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-sm-center { left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-md-center { left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-lg-center { left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-xl-center { left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-xxl-center { left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-toggle::after { display: inline-block !important; margin-left: 0.255em !important; vertical-align: 0.255em !important; content: "" !important; border-top: 0.3em solid !important; border-right: 0.3em solid transparent !important; border-bottom: 0 !important; border-left: 0.3em solid transparent !important; }
+.dropdown-toggle:empty::after { margin-left: 0 !important; }
+.dropdown-menu { margin-top: 0.125rem !important; }
+.dropdown-menu[data-bs-popper] { top: 100% !important; left: 0 !important; margin-top: 0.125rem !important; }
+.dropdown-menu-start { --bs-position: start !important; }
+.dropdown-menu-start[data-bs-popper] { right: auto !important; left: 0 !important; }
+.dropdown-menu-end { --bs-position: end !important; }
+.dropdown-menu-end[data-bs-popper] { right: 0 !important; left: auto !important; }
+.dropdown-menu-center { --bs-position: center !important; }
+.dropdown-menu-center[data-bs-popper] { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-sm-start { --bs-position: start !important; }
+.dropdown-menu-sm-start[data-bs-popper] { right: auto !important; left: 0 !important; }
+.dropdown-menu-sm-end { --bs-position: end !important; }
+.dropdown-menu-sm-end[data-bs-popper] { right: 0 !important; left: auto !important; }
+.dropdown-menu-sm-center { --bs-position: center !important; }
+.dropdown-menu-sm-center[data-bs-popper] { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-md-start { --bs-position: start !important; }
+.dropdown-menu-md-start[data-bs-popper] { right: auto !important; left: 0 !important; }
+.dropdown-menu-md-end { --bs-position: end !important; }
+.dropdown-menu-md-end[data-bs-popper] { right: 0 !important; left: auto !important; }
+.dropdown-menu-md-center { --bs-position: center !important; }
+.dropdown-menu-md-center[data-bs-popper] { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-lg-start { --bs-position: start !important; }
+.dropdown-menu-lg-start[data-bs-popper] { right: auto !important; left: 0 !important; }
+.dropdown-menu-lg-end { --bs-position: end !important; }
+.dropdown-menu-lg-end[data-bs-popper] { right: 0 !important; left: auto !important; }
+.dropdown-menu-lg-center { --bs-position: center !important; }
+.dropdown-menu-lg-center[data-bs-popper] { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-xl-start { --bs-position: start !important; }
+.dropdown-menu-xl-start[data-bs-popper] { right: auto !important; left: 0 !important; }
+.dropdown-menu-xl-end { --bs-position: end !important; }
+.dropdown-menu-xl-end[data-bs-popper] { right: 0 !important; left: auto !important; }
+.dropdown-menu-xl-center { --bs-position: center !important; }
+.dropdown-menu-xl-center[data-bs-popper] { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+.dropdown-menu-xxl-start { --bs-position: start !important; }
+.dropdown-menu-xxl-start[data-bs-popper] { right: auto !important; left: 0 !important; }
+.dropdown-menu-xxl-end { --bs-position: end !important; }
+.dropdown-menu-xxl-end[data-bs-popper] { right: 0 !important; left: auto !important; }
+.dropdown-menu-xxl-center { --bs-position: center !important; }
+.dropdown-menu-xxl-center[data-bs-popper] { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+@media (min-width: 576px) { .dropdown-menu-sm-start { right: auto !important; left: 0 !important; }
+  .dropdown-menu-sm-end { right: 0 !important; left: auto !important; }
+  .dropdown-menu-sm-center { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; } }
+@media (min-width: 768px) { .dropdown-menu-md-start { right: auto !important; left: 0 !important; }
+  .dropdown-menu-md-end { right: 0 !important; left: auto !important; }
+  .dropdown-menu-md-center { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; } }
+@media (min-width: 992px) { .dropdown-menu-lg-start { right: auto !important; left: 0 !important; }
+  .dropdown-menu-lg-end { right: 0 !important; left: auto !important; }
+  .dropdown-menu-lg-center { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; } }
+@media (min-width: 1200px) { .dropdown-menu-xl-start { right: auto !important; left: 0 !important; }
+  .dropdown-menu-xl-end { right: 0 !important; left: auto !important; }
+  .dropdown-menu-xl-center { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; } }
+@media (min-width: 1400px) { .dropdown-menu-xxl-start { right: auto !important; left: 0 !important; }
+  .dropdown-menu-xxl-end { right: 0 !important; left: auto !important; }
+  .dropdown-menu-xxl-center { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; } }
+.dropup .dropdown-menu { top: auto !important; bottom: 100% !important; margin-top: 0 !important; margin-bottom: 0.125rem !important; }
+.dropup .dropdown-toggle::after { display: inline-block !important; margin-left: 0.255em !important; vertical-align: 0.255em !important; content: "" !important; border-top: 0 !important; border-right: 0.3em solid transparent !important; border-bottom: 0.3em solid !important; border-left: 0.3em solid transparent !important; }
+.dropup .dropdown-toggle:empty::after { margin-left: 0 !important; }
+.dropend .dropdown-menu { top: 0 !important; right: auto !important; left: 100% !important; margin-top: 0 !important; margin-left: 0.125rem !important; }
+.dropend .dropdown-toggle::after { display: inline-block !important; margin-left: 0.255em !important; vertical-align: 0.255em !important; content: "" !important; border-top: 0.3em solid transparent !important; border-right: 0 !important; border-bottom: 0.3em solid transparent !important; border-left: 0.3em solid !important; }
+.dropend .dropdown-toggle:empty::after { margin-left: 0 !important; }
+.dropend .dropdown-toggle::after { vertical-align: 0 !important; }
+.dropstart .dropdown-menu { top: 0 !important; right: 100% !important; left: auto !important; margin-top: 0 !important; margin-right: 0.125rem !important; }
+.dropstart .dropdown-toggle::after { display: inline-block !important; margin-left: 0.255em !important; vertical-align: 0.255em !important; content: "" !important; border-top: 0.3em solid transparent !important; border-right: 0.3em solid !important; border-bottom: 0.3em solid transparent !important; }
+.dropstart .dropdown-toggle::before { display: inline-block !important; margin-right: 0.255em !important; vertical-align: 0.255em !important; content: "" !important; border-top: 0.3em solid transparent !important; border-right: 0.3em solid !important; border-bottom: 0.3em solid transparent !important; }
+.dropstart .dropdown-toggle:empty::after { margin-left: 0 !important; }
+.dropstart .dropdown-toggle::before { vertical-align: 0 !important; }
+.dropdown-divider { height: 0 !important; margin: 0.5rem 0 !important; overflow: hidden !important; border-top: 1px solid var(--tw-gray-200) !important; }
+.dropdown-item-text { display: block !important; width: 100% !important; padding: 0.5rem 1rem !important; clear: both !important; font-weight: 400 !important; color: var(--tw-gray-700) !important; text-align: inherit !important; text-decoration: none !important; white-space: nowrap !important; background-color: transparent !important; border: 0 !important; }
+.dropdown-item-text:hover { color: var(--tw-gray-900) !important; background-color: var(--tw-gray-100) !important; }
+.dropdown-item-text:focus { color: var(--tw-gray-900) !important; background-color: var(--tw-gray-100) !important; }
+.dropdown-item-text:active { color: var(--tw-white) !important; text-decoration: none !important; background-color: var(--tw-primary) !important; }
+.dropdown-item-text.disabled { color: var(--tw-gray-500) !important; pointer-events: none !important; background-color: transparent !important; }
+</style>
