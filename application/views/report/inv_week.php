@@ -8,7 +8,10 @@
       </div>
       <div id="toolbar_right" class="flex items-center gap-2">
         <div class="input-group input-sm">
-          <select class="select" id="month_filter" style="min-height: 35px; height: 35px; line-height: 1.2; padding: 8px 12px; font-size: 14px;">
+          <select class="select" id="year_filter">
+            <option value="">Pilih Tahun</option>
+          </select>
+          <select class="select" id="month_filter">
             <option value="">Pilih Bulan</option>
             <option value="1">Januari</option>
             <option value="2">Februari</option>
@@ -28,7 +31,7 @@
         <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportInvWeekData();" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
       </div>
     </div>
-    <div id="result_message" class="input-result-message"></div>
+    <div id="result_message" class="input-result-message" style="display:none;"></div>
     <div id="show_data"></div>
   </div>
 </div>
@@ -103,18 +106,91 @@
 .form-hint { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #333; }
 .select, .input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; min-height: 40px; line-height: 1.4; }
 .select:focus, .input:focus { outline: none; border-color: var(--primary); }
-.select option { padding: 8px 12px; }
+.select option { 
+  padding: 8px 12px !important; 
+  font-size: 14px !important; 
+  font-weight: 500 !important; 
+  background-color: #ffffff !important;
+  color: #333 !important;
+  border: none !important;
+  outline: none !important;
+}
 #year, #month { width: 100% !important; max-width: none !important; }
-#month { min-height: 35px !important; height: 35px !important; line-height: 1.2 !important; padding: 8px 12px !important; vertical-align: middle !important; font-size: 13px !important; }
-#month option { white-space: nowrap !important; padding: 8px 12px !important; line-height: 1.2 !important; font-size: 13px !important; height: auto !important; min-height: 20px !important; }
-select.select { text-overflow: unset !important; overflow: visible !important; }
-.input-group { display: flex; align-items: center; gap: 5px; }
-.input-group .select { flex: 1; min-width: 150px; }
-.input-group .btn { white-space: nowrap; }
-#month_filter { min-height: 35px !important; height: 35px !important; line-height: 1.2 !important; padding: 8px 12px !important; font-size: 13px !important; font-weight: 500 !important; background-color: var(--tw-light-active) !important; border-radius: 0.375rem !important; border: 1px solid var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
-#month_filter:hover { border-color: var(--tw-gray-400) !important; }
-#month_filter:focus { border-color: var(--tw-primary) !important; box-shadow: var(--tw-input-focus-box-shadow) !important; color: var(--tw-gray-700) !important; }
-#month_filter option { font-size: 13px !important; font-weight: 500 !important; padding: 8px 12px !important; }
+
+select.select { 
+  text-overflow: unset !important; 
+  overflow: visible !important; 
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  outline: none !important;
+}
+.input-group { 
+  display: flex; 
+  align-items: center; 
+  gap: 5px; 
+  border: none !important;
+  outline: none !important;
+}
+.input-group .select { 
+  flex: 1; 
+  min-width: 150px; 
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+}
+.input-group .btn { 
+  white-space: nowrap; 
+  border: none !important;
+}
+#month_filter { 
+  min-height: 35px !important; 
+  height: 35px !important; 
+  line-height: 1.2 !important; 
+  padding: 8px 12px !important; 
+  font-size: 14px !important; 
+  font-weight: 500 !important; 
+  background-color: #ffffff !important; 
+  border-radius: 4px !important; 
+  border: 1px solid #ddd !important; 
+  border-right: 1px solid #ddd !important;
+  color: #333 !important; 
+  width: 100% !important;
+  transition: border-color 0.2s !important;
+  outline: none !important;
+}
+#year_filter { 
+  min-height: 35px !important; 
+  height: 35px !important; 
+  line-height: 1.2 !important; 
+  padding: 8px 12px !important; 
+  font-size: 14px !important; 
+  font-weight: 500 !important; 
+  background-color: #ffffff !important; 
+  border-radius: 4px !important; 
+  border: 1px solid #ddd !important; 
+  color: #333 !important; 
+  width: 100% !important;
+  transition: border-color 0.2s !important;
+  outline: none !important;
+}
+#year_filter:hover { border-color: #0074d9 !important; }
+#year_filter:focus { border-color: #0074d9 !important; outline: none !important; box-shadow: 0 0 0 2px rgba(0,116,217,0.2) !important; }
+#month_filter:hover { 
+  border-color: #0074d9 !important; 
+}
+#month_filter:focus { 
+  border-color: #0074d9 !important; 
+  outline: none !important; 
+  box-shadow: 0 0 0 2px rgba(0, 116, 217, 0.2) !important; 
+}
+#month_filter option { 
+  font-size: 14px !important; 
+  font-weight: 500 !important; 
+  padding: 8px 12px !important; 
+  background-color: #ffffff !important;
+  color: #333 !important;
+  border: none !important;
+  outline: none !important;
+}
 .btn { display: inline-flex !important; align-items: center !important; cursor: pointer !important; line-height: 1 !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 1rem !important; padding-inline-end: 1rem !important; gap: 0.375rem !important; border: 1px solid transparent !important; font-weight: 500 !important; font-size: 0.8125rem !important; outline: none !important; }
 .btn-sm { height: 2rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; font-weight: 500 !important; font-size: 0.75rem !important; gap: 0.275rem !important; }
 .btn i { font-size: 1.125rem !important; line-height: 0 !important; }
@@ -122,9 +198,29 @@ select.select { text-overflow: unset !important; overflow: visible !important; }
 .input { display: block !important; width: 100% !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; box-shadow: none !important; outline: none !important; font-weight: 500 !important; font-size: 0.8125rem !important; line-height: 1 !important; background-color: var(--tw-light-active) !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; border: 1px solid var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
 .input:hover { border-color: var(--tw-gray-400) !important; }
 .input:focus { border-color: var(--tw-primary) !important; box-shadow: var(--tw-input-focus-box-shadow) !important; color: var(--tw-gray-700) !important; }
-.select { font-weight: 500 !important; font-size: 0.8125rem !important; line-height: 1 !important; background-color: var(--tw-light-active) !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; border: 1px solid var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
-.select:hover { border-color: var(--tw-gray-400) !important; }
-.select:focus { border-color: var(--tw-primary) !important; box-shadow: var(--tw-input-focus-box-shadow) !important; color: var(--tw-gray-700) !important; }
+.select { 
+  font-weight: 500 !important; 
+  font-size: 14px !important; 
+  line-height: 1.4 !important; 
+  background-color: #ffffff !important; 
+  border-radius: 4px !important; 
+  height: 40px !important; 
+  padding: 10px 12px !important; 
+  border: 1px solid #ddd !important; 
+  border-right: 1px solid #ddd !important;
+  color: #333 !important; 
+  width: 100% !important;
+  transition: border-color 0.2s !important;
+  outline: none !important;
+}
+.select:hover { 
+  border-color: #0074d9 !important; 
+}
+.select:focus { 
+  border-color: #0074d9 !important; 
+  outline: none !important; 
+  box-shadow: 0 0 0 2px rgba(0, 116, 217, 0.2) !important; 
+}
 .select-sm { font-weight: 500 !important; font-size: 0.75rem !important; height: 2rem !important; padding-inline-start: 0.625rem !important; padding-inline-end: 0.625rem !important; background-size: 14px 10px !important; background-position: inset-inline-end 0.55rem center !important; }
 .card-header { padding: 1rem 1.5rem !important; border-bottom: 1px solid var(--tw-gray-200) !important; background-color: var(--tw-white) !important; }
 .card-header .btn { margin: 0 !important; }
@@ -157,6 +253,11 @@ select.select { text-overflow: unset !important; overflow: visible !important; }
 .alert-danger { background-color: #f8d7da !important; border-color: #f5c6cb !important; color: #721c24 !important; }
 .alert-warning { background-color: #fff3cd !important; border-color: #ffeaa7 !important; color: #856404 !important; }
 .alert-info { background-color: #d1ecf1 !important; border-color: #bee5eb !important; color: #0c5460 !important; }
+.input-result-message { display:none; padding: 10px 12px; border-radius: 6px; margin: 12px 16px; font-weight: 500; }
+.input-result-message.success { display:block; background: #d4edda; color:#155724; border:1px solid #c3e6cb; }
+.input-result-message.error { display:block; background: #f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+.input-result-message.warning { display:block; background: #fff3cd; color:#856404; border:1px solid #ffeaa7; }
+.input-result-message.info { display:block; background: #d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
 .btn-group { display: inline-flex !important; }
 .btn-group .btn { border-radius: 0 !important; }
 .btn-group .btn:first-child { border-top-left-radius: 0.375rem !important; border-bottom-left-radius: 0.375rem !important; }
@@ -177,7 +278,7 @@ select.select { text-overflow: unset !important; overflow: visible !important; }
 .form-check-label { font-size: 0.875rem !important; }
 .form-check-input { font-size: 0.875rem !important; }
 .input-group-text { font-size: 0.875rem !important; }
-.btn-close { font-size: 0.875rem !important; }
+/* Removed duplicate btn-close style */
 .accordion-button { font-size: 0.875rem !important; }
 .accordion-body { font-size: 0.875rem !important; }
 .carousel-caption { font-size: 0.875rem !important; }
@@ -207,9 +308,7 @@ select.select { text-overflow: unset !important; overflow: visible !important; }
 .modal-content { background-color: var(--tw-white) !important; border: 1px solid var(--tw-gray-200) !important; border-radius: 0.5rem !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; }
 .modal-header { border-bottom: 1px solid var(--tw-gray-200) !important; }
 .modal-footer { border-top: 1px solid var(--tw-gray-200) !important; }
-.btn-close { background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat !important; border: 0 !important; border-radius: 0.375rem !important; box-sizing: content-box !important; width: 1em !important; height: 1em !important; padding: 0.25em !important; color: #000 !important; background-color: transparent !important; }
-.btn-close:hover { color: #000 !important; text-decoration: none !important; opacity: 0.75 !important; }
-.btn-close:focus { outline: 0 !important; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; opacity: 1 !important; }
+/* Removed conflicting Bootstrap btn-close styles to prevent double X */
 .dropdown-menu { position: absolute !important; top: 100% !important; left: 0 !important; z-index: 1000 !important; display: none !important; min-width: 10rem !important; padding: 0.5rem 0 !important; margin: 0.125rem 0 0 !important; font-size: 0.875rem !important; color: var(--tw-gray-700) !important; text-align: left !important; list-style: none !important; background-color: var(--tw-white) !important; background-clip: padding-box !important; border: 1px solid var(--tw-gray-200) !important; border-radius: 0.375rem !important; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; }
 .dropdown-menu.show { display: block !important; }
 .dropdown-item { display: block !important; width: 100% !important; padding: 0.5rem 1rem !important; clear: both !important; font-weight: 400 !important; color: var(--tw-gray-700) !important; text-align: inherit !important; text-decoration: none !important; white-space: nowrap !important; background-color: transparent !important; border: 0 !important; }
