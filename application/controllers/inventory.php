@@ -44,6 +44,19 @@ class Inventory extends CI_Controller {
             $data = $this->load_top($data);
             $data['title_page'] = "Inventory Report";
             $data['dvc_code'] = $this->report_model->getDevicesForReport('ecbs', 'app'); // Default data
+
+            // Preload filter lists so the modal shows data on first render
+            $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
+            $data['available_years'] = $this->report_model->getAvailableYears();
+            $data['available_months'] = $this->report_model->getAvailableMonths();
+            $data['available_weeks'] = $this->report_model->getAvailableWeeks();
+            $data['current_filters'] = array(
+                'device_search' => '',
+                'year' => '',
+                'month' => '',
+                'week' => '',
+                'id_week' => ''
+            );
             $this->load->view('inventory/banner', $data);
             $this->load->view('report/inv_report', $data);
             $this->load_bot($data);
@@ -456,6 +469,7 @@ class Inventory extends CI_Controller {
             $month = $this->input->get('month');
             $week = $this->input->get('week');
             $id_week = $this->input->get('id_week');
+            $no_default_week = $this->input->get('no_default_week');
             
             if ($device_search) {
                 $filters['device_search'] = $device_search;
@@ -475,7 +489,7 @@ class Inventory extends CI_Controller {
             
             if ($id_week) {
                 $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week) {
+            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
                 // Default to current week if no filters specified
                 $filters['id_week'] = $current_week['id_week'];
             }
@@ -542,6 +556,7 @@ class Inventory extends CI_Controller {
             $month = $this->input->get('month');
             $week = $this->input->get('week');
             $id_week = $this->input->get('id_week');
+            $no_default_week = $this->input->get('no_default_week');
             
             if ($device_search) {
                 $filters['device_search'] = $device_search;
@@ -561,7 +576,7 @@ class Inventory extends CI_Controller {
             
             if ($id_week) {
                 $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week) {
+            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
                 // Default to current week if no filters specified
                 $filters['id_week'] = $current_week['id_week'];
             }

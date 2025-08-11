@@ -122,21 +122,71 @@ function saveAllData() {
 // =================== MONTH SEARCH FUNCTION ===================
 function searchByMonth() {
     const selectedMonth = document.getElementById('month_filter').value;
-    const currentYear = new Date().getFullYear();
+    const selectedYear = document.getElementById('year_filter').value;
     
     if (!selectedMonth) {
         showMessage('Silakan pilih bulan terlebih dahulu', 'error');
         return;
     }
     
+    if (!selectedYear) {
+        showMessage('Silakan pilih tahun terlebih dahulu', 'error');
+        return;
+    }
+    
     // Set current month and year
     currentMonth = parseInt(selectedMonth);
+    currentYear = parseInt(selectedYear);
     
-    // Load data for selected month
+    // Load data for selected month and year
     loadInvWeekData(currentYear, currentMonth);
     
     // Show success message
     showMessage(`Menampilkan data untuk bulan ${getMonthName(currentMonth)} ${currentYear}`, 'success');
+}
+
+// =================== YEAR DROPDOWN POPULATION FUNCTION ===================
+function populateYearDropdown() {
+    const yearFilter = document.getElementById('year_filter');
+    const currentYearValue = new Date().getFullYear();
+    const startYear = 2020; // Mulai dari tahun 2020
+    
+    // Clear existing options except the first one
+    yearFilter.innerHTML = '<option value="">Pilih Tahun</option>';
+    
+    // Add year options from startYear to currentYear + 1
+    for (let year = startYear; year <= currentYearValue + 1; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        
+        // Set current year as selected by default
+        if (year === currentYearValue) {
+            option.selected = true;
+        }
+        
+        yearFilter.appendChild(option);
+    }
+    
+    // Set global variables
+    currentYear = currentYearValue;
+    currentMonth = new Date().getMonth() + 1; // Current month (1-12)
+}
+
+// =================== INITIALIZATION FUNCTION ===================
+function initializeFilters() {
+    populateYearDropdown();
+    
+    // Set current month as selected by default
+    const monthFilter = document.getElementById('month_filter');
+    if (monthFilter) {
+        monthFilter.value = currentMonth;
+    }
+    
+    // Load data for current month and year
+    if (currentYear && currentMonth) {
+        loadInvWeekData(currentYear, currentMonth);
+    }
 }
 
 // =================== EXISTING FUNCTIONS ===================
@@ -188,7 +238,7 @@ function showInvWeekData() {
         loadInvWeekData(currentYear, currentMonth);
     } else {
         console.log('No year/month set, showing empty state');
-        document.getElementById("show_data").innerHTML = '<div class="no-data"><p>Silakan klik tombol <strong>Input</strong> untuk generate periode mingguan.</p><p>Pilih tahun dan bulan, lalu klik Generate Periode.</p></div>';
+        document.getElementById("show_data").innerHTML = '<div class="no-data" style="text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px;">No Data, Generate Please</div>';
     }
 }
 
@@ -232,7 +282,7 @@ function loadInvWeekDataFromServer(link) {
                 if (data.trim() === '') {
                     console.log('Empty data received');
                     document.getElementById("show_data").innerHTML = 
-                        '<div class="no-data"><p>Tidak ada data periode untuk bulan dan tahun yang dipilih.</p><p>Silakan generate periode terlebih dahulu.</p></div>';
+                        '<div class="no-data" style="text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px;">No Data, Generate Please</div>';
                 } else {
                     console.log('Data loaded successfully');
                     document.getElementById("show_data").innerHTML = data;
@@ -261,7 +311,7 @@ function generateInvWeekPeriods() {
         loadingSpinner.style.display = 'inline-block';
     }
     
-    showModalMessage('Generating periods dengan logika 27-26, waktu 08:00-17:00, dan minggu kerja Senin-Jumat...', 'success');
+    showModalMessage('Generating periods...', 'success');
     
     const requestData = {
         year: parseInt(year),
@@ -367,7 +417,7 @@ function showRegenerateConfirmation(year, month) {
         <div id="regenerate_confirmation" class="confirmation-section" style="display: block;">
             <div class="confirmation-content">
                 <div class="confirmation-text">
-                    Apakah Anda yakin untuk generate ulang? Tindakan ini akan menghapus data yang sudah ada dan membuat ulang.
+                    Yakin ingin regenerate? Data lama akan dihapus.
                 </div>
                 <div class="confirmation-buttons">
                     <button class="btn-confirm" onclick="confirmRegenerate(${year}, ${month})">YA</button>
@@ -402,7 +452,7 @@ function executeRegenerate(year, month) {
         loadingSpinner.style.display = 'inline-block';
     }
     
-    showModalMessage('Regenerating periods dengan logika 27-26, waktu 08:00-17:00, dan minggu kerja Senin-Jumat...', 'success');
+    showModalMessage('Regenerating periods...', 'success');
     
     const requestData = {
         year: parseInt(year),
@@ -716,27 +766,64 @@ function showMessage(message, type) {
 
 function showModalMessage(message, type) {
     const element = document.getElementById('modal_result_message');
-    element.textContent = message;
+    
+    // Check if message contains "Generating" or "Regenerating" to show loading spinner
+    if (message.includes('Generating') || message.includes('Regenerating')) {
+        const isRegenerating = message.includes('Regenerating');
+        const actionText = isRegenerating ? 'Regenerating' : 'Generating';
+        
+        element.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="loading-spinner" style="width: 20px; height: 20px; border: 2px solid #e9ecef; border-top: 2px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <span style="color: #28a745; font-weight: 500;">${actionText} periods...</span>
+            </div>
+        `;
+    } else {
+        element.textContent = message;
+    }
+    
     element.className = 'input-result-message ' + type;
     element.style.display = 'block';
 }
 
 // Event listeners for inv_week
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize current year and month
-    currentYear = new Date().getFullYear();
-    currentMonth = new Date().getMonth() + 1;
+    // Initialize filters and populate year dropdown
+    initializeFilters();
     
     console.log('DOMContentLoaded - Initialized year:', currentYear, 'month:', currentMonth);
-    
-    // Try to load existing data for current year/month
-    showInvWeekData();
     
     // Add event listener for month dropdown Enter key
     const monthFilter = document.getElementById('month_filter');
     if (monthFilter) {
         monthFilter.addEventListener('keyup', function(event) {
             if (event.key === 'Enter') {
+                searchByMonth();
+            }
+        });
+    }
+    
+    // Add event listener for year dropdown Enter key
+    const yearFilter = document.getElementById('year_filter');
+    if (yearFilter) {
+        yearFilter.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                searchByMonth();
+            }
+        });
+        
+        // Add change event listener for year filter
+        yearFilter.addEventListener('change', function() {
+            if (monthFilter && monthFilter.value) {
+                searchByMonth();
+            }
+        });
+    }
+    
+    // Add change event listener for month filter
+    if (monthFilter) {
+        monthFilter.addEventListener('change', function() {
+            if (yearFilter && yearFilter.value) {
                 searchByMonth();
             }
         });
