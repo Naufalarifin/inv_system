@@ -17,7 +17,7 @@
             <option value="2024">2024</option>
             <option value="2025">2025</option>
           </select>
-          <select class="select" id="month_filter">
+          <select class="select select-bulan" id="month_filter">
             <option value="">Pilih Bulan</option>
             <option value="1">Januari</option>
             <option value="2">Februari</option>

@@ -345,37 +345,36 @@ function generateInvWeekPeriods() {
     
     fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        error: function(xhr, status, error) {
-            showToast('Error saving data: ' + error, 'error');
-        },
-        complete: function() {
-            $saveBtn.text(originalText).prop('disabled', false);
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
+        return response.json();
+    })
+    .then(data => {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        if (data.success) {
+            currentYear = parseInt(year);
+            currentMonth = parseInt(month);
+            showModalMessage(data.message || 'Periode berhasil di-generate', 'success');
+            loadInvWeekData(currentYear, currentMonth);
+            setTimeout(() => closeModal('modal_input_all'), 600);
+        } else {
+            showModalMessage(data.message || 'Gagal generate periode', 'error');
+            // Jika gagal (kemungkinan periode sudah ada), otomatis alihkan ke mode Regenerate
+            checkPeriodsExist();
+        }
+    })
+    .catch(error => {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        showModalMessage('Error: ' + error.message, 'error');
     });
 }
 
-$(document).ready(function() {
-    $('.needs-input').prop('disabled', true);
-    setTimeout(calculateTotals, 100);
-    
-    // Ensure year and month are numbers
-    year = parseInt(year);
-    month = parseInt(month);
-    
-    currentYear = year;
-    currentMonth = month;
-    
-    // Close modal
-    closeModal('modal_input_all');
-    
-    // Show message
-    showMessage(`Menampilkan data periode untuk tahun ${year} bulan ${getMonthName(month)}`, 'success');
-    
-    // Load existing data immediately
-    loadInvWeekData(year, month);
-}
+// Removed invalid jQuery ready block that caused parse errors
 
 // Regenerate periods function
 function regeneratePeriods(year, month) {
@@ -426,35 +425,43 @@ function cancelRegenerate() {
 
 function executeRegenerate(year, month) {
     const loadingSpinner = document.getElementById('generate_loading_spinner');
-    
     if (loadingSpinner) {
         loadingSpinner.style.display = 'inline-block';
     }
-    
     showModalMessage('Regenerating periods...', 'success');
-    
+
     const requestData = {
         year: parseInt(year),
         month: parseInt(month),
         regenerate: true
     };
-    
+
     fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData)
     })
     .then(response => {
         if (!response.ok) {
             throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-=======
-    $('.needs-input').on('keypress', function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            $(this).blur();
         }
+        return response.json();
+    })
+    .then(data => {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        if (data.success) {
+            currentYear = parseInt(year);
+            currentMonth = parseInt(month);
+            showModalMessage(data.message || 'Periode berhasil di-regenerate', 'success');
+            loadInvWeekData(currentYear, currentMonth);
+            setTimeout(() => closeModal('modal_input_all'), 600);
+        } else {
+            showModalMessage(data.message || 'Gagal regenerate periode', 'error');
+        }
+    })
+    .catch(error => {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        showModalMessage('Error: ' + error.message, 'error');
     });
 }
 
@@ -469,6 +476,19 @@ function exportInvWeekData() {
     }
     
     window.open(window.location.origin + '/cdummy/inventory/export_inv_week?year=' + year + '&month=' + month, '_blank');
+}
+
+// View existing data from modal action
+function viewExistingData(year, month) {
+    try {
+        currentYear = parseInt(year);
+        currentMonth = parseInt(month);
+        showModalMessage(`Menampilkan data untuk bulan ${getMonthName(currentMonth)} ${currentYear}`, 'success');
+        loadInvWeekData(currentYear, currentMonth);
+        setTimeout(() => closeModal('modal_input_all'), 300);
+    } catch (e) {
+        showModalMessage('Gagal menampilkan data: ' + e.message, 'error');
+    }
 }
 
 // Edit period functions
@@ -490,10 +510,49 @@ function updatePeriod() {
         return;
     }
     
-    if (!confirm('Apakah Anda yakin ingin mengupdate periode ini? Waktu akan otomatis diset ke 08:00-17:00')) {
-        return;
-    }
-    
+    // tampilkan konfirmasi ala regenerate
+    showUpdateConfirmation();
+}
+
+// Konfirmasi update periode (mirip dengan konfirmasi regenerate)
+function showUpdateConfirmation() {
+    const existing = document.getElementById('edit_confirmation');
+    if (existing) return;
+    const modalFooter = document.querySelector('#modal_edit .modal-footer');
+    if (!modalFooter) return;
+
+    const confirmationHtml = `
+        <div id="edit_confirmation" class="confirmation-section" style="display: block;">
+            <div class="confirmation-content">
+                <div class="confirmation-text">
+                    Apakah Anda yakin ingin mengupdate periode ini?
+                </div>
+                <div class="confirmation-buttons">
+                    <button class="btn-confirm" onclick="confirmUpdatePeriod()">YA</button>
+                    <button class="btn-cancel" onclick="cancelUpdatePeriod()">TIDAK</button>
+                </div>
+            </div>
+        </div>
+    `;
+    modalFooter.insertAdjacentHTML('afterend', confirmationHtml);
+}
+
+function confirmUpdatePeriod() {
+    const section = document.getElementById('edit_confirmation');
+    if (section) section.remove();
+    executeUpdatePeriod();
+}
+
+function cancelUpdatePeriod() {
+    const section = document.getElementById('edit_confirmation');
+    if (section) section.remove();
+}
+
+function executeUpdatePeriod() {
+    const id_week = document.getElementById('edit_id_week').value;
+    const date_start = document.getElementById('edit_date_start').value;
+    const date_finish = document.getElementById('edit_date_finish').value;
+
     fetch('<?= base_url('inventory/update_inv_week_period') ?>', {
         method: 'POST',
         headers: {
@@ -513,13 +572,9 @@ function updatePeriod() {
     })
     .then(data => {
         if (data.success) {
-            showMessage('Periode berhasil diupdate dengan waktu 08:00-17:00', 'success');
+            showMessage('Periode berhasil diupdate', 'success');
             closeModal('modal_edit');
-            
-            // Reload data after successful update
-            setTimeout(() => {
-                loadInvWeekData(currentYear, currentMonth);
-            }, 1000);
+            setTimeout(() => { loadInvWeekData(currentYear, currentMonth); }, 800);
         } else {
             showMessage(data.message || 'Gagal update periode', 'error');
         }
@@ -571,6 +626,8 @@ function renderInvWeekInputMode() {
     
     // Reset modal state when opening
     resetModalState();
+    // Cek status periode untuk tahun/bulan default saat modal pertama dibuka
+    checkPeriodsExist();
 }
 
 // Debounce function to prevent too many API calls
@@ -811,7 +868,5 @@ document.addEventListener('keydown', function(event) {
             }
         });
     }
-=======
->>>>>>> 83781fc6d6228129d717108e9ca0f92a156ec604
 });
 </script>
