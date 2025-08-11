@@ -122,6 +122,7 @@ class Inventory extends CI_Controller {
             $data['title_page'] = "Inventory Report Needs";
             $this->load->view('inventory/banner', $data);
             $this->load->view('report/inv_report_needs', $data);
+            $this->load->view('report/javascript_report', $data);
             $this->load_bot($data);
         } catch (Exception $e) {
             log_message('error', 'Report needs error: ' . $e->getMessage());
@@ -612,43 +613,64 @@ class Inventory extends CI_Controller {
         try {
             $data = $this->input->post('data');
             
-            if (!is_array($data)) {
-                $this->_json_response(false, 'Invalid data format');
+            if (!$data || !is_array($data)) {
+                $this->_json_response(false, 'Invalid data received');
                 return;
             }
             
             $success_count = 0;
+            $failed_count = 0;
+            $errors = array();
             $actions = array();
             
-            foreach ($data as $item) {
-                $result = $this->_process_needs_item($item);
-                if ($result['success']) {
-                    $success_count++;
+            foreach ($data as $index => $item) {
+                try {
+                    $result = $this->_process_needs_item($item);
+                    
+                    if ($result['success']) {
+                        $success_count++;
+                        if ($result['action'] !== 'unchanged') {
+                            $actions[] = $result['action'];
+                        }
+                    } else {
+                        $failed_count++;
+                        $errors[] = "Item " . ($index + 1) . ": " . (isset($result['message']) ? $result['message'] : 'Unknown error');
+                    }
+                } catch (Exception $e) {
+                    $failed_count++;
+                    $errors[] = "Item " . ($index + 1) . ": " . $e->getMessage();
                 }
-                $actions[] = $result['action'];
             }
             
-            // Auto-update inventory report after needs save
-            // This will update needs values for current active weeks only
-            $this->report_model->updateInventoryReportNeedsAuto();
-            
-            // Auto-update stock values for current active weeks only
-            $this->report_model->updateInventoryReportStockAuto();
-            
-            $this->_json_response(true, 'Data processed', array(
-                'success' => $success_count,
-                'total' => count($data),
-                'actions' => array_count_values($actions)
-            ));
+            if ($failed_count === 0) {
+                $message = "Processed {$success_count} items successfully";
+                if (!empty($actions)) {
+                    $action_counts = array_count_values($actions);
+                    $action_details = array();
+                    foreach ($action_counts as $action => $count) {
+                        $action_details[] = "{$count} {$action}";
+                    }
+                    $message .= " (" . implode(', ', $action_details) . ")";
+                }
+                
+                $this->_json_response(true, $message, array(
+                    'success_count' => $success_count,
+                    'failed_count' => $failed_count,
+                    'actions' => $actions
+                ));
+            } else {
+                $this->_json_response(false, "{$failed_count} items failed to process", array(
+                    'success_count' => $success_count,
+                    'failed_count' => $failed_count,
+                    'errors' => $errors
+                ));
+            }
             
         } catch (Exception $e) {
             $this->_handle_error($e, 'Save all needs data error', true);
         }
     }
-    
-    /**
-     * Save On PMS data - Fixed method
-     */
+
     public function save_on_pms() {
         try {
             $data = array(
@@ -855,62 +877,27 @@ class Inventory extends CI_Controller {
     }
     
     private function _process_needs_item($item) {
-        // Set default values
         $item = array_merge(array(
             'id_dvc' => '', 'dvc_size' => '', 'dvc_col' => '', 'dvc_qc' => '',
             'needs_qty' => 0, 'original_qty' => 0
         ), $item);
         
-        // Validate and convert
         if (empty($item['id_dvc']) || $item['id_dvc'] == '0') {
-            return array('success' => false, 'action' => 'invalid');
+            return array('success' => false, 'action' => 'invalid', 'message' => 'Invalid device ID');
         }
         
-        // Validate QC value - should be 'LN' or 'DN'
-        if (!in_array($item['dvc_qc'], array('LN', 'DN'))) {
-            return array('success' => false, 'action' => 'invalid_qc');
+        if (empty($item['dvc_qc'])) {
+            return array('success' => false, 'action' => 'invalid_qc', 'message' => 'Invalid QC value');
         }
         
         $item['needs_qty'] = intval($item['needs_qty']);
         $item['original_qty'] = intval($item['original_qty']);
         
-        // Skip if no change
+        // Convert size to uppercase (e.g., "xl" -> "XL", "xs" -> "XS")
+        $item['dvc_size'] = strtoupper($item['dvc_size']);
+        
         if ($item['needs_qty'] === $item['original_qty']) {
-            return array('success' => true, 'action' => 'unchanged');
-        }
-        
-        // Get device info to determine proper color
-        $this->db->select('dvc_code, dvc_tech, dvc_type');
-        $this->db->from('inv_dvc');
-        $this->db->where('id_dvc', $item['id_dvc']);
-        $device_query = $this->db->get();
-        
-            if ($device_query->num_rows() > 0) {
-            $device = $device_query->row_array();
-            $dvc_code = strtoupper($device['dvc_code']);
-            $dvc_tech = strtolower($device['dvc_tech']);
-            $dvc_type = strtoupper($device['dvc_type']);
-            
-            // Determine color based on device properties
-            if (stripos($dvc_code, 'VOH') === 0) {
-                // For VOH devices, use the exact color text from the form (e.g., "Dark Gray")
-                $item['dvc_col'] = $item['dvc_col'];
-            } elseif ($dvc_tech == 'ecct' && $dvc_type == 'APP') {
-                // ECCT APP devices should be "Dark Grey" (store display text)
-                $item['dvc_col'] = 'Dark Grey';
-            } elseif ($dvc_tech == 'ecbs' && $dvc_type == 'APP') {
-                // ECBS APP devices should be "Black"
-                $item['dvc_col'] = 'Black';
-            } elseif ($dvc_type == 'OSC') {
-                // OSC devices should have empty string
-                $item['dvc_col'] = ' ';
-            } else {
-                // For other devices, keep what the form sends (if any)
-                $item['dvc_col'] = $item['dvc_col'];
-            }
-        } else {
-            // Fallback: keep as provided
-            $item['dvc_col'] = $item['dvc_col'];
+            return array('success' => true, 'action' => 'unchanged', 'message' => 'No changes detected');
         }
         
         $db_data = array(
@@ -921,21 +908,19 @@ class Inventory extends CI_Controller {
             'needs_qty' => $item['needs_qty']
         );
         
-        // Delete if quantity is 0 or less
         if ($item['needs_qty'] <= 0) {
             $result = $this->report_model->deleteNeedsData($item['id_dvc'], $item['dvc_size'], $item['dvc_col'], $item['dvc_qc']);
-            return array('success' => $result, 'action' => 'deleted');
+            return array('success' => $result, 'action' => 'deleted', 'message' => $result ? 'Item deleted successfully' : 'Failed to delete item');
         }
         
-        // Check if exists and update or insert
         $existing = $this->report_model->getNeedsData($item['id_dvc'], $item['dvc_size'], $item['dvc_col'], $item['dvc_qc']);
         
         if ($existing) {
             $result = $this->report_model->updateNeedsData($existing['id_needs'], array('needs_qty' => $item['needs_qty']));
-            return array('success' => $result, 'action' => 'updated');
+            return array('success' => $result, 'action' => 'updated', 'message' => $result ? 'Item updated successfully' : 'Failed to update item');
         } else {
             $result = $this->report_model->saveNeedsData($db_data);
-            return array('success' => $result, 'action' => 'inserted');
+            return array('success' => $result, 'action' => 'inserted', 'message' => $result ? 'Item inserted successfully' : 'Failed to insert item');
         }
     }
 
@@ -975,7 +960,7 @@ class Inventory extends CI_Controller {
         if ($data !== null) {
             $response = array_merge($response, $data);
         }
-        return $response;
+        $this->_output_json($response);
     }
     
     private function _handle_error($e, $log_message, $is_json = false) {
