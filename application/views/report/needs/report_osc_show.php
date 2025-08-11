@@ -12,7 +12,7 @@ function getExistingValue($existing_needs, $id_dvc, $size, $color, $qc) {
 
 <div class="card-table">
     <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 text-s compact-table">
+        <table class="table table-border align-middle text-gray-700 text-s compact-table needs-table">
             <thead>
                 <tr>
                     <th align="center">No</th>
@@ -159,17 +159,34 @@ function getExistingValue($existing_needs, $id_dvc, $size, $color, $qc) {
 </div>
 
 <style>
-.compact-table {
-    font-size: 13px !important;
-}
-.compact-table th,
-.compact-table td {
-    padding: 0px 4px !important;
-    line-height: 1.8 !important;
-}
-.compact-table th {
-    font-size: 14px !important;
-}
+.compact-table { font-size: 12.5px !important; }
+.compact-table th, .compact-table td { padding: 4px 6px !important; line-height: 1.35 !important; }
+.compact-table th { font-size: 12.5px !important; white-space: nowrap; }
+
+/* Neater layout for needs table */
+.needs-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.needs-table thead th { text-align: center; vertical-align: middle; }
+.needs-table td { text-align: center; vertical-align: middle; }
+.needs-table td:nth-child(2) { text-align: left; }
+.needs-table td:nth-child(3) { text-align: left; }
+
+/* Fixed column widths */
+.needs-table th:nth-child(1), .needs-table td:nth-child(1) { width: 34px; }
+.needs-table th:nth-child(2), .needs-table td:nth-child(2) { width: 220px; }
+.needs-table th:nth-child(3), .needs-table td:nth-child(3) { width: 70px; }
+.needs-table th:last-child, .needs-table td:last-child { width: 48px; }
+
+/* Inputs tidy */
+.needs-input { width: 46px !important; height: 28px !important; padding: 0 !important; text-align: center !important; margin: 0 auto !important; }
+.needs-input::-webkit-outer-spin-button,
+.needs-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.needs-input[type=number] { -moz-appearance: textfield; }
+
+/* Subtotal and percentage emphasis */
+.needs-table td strong { font-weight: 600; }
+
+/* Row hover */
+.needs-table tbody tr:hover { background-color: #f7f9fc; }
 </style>
 
 <?php $this->load->view('report/javascript_report'); ?>

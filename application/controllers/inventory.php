@@ -44,10 +44,17 @@ class Inventory extends CI_Controller {
             $data = $this->load_top($data);
             $data['title_page'] = "Inventory Report";
             $data['dvc_code'] = $this->report_model->getDevicesForReport('ecbs', 'app'); // Default data
+            $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
             $data['available_years'] = $this->report_model->getAvailableYears();
             $data['available_months'] = $this->report_model->getAvailableMonths();
             $data['available_weeks'] = $this->report_model->getAvailableWeeks();
-            $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
+            $data['current_filters'] = array(
+                'device_search' => '',
+                'year' => '',
+                'month' => '',
+                'week' => '',
+                'id_week' => ''
+            );
             $this->load->view('inventory/banner', $data);
             $this->load->view('report/inv_report', $data);
             $this->load_bot($data);
@@ -259,7 +266,7 @@ class Inventory extends CI_Controller {
             $month = $this->input->get('month');
             
             if (!$year || !$month) {
-                return $this->_output_json($this->_json_response(false, 'Year and month are required'));
+                return $this->_json_response(false, 'Year and month are required');
             }
 
             $year = intval($year);
@@ -267,18 +274,18 @@ class Inventory extends CI_Controller {
 
             // Validate year and month ranges
             if ($year < 2020 || $year > 2030) {
-                return $this->_output_json($this->_json_response(false, 'Invalid year range (2020-2030)'));
+                return $this->_json_response(false, 'Invalid year range (2020-2030)');
             }
             
             if ($month < 1 || $month > 12) {
-                return $this->_output_json($this->_json_response(false, 'Invalid month range (1-12)'));
+                return $this->_json_response(false, 'Invalid month range (1-12)');
             }
 
             $exists = $this->report_model->periods_exist($year, $month);
-            return $this->_output_json($this->_json_response(true, '', array('exists' => $exists)));
+            return $this->_json_response(true, '', array('exists' => $exists));
         } catch (Exception $e) {
             log_message('error', 'Check periods error: ' . $e->getMessage());
-            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+            return $this->_json_response(false, 'Error: ' . $e->getMessage());
         }
     }
 
@@ -286,7 +293,7 @@ class Inventory extends CI_Controller {
         try {
             $input_data = $this->_get_json_input();
             if (!$input_data) {
-                return $this->_output_json($this->_json_response(false, 'Invalid JSON input or empty data'));
+                return $this->_json_response(false, 'Invalid JSON input or empty data');
             }
 
             $year = isset($input_data['year']) ? intval($input_data['year']) : null;
@@ -294,16 +301,16 @@ class Inventory extends CI_Controller {
             $regenerate = isset($input_data['regenerate']) ? boolval($input_data['regenerate']) : false;
 
             if (!$year || !$month) {
-                return $this->_output_json($this->_json_response(false, 'Year and month are required'));
+                return $this->_json_response(false, 'Year and month are required');
             }
 
             // Validate year and month ranges
             if ($year < 2020 || $year > 2030) {
-                return $this->_output_json($this->_json_response(false, 'Invalid year range (2020-2030)'));
+                return $this->_json_response(false, 'Invalid year range (2020-2030)');
             }
             
             if ($month < 1 || $month > 12) {
-                return $this->_output_json($this->_json_response(false, 'Invalid month range (1-12)'));
+                return $this->_json_response(false, 'Invalid month range (1-12)');
             }
 
             // Generate periods using report model
@@ -315,19 +322,19 @@ class Inventory extends CI_Controller {
                 $message .= "Total $period_count periode mingguan telah dibuat. ";
                 $message .= "Data inv_report telah otomatis di-generate untuk setiap periode.";
                 
-                return $this->_output_json($this->_json_response(true, $message, array(
+                return $this->_json_response(true, $message, array(
                     'period_count' => $period_count,
                     'year' => $year,
                     'month' => $month,
                     'auto_report_generated' => true
-                )));
+                ));
             } else {
-                return $this->_output_json($this->_json_response(false, 'Gagal generate periode'));
+                return $this->_json_response(false, 'Gagal generate periode');
             }
             
         } catch (Exception $e) {
             log_message('error', 'Generate periods error: ' . $e->getMessage());
-            return $this->_output_json($this->_json_response(false, $e->getMessage()));
+            return $this->_json_response(false, $e->getMessage());
         }
     }
 
@@ -335,7 +342,7 @@ class Inventory extends CI_Controller {
         try {
             $input_data = $this->_get_json_input();
             if (!$input_data) {
-                return $this->_output_json($this->_json_response(false, 'Invalid JSON input or empty data'));
+                return $this->_json_response(false, 'Invalid JSON input or empty data');
             }
 
             $id_week = isset($input_data['id_week']) ? intval($input_data['id_week']) : null;
@@ -343,7 +350,7 @@ class Inventory extends CI_Controller {
             $date_finish = isset($input_data['date_finish']) ? $input_data['date_finish'] : null;
 
             if (!$id_week || !$date_start || !$date_finish) {
-                return $this->_output_json($this->_json_response(false, 'All fields are required'));
+                return $this->_json_response(false, 'All fields are required');
             }
 
             // Validate date format
@@ -351,24 +358,24 @@ class Inventory extends CI_Controller {
             $finish_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_finish);
             
             if (!$start_dt || !$finish_dt) {
-                return $this->_output_json($this->_json_response(false, 'Invalid date format'));
+                return $this->_json_response(false, 'Invalid date format');
             }
 
             if ($start_dt >= $finish_dt) {
-                return $this->_output_json($this->_json_response(false, 'Start date must be before finish date'));
+                return $this->_json_response(false, 'Start date must be before finish date');
             }
 
             $result = $this->report_model->update_inv_week($id_week, $date_start, $date_finish);
             
             if ($result) {
                 $message = "Period updated successfully. Times automatically set to 08:00-17:00";
-                return $this->_output_json($this->_json_response(true, $message));
+                return $this->_json_response(true, $message);
             } else {
-                return $this->_output_json($this->_json_response(false, 'Failed to update period'));
+                return $this->_json_response(false, 'Failed to update period');
             }
         } catch (Exception $e) {
             log_message('error', 'Update period error: ' . $e->getMessage());
-            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+            return $this->_json_response(false, 'Error: ' . $e->getMessage());
         }
     }
 
@@ -462,6 +469,7 @@ class Inventory extends CI_Controller {
             $month = $this->input->get('month');
             $week = $this->input->get('week');
             $id_week = $this->input->get('id_week');
+            $no_default_week = $this->input->get('no_default_week');
             
             if ($device_search) {
                 $filters['device_search'] = $device_search;
@@ -481,7 +489,7 @@ class Inventory extends CI_Controller {
             
             if ($id_week) {
                 $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week) {
+            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
                 // Default to current week if no filters specified
                 $filters['id_week'] = $current_week['id_week'];
             }
@@ -548,6 +556,7 @@ class Inventory extends CI_Controller {
             $month = $this->input->get('month');
             $week = $this->input->get('week');
             $id_week = $this->input->get('id_week');
+            $no_default_week = $this->input->get('no_default_week');
             
             if ($device_search) {
                 $filters['device_search'] = $device_search;
@@ -564,6 +573,10 @@ class Inventory extends CI_Controller {
             if ($id_week !== null && $id_week !== '') {
                 $filters['id_week'] = $id_week;
             }
+            // } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
+            //     // Default to current week if no filters specified
+            //     $filters['id_week'] = $current_week['id_week'];
+            // }
             
             $data['data'] = $this->report_model->getInventoryReportData($config['tech'], $config['type'], $filters);
             
@@ -766,23 +779,23 @@ class Inventory extends CI_Controller {
         try {
             $input_data = $this->_get_json_input();
             if (!$input_data) {
-                return $this->_output_json($this->_json_response(false, 'Invalid JSON input or empty data'));
+                return $this->_json_response(false, 'Invalid JSON input or empty data');
             }
 
             $year = isset($input_data['year']) ? intval($input_data['year']) : null;
             $month = isset($input_data['month']) ? intval($input_data['month']) : null;
 
             if (!$year || !$month) {
-                return $this->_output_json($this->_json_response(false, 'Year and month are required'));
+                return $this->_json_response(false, 'Year and month are required');
             }
 
             // Validate year and month ranges
             if ($year < 2020 || $year > 2030) {
-                return $this->_output_json($this->_json_response(false, 'Invalid year range (2020-2030)'));
+                return $this->_json_response(false, 'Invalid year range (2020-2030)');
             }
             
             if ($month < 1 || $month > 12) {
-                return $this->_output_json($this->_json_response(false, 'Invalid month range (1-12)'));
+                return $this->_json_response(false, 'Invalid month range (1-12)');
             }
 
             // Generate inv_report for this period
@@ -792,14 +805,14 @@ class Inventory extends CI_Controller {
                 $message = "Inv_report berhasil di-generate untuk periode $month/$year. ";
                 $message .= $result['message'];
                 
-                return $this->_output_json($this->_json_response(true, $message, $result));
+                return $this->_json_response(true, $message, $result);
             } else {
-                return $this->_output_json($this->_json_response(false, $result['message']));
+                return $this->_json_response(false, $result['message']);
             }
             
         } catch (Exception $e) {
             log_message('error', 'Generate inv_report for period error: ' . $e->getMessage());
-            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
+            return $this->_json_response(false, 'Error: ' . $e->getMessage());
         }
     }
         

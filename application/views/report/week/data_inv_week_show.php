@@ -1,15 +1,15 @@
 <?php if (!empty($data)): ?>
-<div class="card-table" style="margin-top: 0;">
+<div class="card-table">
     <div class="table-responsive">
-        <table class="table table-border align-middle text-gray-700 text-s compact-table">
+        <table class="table compact-table">
             <thead>
                 <tr>
-                    <th align="center" style="width: 80px;">Week</th>
-                    <th align="center">Periode</th>
-                    <th align="center">Tanggal Mulai</th>
-                    <th align="center">Tanggal Selesai</th>
-                    <th align="center">Durasi (Hari)</th>
-                    <th align="center" style="width: 100px;">Action</th>
+                    <th style="width: 80px; text-align: center;">Week</th>
+                    <th>Periode</th>
+                    <th style="text-align: center;">Tanggal Mulai</th>
+                    <th style="text-align: center;">Tanggal Selesai</th>
+                    <th style="text-align: center;">Durasi (Hari)</th>
+                    <th style="width: 100px; text-align: center;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,71 +25,66 @@
                     $duration = $start_date->diff($finish_date)->days + 1;
                 ?>
                 <tr>
-                    <td align="center" style="font-weight: bold;"><?= $row['period_w'] ?></td>
-                    <td align="left">
+                    <td style="text-align: center; font-weight: bold;"><?= $row['period_w'] ?></td>
+                    <td>
                         <strong><?= getMonthName($row['period_m']) ?> <?= $row['period_y'] ?></strong><br>
-                        <small style="color: #666;">Minggu ke-<?= $row['period_w'] ?></small>
+                        <small class="text-muted">Minggu ke-<?= $row['period_w'] ?></small>
                     </td>
-                    <td align="center">
+                    <td style="text-align: center;">
                         <?= $start_date->format('d/m/Y H:i') ?><br>
-                        <small style="color: #666;"><?= getDayName($start_date->format('N')) ?></small>
+                        <small class="text-muted"><?= getDayName($start_date->format('N')) ?></small>
                     </td>
-                    <td align="center">
+                    <td style="text-align: center;">
                         <?= $finish_date->format('d/m/Y H:i') ?><br>
-                        <small style="color: #666;"><?= getDayName($finish_date->format('N')) ?></small>
+                        <small class="text-muted"><?= getDayName($finish_date->format('N')) ?></small>
                     </td>
-                    <td align="center">
-                        <span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                            <?= $duration ?> hari
-                        </span>
+                    <td style="text-align: center;">
+                        <span class="duration-badge"><?= $duration ?> hari</span>
                     </td>
-                    <td align="center">
-                        <i class="edit-icon <?= $can_edit ? '' : 'disabled' ?>" 
-                           onclick="<?= $can_edit ? "editPeriod('{$row['id_week']}', '{$row['date_start']}', '{$row['date_finish']}')" : '' ?>"
-                           title="<?= $can_edit ? 'Edit periode' : 'Tidak dapat edit di luar periode aktif' ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </i>
+                    <td style="text-align: center;">
+                        <button class="edit-btn <?= $can_edit ? '' : 'disabled' ?>" 
+                                onclick="<?= $can_edit ? "editPeriod('{$row['id_week']}', '{$row['date_start']}', '{$row['date_finish']}')" : '' ?>"
+                                title="<?= $can_edit ? 'Edit periode' : 'Tidak dapat edit di luar periode aktif' ?>">
+                            ✏️
+                        </button>
                     </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
         
-        <div style="margin-top: 10px; padding: 10px; background:rgb(255, 255, 255); border-radius: 6px;">
-            <h5 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">Informasi Periode</h5>
-            <p style="margin: 2px 0; font-size: 12px; color: #666;">
+        <div class="info-panel">
+            <h5 class="info-title">Informasi Periode</h5>
+            <div class="info-item">
                 <strong>Total Minggu:</strong> <?= count($data) ?> minggu
-            </p>
-            <p style="margin: 2px 0; font-size: 12px; color: #666;">
+            </div>
+            <div class="info-item">
                 <strong>Periode Penuh:</strong> 
                 <?= $month_start->format('d/m/Y H:i') ?> - 
                 <?= $month_end->format('d/m/Y H:i') ?>
-            </p>
-            <p style="margin: 2px 0; font-size: 12px; color: #666;">
+            </div>
+            <div class="info-item">
                 <strong>Catatan:</strong> Periode dimulai dari tanggal 27 bulan sebelumnya (08:00) hingga tanggal 26 bulan ini (17:00)
-            </p>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-.compact-table { font-size: 13px !important; }
-.compact-table th, .compact-table td { padding: 6px 8px !important; line-height: 1.4 !important; vertical-align: middle !important; }
-.compact-table th { font-size: 14px !important; font-weight: 600 !important; background-color: #f8f9fa !important; }
-.edit-icon { cursor: pointer; color: #0074d9; display: inline-flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: all 0.2s ease; }
-.edit-icon:hover { color: #0056b3; background-color: rgba(0, 116, 217, 0.1); transform: scale(1.1); }
-.edit-icon.disabled { color: #ccc; cursor: not-allowed; opacity: 0.5; }
-.edit-icon.disabled:hover { background-color: transparent; transform: none; }
+.compact-table { font-size: 13px; }
+.compact-table th, .compact-table td { padding: 8px 10px; line-height: 1.4; vertical-align: middle; }
+.compact-table th { font-size: 14px; font-weight: 600; background-color: #f8f9fa; }
+.text-muted { color: #6c757d; font-size: 12px; }
+.duration-badge { background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+.edit-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 4px; transition: all 0.2s ease; }
+.edit-btn:hover { background-color: rgba(0, 116, 217, 0.1); transform: scale(1.1); }
+.edit-btn.disabled { cursor: not-allowed; opacity: 0.5; }
+.edit-btn.disabled:hover { background-color: transparent; transform: none; }
+.info-panel { margin-top: 15px; padding: 15px; background: #ffffff; border-radius: 6px; border: 1px solid #e9ecef; }
+.info-title { margin: 0 0 10px 0; color: #333; font-size: 16px; font-weight: 600; }
+.info-item { margin: 5px 0; font-size: 13px; color: #666; }
+.no-data { text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px; }
 </style>
-
-<?php else: ?>
-<div class="no-data">
-    <p>Tidak ada data periode untuk bulan dan tahun yang dipilih.</p>
-    <p>Silakan generate periode terlebih dahulu.</p>
-</div>
 <?php endif; ?>
 
 <?php
