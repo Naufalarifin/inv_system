@@ -44,8 +44,6 @@ class Inventory extends CI_Controller {
             $data = $this->load_top($data);
             $data['title_page'] = "Inventory Report";
             $data['dvc_code'] = $this->report_model->getDevicesForReport('ecbs', 'app'); // Default data
-
-            // Preload filter lists so the modal shows data on first render
             $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
             $data['available_years'] = $this->report_model->getAvailableYears();
             $data['available_months'] = $this->report_model->getAvailableMonths();
@@ -116,6 +114,7 @@ class Inventory extends CI_Controller {
     public function inv_week() {
         try {
             $data['onload'] = "showInvWeekData();";
+            $current_week = $this->report_model->getCurrentWeekPeriod();
             $data = $this->load_top($data);
             $data['title_page'] = "Inventory Weekly Period Management";
             $this->load->view('inventory/banner', $data);
@@ -562,25 +561,22 @@ class Inventory extends CI_Controller {
             if ($device_search) {
                 $filters['device_search'] = $device_search;
             }
-            
-            if ($year) {
+            if ($year !== null && $year !== '') {
                 $filters['year'] = $year;
             }
-            
-            if ($month) {
+            if ($month !== null && $month !== '') {
                 $filters['month'] = $month;
             }
-            
-            if ($week) {
+            if ($week !== null && $week !== '') {
                 $filters['week'] = $week;
             }
-            
-            if ($id_week) {
+            if ($id_week !== null && $id_week !== '') {
                 $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
-                // Default to current week if no filters specified
-                $filters['id_week'] = $current_week['id_week'];
             }
+            // } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
+            //     // Default to current week if no filters specified
+            //     $filters['id_week'] = $current_week['id_week'];
+            // }
             
             $data['data'] = $this->report_model->getInventoryReportData($config['tech'], $config['type'], $filters);
             

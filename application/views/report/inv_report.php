@@ -51,42 +51,63 @@
         <div class="form-group">
             <label class="input-form-label">Year</label>
             <select class="input" id="filter_year">
-                <option value="">All Years</option>
+                <?php if (isset($current_week['period_y'])): ?>
+                    <option value="<?php echo $current_week['period_y']; ?>">
+                        Current Year: <?php echo $current_week['period_y']; ?>
+                    </option>
+                <?php endif; ?>
                 <?php if (isset($available_years) && is_array($available_years)): ?>
                     <?php foreach ($available_years as $year_data): ?>
-                        <option value="<?php echo $year_data['year']; ?>" <?php echo (isset($current_filters['year']) && $current_filters['year'] == $year_data['year']) ? 'selected' : ''; ?>>
-                            <?php echo $year_data['year']; ?>
-                        </option>
+                        <?php if (!isset($current_week['period_y']) || $year_data['year'] != $current_week['period_y']): ?>
+                            <option value="<?php echo $year_data['year']; ?>" <?php echo (isset($current_filters['year']) && $current_filters['year'] == $year_data['year']) ? 'selected' : ''; ?>>
+                                <?php echo $year_data['year']; ?>
+                            </option>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                <option value="">All Years</option>
             </select>
         </div>
         
         <div class="form-group">
             <label class="input-form-label">Month</label>
             <select class="input" id="filter_month">
-                <option value="">All Months</option>
+                <?php if (isset($current_week['period_m'])): ?>
+                    <option value="<?php echo $current_week['period_m']; ?>">
+                        Current Month: <?php echo $current_week['period_m']; ?>
+                    </option>
+                <?php endif; ?>
                 <?php if (isset($available_months) && is_array($available_months)): ?>
                     <?php foreach ($available_months as $month_data): ?>
-                        <option value="<?php echo $month_data['month']; ?>" <?php echo (isset($current_filters['month']) && $current_filters['month'] == $month_data['month']) ? 'selected' : ''; ?>>
-                            <?php echo $month_data['month']; ?>
-                        </option>
+                        <?php if (!isset($current_week['period_m']) || $month_data['month'] != $current_week['period_m']): ?>
+                            <option value="<?php echo $month_data['month']; ?>" <?php echo (isset($current_filters['month']) && $current_filters['month'] == $month_data['month']) ? 'selected' : ''; ?>>
+                                <?php echo $month_data['month']; ?>
+                            </option>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                <option value="">All Months</option>
             </select>
         </div>
         
         <div class="form-group">
             <label class="input-form-label">Week</label>
             <select class="input" id="filter_week">
-                <option value="">All Weeks</option>
+                <?php if (isset($current_week['period_w'])): ?>
+                    <option value="<?php echo $current_week['period_w']; ?>">
+                        Current Week: <?php echo $current_week['period_w']; ?>
+                    </option>
+                <?php endif; ?>
                 <?php if (isset($available_weeks) && is_array($available_weeks)): ?>
                     <?php foreach ($available_weeks as $week_data): ?>
-                        <option value="<?php echo $week_data['week']; ?>" <?php echo (isset($current_filters['week']) && $current_filters['week'] == $week_data['week']) ? 'selected' : ''; ?>>
-                            Week <?php echo $week_data['week']; ?>
-                        </option>
+                        <?php if (!isset($current_week['period_w']) || $week_data['week'] != $current_week['period_w']): ?>
+                            <option value="<?php echo $week_data['week']; ?>" <?php echo (isset($current_filters['week']) && $current_filters['week'] == $week_data['week']) ? 'selected' : ''; ?>>
+                                Week <?php echo $week_data['week']; ?>
+                            </option>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                <option value="">All Weeks</option>
             </select>
         </div>
         
@@ -457,3 +478,107 @@
     });
 </script>
 
+<style>
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+}
+
+.modal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    z-index: 1001;
+    width: 400px;
+    display: none;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.input-form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.input-info {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    color: #666;
+    font-size: 14px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+</style>
