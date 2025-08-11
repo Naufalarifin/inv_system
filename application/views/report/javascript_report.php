@@ -869,4 +869,16 @@ document.addEventListener('keydown', function(event) {
         });
     }
 });
+
+$(document).ready(function() {
+    $('.needs-input').prop('disabled', true);
+    setTimeout(calculateTotals, 100);
+    
+    $('.needs-input').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $(this).blur();
+        }
+    });
+});
 </script>
