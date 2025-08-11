@@ -107,7 +107,7 @@ class Inventory extends CI_Controller {
             $data['title_page'] = "Inventory Weekly Period Management";
             $this->load->view('inventory/banner', $data);
             $this->load->view('report/inv_week', $data);
-            $this->load->view('inventory/javascript', $data);
+            $this->load->view('report/javascript_report', $data);
             $this->load_bot($data);
         } catch (Exception $e) {
             log_message('error', 'Inv week error: ' . $e->getMessage());
