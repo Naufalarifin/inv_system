@@ -10,6 +10,12 @@
         <div class="input-group input-sm">
           <select class="select" id="year_filter">
             <option value="">Pilih Tahun</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
           </select>
           <select class="select" id="month_filter">
             <option value="">Pilih Bulan</option>
@@ -26,9 +32,10 @@
             <option value="11">November</option>
             <option value="12">Desember</option>
           </select>
-          <span class="btn btn-primary btn-sm" onclick="searchByMonth();">Search</span>
+          <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportInvWeekData();">
+            <i class="ki-filled ki-exit-down !text-base"></i>Export
+          </a>
         </div>
-        <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportInvWeekData();" style="margin-left:4px;"><i class="ki-filled ki-exit-down !text-base"></i>Export</a>
       </div>
     </div>
     <div id="result_message" class="input-result-message" style="display:none;"></div>
@@ -191,6 +198,15 @@ select.select {
   border: none !important;
   outline: none !important;
 }
+#year_filter option { 
+  font-size: 14px !important; 
+  font-weight: 500 !important; 
+  padding: 8px 12px !important; 
+  background-color: #ffffff !important;
+  color: #333 !important;
+  border: none !important;
+  outline: none !important;
+}
 .btn { display: inline-flex !important; align-items: center !important; cursor: pointer !important; line-height: 1 !important; border-radius: 0.375rem !important; height: 2.5rem !important; padding-inline-start: 1rem !important; padding-inline-end: 1rem !important; gap: 0.375rem !important; border: 1px solid transparent !important; font-weight: 500 !important; font-size: 0.8125rem !important; outline: none !important; }
 .btn-sm { height: 2rem !important; padding-inline-start: 0.75rem !important; padding-inline-end: 0.75rem !important; font-weight: 500 !important; font-size: 0.75rem !important; gap: 0.275rem !important; }
 .btn i { font-size: 1.125rem !important; line-height: 0 !important; }
@@ -228,6 +244,147 @@ select.select {
 .card-header .btn-success:hover { background-color: #218838 !important; border-color: #1e7e34 !important; }
 .card-header .btn-light { background-color: var(--tw-gray-100) !important; border-color: var(--tw-gray-300) !important; color: var(--tw-gray-700) !important; }
 .card-header .btn-light:hover { background-color: var(--tw-gray-200) !important; border-color: var(--tw-gray-400) !important; }
+
+/* Custom styling for Export button in inv_week */
+.input-group .btn-light {
+  background-color: #ffffff !important;
+  border: 1px solid #ddd !important;
+  color: #333 !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+  transition: border-color 0.2s !important;
+}
+
+.input-group .btn-light:hover {
+  background-color: #f8f9fa !important;
+  border-color: #0074d9 !important;
+  box-shadow: none !important;
+}
+
+.input-group .btn-light:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(0,116,217,0.2) !important;
+}
+
+/* Styling for modal buttons */
+.btn-secondary {
+  background-color: #6c757d !important;
+  border: 1px solid #6c757d !important;
+  color: white !important;
+  box-shadow: none !important;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268 !important;
+  border-color: #5a6268 !important;
+  color: white !important;
+}
+
+.btn-lihat-data {
+  background-color: #ffffff !important;
+  border: 1px solid #0074d9 !important;
+  color: #0074d9 !important;
+  box-shadow: none !important;
+}
+
+.btn-lihat-data:hover {
+  background-color: #f8f9fa !important;
+  border-color: #0056b3 !important;
+  color: #0056b3 !important;
+}
+
+.btn-regenerate {
+  background-color: #0074d9 !important;
+  border: 1px solid #0074d9 !important;
+  color: white !important;
+  box-shadow: none !important;
+}
+
+.btn-regenerate:hover {
+  background-color: #0056b3 !important;
+  border-color: #0056b3 !important;
+  color: white !important;
+}
+
+/* Styling for confirmation buttons */
+.btn-confirm {
+  background-color: #0074d9 !important;
+  border: 1px solid #0074d9 !important;
+  color: white !important;
+  box-shadow: none !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  min-width: 40px !important;
+}
+
+.btn-confirm:hover {
+  background-color: #0056b3 !important;
+  border-color: #0056b3 !important;
+  color: white !important;
+}
+
+.btn-cancel {
+  background-color: #ffffff !important;
+  border: 1px solid #0074d9 !important;
+  color: #0074d9 !important;
+  box-shadow: none !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  min-width: 40px !important;
+}
+
+.btn-cancel:hover {
+  background-color: #f8f9fa !important;
+  border-color: #0056b3 !important;
+  color: #0056b3 !important;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Styling for confirmation section layout */
+.confirmation-section {
+  margin-top: 15px !important;
+  padding: 15px !important;
+  background-color: #f8f9fa !important;
+  border-radius: 6px !important;
+  border: 1px solid #e9ecef !important;
+}
+
+.confirmation-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 15px !important;
+}
+
+.confirmation-text {
+  color: #495057 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  flex: 1 !important;
+}
+
+.confirmation-buttons {
+  display: flex !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
 .card-body { padding: 1.5rem !important; }
 .table { font-size: 0.875rem !important; }
 .table th { font-weight: 600 !important; font-size: 0.875rem !important; padding: 0.75rem !important; }

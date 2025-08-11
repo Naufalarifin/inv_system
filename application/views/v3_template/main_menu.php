@@ -18,9 +18,9 @@
   $menu1_link = array("inventory", "report");
   $menu1_icon = array("ki-cube-2", "ki-book");
   
-  $menu2_name[0] = array("ECCT", "ECBS", "Report", "Weekly");
-  $menu2_link[0] = array("inventory/inv_ecct", "inventory/inv_ecbs", "inventory/inv_report_needs", "inventory/inv_week");
-  $menu2_icon[0] = array("ki-technology-1", "ki-technology-3", "ki-duotone ki-book-open", "ki-duotone ki-book");
+  $menu2_name[0] = array("ECCT", "ECBS", "Needs", "Weekly", "Report");
+  $menu2_link[0] = array("inventory/inv_ecct", "inventory/inv_ecbs", "inventory/inv_report_needs", "inventory/inv_week", "inventory/inv_report");
+  $menu2_icon[0] = array("ki-technology-1", "ki-technology-3", "ki-duotone ki-book-open", "ki-duotone ki-book", "ki-book");
 
   $menu2_name[1] = array("Rekap", "Statistik");
   $menu2_link[1] = array("laporan/rekap", "laporan/statistik");

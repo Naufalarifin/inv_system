@@ -31,6 +31,9 @@
                     }elseif ($config['hal_sub'] == 'inv_report_needs') {
                         $breadcrumb_last = 'Needs';
                         $breadcrumb_link = $config['base_url'] . 'inventory/inv_report_needs';
+                    } elseif ($config['hal_sub'] == 'inv_report') {
+                        $breadcrumb_last = 'Report';
+                        $breadcrumb_link = $config['base_url'] . 'inventory/inv_report';
                     }
                 }
                 ?>
@@ -50,7 +53,7 @@
             // Display menu based on current page
             if ($current_page == 'inv_ecct'): ?>
                 <!-- ECCT Menu - Controls JavaScript switchTable() -->
-                <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
+                <div class="menu menu-default flex flex-wrap justify-center rounded-lg py-2">
                     <div class="menu-item">
                         <button id="banner_btn_stock" class="menu-link" onclick="switchTable('ecct');">
                             <span class="menu-icon">
@@ -71,7 +74,7 @@
                 
             <?php elseif ($current_page == 'inv_ecbs'): ?>
                 <!-- ECBS Menu - Controls JavaScript switchTable() -->
-                <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
+                <div class="menu menu-default flex flex-wrap justify-center rounded-lg py-2">
                     <div class="menu-item">
                         <button id="banner_btn_stock" class="menu-link" onclick="switchTable('ecbs');">
                             <span class="menu-icon">
@@ -90,9 +93,9 @@
                     </div>
                 </div>
                 
-            <?php elseif ($current_page == 'inv_week' || $current_page == 'inv_report_needs'): ?>
+            <?php elseif ($current_page == 'inv_week' || $current_page == 'inv_report_needs' || $current_page == 'inv_report'): ?>
                 <!-- Weekly Period Menu -->
-                <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
+                <div class="menu menu-default flex flex-wrap justify-center rounded-lg py-2">
                     <div class="menu-item">
                         <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_week">
                             <span class="menu-icon">
@@ -109,11 +112,19 @@
                             <span class="menu-title">Needs</span>
                         </a>
                     </div>
+                    <div class="menu-item">
+                        <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_report">
+                            <span class="menu-icon">
+                                <i class="ki-filled ki-calendar"></i>
+                            </span>
+                            <span class="menu-title">Report</span>
+                        </a>
+                    </div>
                 </div>
                 
             <?php else: ?>
                 <!-- Default Menu (Other pages) -->
-                <div class="menu menu-default flex flex-wrap justify-center gap-1.5 rounded-lg py-2">
+                <div class="menu menu-default flex flex-wrap justify-center rounded-lg py-2">
                     <div class="menu-item">
                         <a class="menu-link" href="<?php echo $config['base_url']; ?>inventory/inv_ecct">
                             <span class="menu-icon">

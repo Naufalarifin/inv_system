@@ -500,8 +500,9 @@ class Report_model extends CI_Model {
         // Convert to associative array for easy lookup
         $needs_data = array();
         foreach ($result as $row) {
-            // Use stored color value directly for the lookup key
-            $key = $row['id_dvc'] . '' . $row['dvc_size'] . '' . $row['dvc_col'] . '_' . $row['dvc_qc'];
+            // Generate key that matches the view's getExistingValue function
+            // The view expects: $id_dvc . '_' . $size . '_' . $color . '_' . $qc
+            $key = $row['id_dvc'] . '_' . $row['dvc_size'] . '_' . $row['dvc_col'] . '_' . $row['dvc_qc'];
             $needs_data[$key] = $row['needs_qty'];
         }
         

@@ -23,12 +23,16 @@ function toggleEditMode() {
     if (editMode) {
         $btn.text('Cancel').removeClass('btn-primary').addClass('btn-secondary');
         $save.show();
-        $('.needs-input').each(function() { $(this).data('orig', $(this).val()); });
+        $('.needs-input').each(function() { 
+            $(this).data('orig', $(this).val()); 
+        });
     } else {
         $btn.text('Edit').removeClass('btn-secondary').addClass('btn-primary');
         $save.hide();
         if (hasChanges()) {
-            $('.needs-input').each(function() { $(this).val($(this).data('orig') || 0); });
+            $('.needs-input').each(function() { 
+                $(this).val($(this).data('orig') || 0); 
+            });
             calculateTotals();
         }
     }
@@ -61,13 +65,27 @@ function calculateTotals() {
     
     $('#grand_total').text(grand);
     
+    // Calculate totals for each size and QC combination
     sizes.forEach(function(size) {
-        var total = 0;
-        $('.needs-input[data-size="' + size + '"]').each(function() {
-            total += parseInt($(this).val()) || 0;
+        var total_ln = 0;
+        var total_dn = 0;
+        
+        // Calculate LN totals
+        $('.needs-input[data-size="' + size + '"][data-qc="LN"]').each(function() {
+            total_ln += parseInt($(this).val()) || 0;
         });
-        $('#total_' + size).text(total);
-        $('#percent_' + size).text(grand > 0 ? Math.round(total / grand * 1000) / 10 : 0);
+        
+        // Calculate DN totals
+        $('.needs-input[data-size="' + size + '"][data-qc="DN"]').each(function() {
+            total_dn += parseInt($(this).val()) || 0;
+        });
+        
+        $('#total_' + size + '_ln').text(total_ln);
+        $('#total_' + size + '_dn').text(total_dn);
+        
+        // Calculate percentages
+        $('#percent_' + size + '_ln').text(grand > 0 ? Math.round(total_ln / grand * 1000) / 10 : 0);
+        $('#percent_' + size + '_dn').text(grand > 0 ? Math.round(total_dn / grand * 1000) / 10 : 0);
     });
     
     for (var key in rowTotals) {
@@ -100,14 +118,21 @@ function saveAllData() {
         return;
     }
     
+    var $saveBtn = $('#saveAllDataBtn');
+    var originalText = $saveBtn.text();
+    $saveBtn.text('Saving...').prop('disabled', true);
+    
     $.ajax({
-        url: '<?= base_url('inventory/save_needs_data') ?>',
+        url: '<?= base_url('inventory/save_all_needs_data') ?>',
         type: 'POST',
-        data: JSON.stringify(data),
-        contentType: 'application/json',
+        data: { data: data },
+        dataType: 'json',
         success: function(response) {
             if (response.success) {
                 showToast('Data saved successfully!', 'success');
+                $('.needs-input').each(function() {
+                    $(this).data('orig', $(this).val());
+                });
                 toggleEditMode();
             } else {
                 showToast(response.message || 'Failed to save data', 'error');
@@ -322,64 +347,18 @@ function generateInvWeekPeriods() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+        error: function(xhr, status, error) {
+            showToast('Error saving data: ' + error, 'error');
         },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        complete: function() {
+            $saveBtn.text(originalText).prop('disabled', false);
         }
-        return response.json();
-    })
-    .then(data => {
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        
-        if (data.success) {
-            showModalMessage('Periode berhasil di-generate dengan waktu 08:00-17:00 dan minggu kerja Senin-Jumat', 'success');
-            currentYear = year;
-            currentMonth = month;
-            
-            // Close modal immediately after successful generation
-            closeModal('modal_input_all');
-            
-            // Reload data after modal is closed
-            setTimeout(() => {
-                loadInvWeekData(year, month);
-            }, 500);
-        } else {
-            // Check if the error is about existing periods
-            if (data.message && data.message.includes('sudah ada')) {
-                showModalMessage(data.message + '\n\nKlik "Lihat Data" untuk menampilkan periode yang sudah ada.', 'error');
-                
-                // Update modal footer to show "Lihat Data" button
-                const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-                if (modalFooter) {
-                    modalFooter.innerHTML = `
-                        <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-                        <button class="btn btn-lihat-data" onclick="viewExistingData(${year}, ${month})">Lihat Data</button>
-                        <button class="btn btn-regenerate" onclick="regeneratePeriods(${year}, ${month})">
-                            Regenerate
-                        </button>
-                    `;
-                }
-            } else {
-                showModalMessage(data.message || 'Gagal generate periode', 'error');
-            }
-        }
-    })
-    .catch(error => {
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        showModalMessage('Error: ' + error.message, 'error');
     });
 }
 
-// View existing data function
-function viewExistingData(year, month) {
-    console.log('viewExistingData called with:', year, month);
+$(document).ready(function() {
+    $('.needs-input').prop('disabled', true);
+    setTimeout(calculateTotals, 100);
     
     // Ensure year and month are numbers
     year = parseInt(year);
@@ -470,35 +449,12 @@ function executeRegenerate(year, month) {
     .then(response => {
         if (!response.ok) {
             throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+=======
+    $('.needs-input').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $(this).blur();
         }
-        return response.json();
-    })
-    .then(data => {
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        
-        if (data.success) {
-            showModalMessage('Periode berhasil di-regenerate dengan waktu 08:00-17:00 dan minggu kerja Senin-Jumat', 'success');
-            currentYear = year;
-            currentMonth = month;
-            
-            // Close modal immediately after successful regeneration
-            closeModal('modal_input_all');
-            
-            // Reload data after modal is closed
-            setTimeout(() => {
-                loadInvWeekData(year, month);
-            }, 500);
-        } else {
-            showModalMessage(data.message || 'Gagal regenerate periode', 'error');
-        }
-    })
-    .catch(error => {
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-        }
-        showModalMessage('Error: ' + error.message, 'error');
     });
 }
 
@@ -855,5 +811,7 @@ document.addEventListener('keydown', function(event) {
             }
         });
     }
+=======
+>>>>>>> 83781fc6d6228129d717108e9ca0f92a156ec604
 });
 </script>

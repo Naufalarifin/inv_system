@@ -86,9 +86,8 @@
 </style>
 
 <?php else: ?>
-<div class="no-data">
-    <p>Tidak ada data periode untuk bulan dan tahun yang dipilih.</p>
-    <p>Silakan generate periode terlebih dahulu.</p>
+<div class="no-data" style="text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px;">
+    No Data, Generate Please
 </div>
 <?php endif; ?>
 
