@@ -11,6 +11,63 @@ function showToast(msg, type = 'success') {
     setTimeout(() => t.remove(), 3000);
 }
 
+function showConfirmDialog(message, onConfirm) {
+    // Remove existing dialog if any
+    var existingDialog = document.getElementById('confirmDialog');
+    if (existingDialog) {
+        existingDialog.remove();
+    }
+    
+    // Create dialog container
+    var dialog = document.createElement('div');
+    dialog.id = 'confirmDialog';
+    dialog.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:white;border:1px solid #ddd;border-radius:8px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;min-width:300px;max-width:400px;';
+    
+    // Create message
+    var msgDiv = document.createElement('div');
+    msgDiv.style.cssText = 'margin-bottom:15px;color:#333;font-size:14px;line-height:1.4;';
+    msgDiv.textContent = message;
+    
+    // Create buttons container
+    var btnContainer = document.createElement('div');
+    btnContainer.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+    
+    // Create Cancel button
+    var cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = 'padding:8px 16px;border:1px solid #ddd;background:white;border-radius:4px;cursor:pointer;font-size:14px;';
+    cancelBtn.onmouseover = function() { this.style.backgroundColor = '#f5f5f5'; };
+    cancelBtn.onmouseout = function() { this.style.backgroundColor = 'white'; };
+    cancelBtn.onclick = function() { dialog.remove(); };
+    
+    // Create OK button
+    var okBtn = document.createElement('button');
+    okBtn.textContent = 'OK';
+    okBtn.style.cssText = 'padding:8px 16px;border:none;background:#007bff;color:white;border-radius:4px;cursor:pointer;font-size:14px;';
+    okBtn.onmouseover = function() { this.style.backgroundColor = '#0056b3'; };
+    okBtn.onmouseout = function() { this.style.backgroundColor = '#007bff'; };
+    okBtn.onclick = function() { 
+        dialog.remove(); 
+        if (onConfirm) onConfirm();
+    };
+    
+    // Assemble dialog
+    btnContainer.appendChild(cancelBtn);
+    btnContainer.appendChild(okBtn);
+    dialog.appendChild(msgDiv);
+    dialog.appendChild(btnContainer);
+    
+    // Add to page
+    document.body.appendChild(dialog);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(function() {
+        if (dialog.parentNode) {
+            dialog.remove();
+        }
+    }, 10000);
+}
+
 function toggleEditMode() {
     if (editMode && hasChanges() && !confirm('Discard changes?')) return;
     
@@ -881,4 +938,402 @@ $(document).ready(function() {
         }
     });
 });
+
+// =================== INVENTORY REPORT FUNCTIONS ===================
+
+// Global variables for inv_report
+var selectedTech = 'ecbs';
+var selectedType = 'app';
+
+function selectTech_report(tech) {
+    selectedTech = tech;
+    
+    // Update button states
+    document.getElementById('btn_ecbs').className = tech === 'ecbs' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+    document.getElementById('btn_ecct').className = tech === 'ecct' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+    
+    showData();
+}
+
+function selectType_report(type) {
+    selectedType = type;
+    
+    // Update button states
+    document.getElementById('btn_app').className = type === 'app' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+    document.getElementById('btn_osc').className = type === 'osc' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+    
+    showData();
+}
+
+function showData() {
+    var link = window.location.origin + '/cdummy/inventory/inv_report_data/report_' + selectedTech + '_' + selectedType + '_show';
+    
+    // Add current search parameters
+    var deviceSearch = document.getElementById('device_search') ? document.getElementById('device_search').value : '';
+    var year = document.getElementById('filter_year') ? document.getElementById('filter_year').value : '';
+    var month = document.getElementById('filter_month') ? document.getElementById('filter_month').value : '';
+    var week = document.getElementById('filter_week') ? document.getElementById('filter_week').value : '';
+    
+    var params = [];
+    if (deviceSearch) params.push('device_search=' + encodeURIComponent(deviceSearch));
+    if (year) params.push('year=' + encodeURIComponent(year));
+    if (month) params.push('month=' + encodeURIComponent(month));
+    if (week) params.push('week=' + encodeURIComponent(week));
+    
+    if (params.length > 0) {
+        link += '?' + params.join('&');
+    }
+    
+    document.getElementById('show_data_report').innerHTML = '<div style="text-align: center; padding: 20px;">Loading data...</div>';
+    
+    if (typeof window.$ !== "undefined") {
+        window.$("#show_data_report").load(link);
+    } else {
+        fetch(link)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("show_data_report").innerHTML = data;
+            })
+            .catch(error => {
+                document.getElementById("show_data_report").innerHTML = 
+                    '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + error.message + '</div>';
+            });
+    }
+}
+
+function exportData_report() {
+    var link = window.location.origin + '/cdummy/inventory/inv_report_data/report_' + selectedTech + '_' + selectedType + '_export';
+    window.open(link, '_blank').focus();
+}
+
+// Generate inventory report data
+function generateInventoryReport() {
+    showConfirmDialog('This will generate inventory report data from existing tables. This may take some time. Continue?', function() {
+        proceedWithGeneration();
+    });
+}
+
+function proceedWithGeneration() {
+    
+    var btn = document.getElementById('btn_generate');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ki-filled ki-loading !text-base"></i>Generating...';
+    
+    fetch(window.location.origin + '/cdummy/inventory/generate_inventory_report', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({}) // Send empty JSON body to ensure proper request
+    })
+    .then(response => {
+        
+        if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status);
+        }
+        
+        return response.text().then(text => {
+            
+            if (!text || text.trim() === '') {
+                throw new Error('Empty response received');
+            }
+            
+            try {
+                const parsed = JSON.parse(text);
+                console.log('Successfully parsed JSON:', parsed);
+                return parsed;
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.error('Raw text that failed to parse:', text);
+                throw new Error('Invalid JSON response: ' + text.substring(0, 200));
+            }
+        });
+    })
+    .then(data => {
+        console.log('Parsed response data:', data);
+        if (data.success) {
+            showToast('Inventory report data generated successfully!', 'success');
+            // Auto refresh after successful generation
+            setTimeout(() => {
+                showData(); // Refresh the table
+            }, 1000);
+        } else {
+            showToast('Failed to generate: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Generate error:', error);
+        showToast('Failed to generate inventory report data: ' + error.message, 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ki-filled ki-setting !text-base"></i>Generate Data';
+    });
+}
+
+function showInputPmsModal() {
+    // Load week periods and devices data
+    loadWeekPeriods();
+    loadDevices();
+    
+    // Show modal using Bootstrap or custom modal
+    const modal = document.getElementById('inputPmsModal');
+    if (modal) {
+        if (typeof window.$ !== "undefined" && window.$().modal) {
+            window.$('#inputPmsModal').modal('show');
+        } else {
+            modal.style.display = 'block';
+        }
+    }
+}
+
+function loadWeekPeriods() {
+    fetch(window.location.origin + '/cdummy/inventory/get_week_periods')
+        .then(response => response.json())
+        .then(data => {
+            var options = '<option value="">-- Select Week --</option>';
+            if (data.success && data.weeks) {
+                data.weeks.forEach(function(week) {
+                    var startDate = new Date(week.date_start);
+                    var endDate = new Date(week.date_finish);
+                    var label = 'W' + week.period_w + '/' + week.period_m + '/' + week.period_y + ' (' + 
+                               startDate.toLocaleDateString() + ' - ' + endDate.toLocaleDateString() + ')';
+                    options += '<option value="' + week.id_week + '">' + label + '</option>';
+                });
+            }
+            document.getElementById('select_week').innerHTML = options;
+        })
+        .catch(error => {
+            console.error('Error loading week periods:', error);
+        });
+}
+
+function loadDevices() {
+    var params = new URLSearchParams({
+        tech: selectedTech,
+        type: selectedType
+    });
+    
+    fetch(window.location.origin + '/cdummy/inventory/get_devices_for_report?' + params)
+        .then(response => response.json())
+        .then(data => {
+            var options = '<option value="">-- Select Device --</option>';
+            if (data.success && data.devices) {
+                data.devices.forEach(function(device) {
+                    options += '<option value="' + device.id_dvc + '">' + device.dvc_code + ' - ' + device.dvc_name + '</option>';
+                });
+            }
+            document.getElementById('select_device').innerHTML = options;
+        })
+        .catch(error => {
+            console.error('Error loading devices:', error);
+        });
+}
+
+// Update color options based on selected device
+function updateDeviceColors() {
+    var deviceId = document.getElementById('select_device').value;
+    if (deviceId) {
+        var params = new URLSearchParams({ id_dvc: deviceId });
+        fetch(window.location.origin + '/cdummy/inventory/get_device_colors?' + params)
+            .then(response => response.json())
+            .then(data => {
+                var options = '<option value="">-- Select Color --</option>';
+                if (data.success && data.colors) {
+                    data.colors.forEach(function(color) {
+                        var displayColor = color === '' ? '(Empty)' : color;
+                        options += '<option value="' + color + '">' + displayColor + '</option>';
+                    });
+                }
+                document.getElementById('select_color').innerHTML = options;
+            })
+            .catch(error => {
+                console.error('Error loading colors:', error);
+            });
+    } else {
+        document.getElementById('select_color').innerHTML = '<option value="">-- Select Color --</option>';
+    }
+}
+
+function saveOnPms() {
+    var formData = {
+        id_week: document.getElementById('select_week').value,
+        id_dvc: document.getElementById('select_device').value,
+        dvc_size: document.getElementById('select_size').value,
+        dvc_col: document.getElementById('select_color').value,
+        dvc_qc: document.getElementById('select_qc').value,
+        on_pms: document.getElementById('input_on_pms').value
+    };
+    
+    // Validate form
+    if (!formData.id_week || !formData.id_dvc || !formData.dvc_size || 
+        formData.dvc_col === '' || !formData.dvc_qc || !formData.on_pms) {
+        showToast('Please fill all required fields', 'error');
+        return;
+    }
+    
+    fetch(window.location.origin + '/cdummy/inventory/save_on_pms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('On PMS data saved successfully', 'success');
+            
+            // Hide modal
+            const modal = document.getElementById('inputPmsModal');
+            if (modal) {
+                if (typeof window.$ !== "undefined" && window.$().modal) {
+                    window.$('#inputPmsModal').modal('hide');
+                } else {
+                    modal.style.display = 'none';
+                }
+            }
+            
+            // Reset form
+            document.getElementById('pmsInputForm').reset();
+            showData(); // Refresh the table
+        } else {
+            showToast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Failed to save data', 'error');
+    });
+}
+
+// Apply filters function
+function applyFilters() {
+    closeModal('modal_filter_report');
+    showData();
+}
+
+// Auto search functionality
+let searchTimeout = null;
+
+function setupAutoSearch() {
+    const searchInput = document.getElementById("device_search");
+    
+    if (searchInput) {
+        // Remove existing event listeners to avoid duplicate
+        searchInput.removeEventListener("input", handleAutoSearch);
+        
+        // Add event listener for auto search
+        searchInput.addEventListener("input", handleAutoSearch);
+        
+        // Keep enter key functionality
+        searchInput.addEventListener("keyup", function(event) {
+            if (event.key === 'Enter') {
+                // Clear timeout and search immediately
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                showData();
+            }
+        });
+    }
+}
+
+// Handle auto search with debounce
+function handleAutoSearch(event) {
+    const searchTerm = event.target.value.trim();
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // Set timeout for debounce (500ms delay)
+    searchTimeout = setTimeout(() => {
+        showData();
+    }, 500);
+}
+
+// Modal functions for inv_report
+function openModal_report(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+    document.getElementById('modal_overlay').style.display = 'block';
+}
+
+function closeModal_report(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    document.getElementById('modal_overlay').style.display = 'none';
+}
+
+// Event listeners for inv_report
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup auto search for inv_report
+    setupAutoSearch();
+    
+    // Setup device color change listener
+    const deviceSelect = document.getElementById('select_device');
+    if (deviceSelect) {
+        deviceSelect.addEventListener('change', updateDeviceColors);
+    }
+    
+    // Load default data for inv_report
+    if (document.getElementById('show_data_report')) {
+        showData();
+    }
+});
+
+// Close modal when clicking overlay for inv_report
+document.addEventListener('click', function(event) {
+    if (event.target.id === 'modal_overlay') {
+        const modals = document.querySelectorAll('.modal-container');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+        document.getElementById('modal_overlay').style.display = 'none';
+    }
+});
+
+// ESC key untuk menutup modal inv_report
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal-container');
+        modals.forEach(modal => {
+            if (modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
+        });
+        document.getElementById('modal_overlay').style.display = 'none';
+    }
+});
+    
+    function selectTech_needs(tech) {
+        selectedTech = tech;
+        
+        // Update button states
+        document.getElementById('btn_ecbs').className = tech === 'ecbs' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+        document.getElementById('btn_ecct').className = tech === 'ecct' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+        
+        showData_needs();
+    }
+    
+    function selectType_needs(type) {
+        selectedType = type;
+        
+        // Update button states
+        document.getElementById('btn_app').className = type === 'app' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+        document.getElementById('btn_osc').className = type === 'osc' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
+        
+        showData_needs();
+    }
+    
+    function showData_needs() {
+        var link = "<?php echo base_url(); ?>inventory/report/report_" + selectedTech + "_" + selectedType + "_show";
+        
+        document.getElementById('show_data_needs').innerHTML = '<div style="text-align: center; padding: 20px;">Loading data...</div>';
+        $("#show_data_needs").load(link);
+    }
+    
+    function exportData_needs() {
+        var link = "<?php echo base_url(); ?>inventory/report/report_" + selectedTech + "_" + selectedType + "_export";
+        window.open(link, '_blank').focus();
+    }
 </script>

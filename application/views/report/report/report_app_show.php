@@ -13,26 +13,24 @@ $current_filters = isset($current_filters) ? $current_filters : array();
             Current Week: W<?php echo $current_week['period_w']; ?>/<?php echo $current_week['period_m']; ?>/<?php echo $current_week['period_y']; ?>
         </span>
     <?php endif; ?>
-    <?php if (!empty($current_filters['device_search'])): ?>
-        <span class="badge badge-info" style="background: #17a2b8; color: white; padding: 2px 8px; border-radius: 3px; margin-left: 5px;">
-            Device: <?php echo htmlspecialchars($current_filters['device_search']); ?>
-        </span>
-    <?php endif; ?>
-    <?php if (!empty($current_filters['year'])): ?>
+    <?php 
+    $filter_labels = [
+        'device_search' => 'Device',
+        'year' => 'Year', 
+        'month' => 'Month',
+        'week' => 'Week'
+    ];
+    
+    foreach ($filter_labels as $key => $label):
+        if (!empty($current_filters[$key])):
+    ?>
         <span class="badge badge-secondary" style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 3px; margin-left: 5px;">
-            Year: <?php echo $current_filters['year']; ?>
+            <?php echo $label; ?>: <?php echo htmlspecialchars($current_filters[$key]); ?>
         </span>
-    <?php endif; ?>
-    <?php if (!empty($current_filters['month'])): ?>
-        <span class="badge badge-secondary" style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 3px; margin-left: 5px;">
-            Month: <?php echo $current_filters['month']; ?>
-        </span>
-    <?php endif; ?>
-    <?php if (!empty($current_filters['week'])): ?>
-        <span class="badge badge-secondary" style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 3px; margin-left: 5px;">
-            Week: <?php echo $current_filters['week']; ?>
-        </span>
-    <?php endif; ?>
+    <?php 
+        endif;
+    endforeach; 
+    ?>
 </div>
 <?php endif; ?>
 
@@ -55,9 +53,14 @@ $current_filters = isset($current_filters) ? $current_filters : array();
                 </tr>
             </thead>
             <tbody>
-                <?php if (!empty($report_data)) {
+                <?php 
+                // Initialize totals array first
+                $totals = ['stock' => 0, 'on_pms' => 0, 'needs' => 0, 'order' => 0, 'over' => 0];
+                
+                if (!empty($report_data)): 
                     $no = 1;
-                    foreach ($report_data as $row) {
+                    
+                    foreach ($report_data as $row): 
                         // Format week display
                         $week_display = 'W' . $row['period_w'] . '/' . $row['period_m'] . '/' . $row['period_y'];
                         $week_detail = 'Period: ' . $row['date_start'] . ' to ' . $row['date_finish'];
@@ -66,8 +69,12 @@ $current_filters = isset($current_filters) ? $current_filters : array();
                         $device_display = htmlspecialchars($row['dvc_code']);
                         $device_detail = htmlspecialchars($row['dvc_name']);
                         
-                        // Format color display
-                        $color_display = $row['dvc_col'] === '' ? '-' : htmlspecialchars($row['dvc_col']);
+                        // Calculate totals
+                        $totals['stock'] += intval($row['stock']);
+                        $totals['on_pms'] += intval($row['on_pms']);
+                        $totals['needs'] += intval($row['needs']);
+                        $totals['order'] += intval($row['order']);
+                        $totals['over'] += intval($row['over']);
                 ?>
                 <tr>
                     <td align="center"><?php echo $no++; ?></td>
@@ -77,8 +84,8 @@ $current_filters = isset($current_filters) ? $current_filters : array();
                     <td align="center" title="<?php echo $device_detail; ?>" style="cursor: help;">
                         <?php echo $device_display; ?>
                     </td>
-                    <td align="center"><?php echo strtoupper($row['dvc_size']); ?></td>
-                    <td align="center"><?php echo $color_display; ?></td>
+                    <td align="center"><?php echo htmlspecialchars($row['dvc_size']); ?></td>
+                    <td align="center"><?php echo htmlspecialchars($row['dvc_col']); ?></td>
                     <td align="center"><?php echo htmlspecialchars($row['dvc_qc']); ?></td>
                     <td align="center"><?php echo intval($row['stock']); ?></td>
                     <td align="center"><?php echo intval($row['on_pms']); ?></td>
@@ -87,62 +94,27 @@ $current_filters = isset($current_filters) ? $current_filters : array();
                     <td align="center"><?php echo intval($row['over']); ?></td>
                 </tr>
                 <?php 
-                    }
-                } else { 
+                    endforeach; 
+                else: 
                 ?>
                 <tr>
-                    <td align="center" colspan="11"><i>No Report Data Found</i></td>
+                    <td align="center" colspan="11">
+                        <div style="text-align: center; padding: 40px; color: #666; font-style: italic;">
+                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                            No APP Report Data Found
+                        </div>
+                    </td>
                 </tr>
-                <?php } ?>
+                <?php endif; ?>
             </tbody>
             <tfoot>
                 <tr style="background-color: #00bfff; color: white; font-weight: bold;">
                     <td align="center" colspan="6">TOTAL</td>
-                    <td align="center">
-                        <?php 
-                        $total_stock = 0;
-                        foreach ($report_data as $row) {
-                            $total_stock += intval($row['stock']);
-                        }
-                        echo $total_stock;
-                        ?>
-                    </td>
-                    <td align="center">
-                        <?php 
-                        $total_on_pms = 0;
-                        foreach ($report_data as $row) {
-                            $total_on_pms += intval($row['on_pms']);
-                        }
-                        echo $total_on_pms;
-                        ?>
-                    </td>
-                    <td align="center">
-                        <?php 
-                        $total_needs = 0;
-                        foreach ($report_data as $row) {
-                            $total_needs += intval($row['needs']);
-                        }
-                        echo $total_needs;
-                        ?>
-                    </td>
-                    <td align="center">
-                        <?php 
-                        $total_order = 0;
-                        foreach ($report_data as $row) {
-                            $total_order += intval($row['order']);
-                        }
-                        echo $total_order;
-                        ?>
-                    </td>
-                    <td align="center">
-                        <?php 
-                        $total_over = 0;
-                        foreach ($report_data as $row) {
-                            $total_over += intval($row['over']);
-                        }
-                        echo $total_over;
-                        ?>
-                    </td>
+                    <td align="center"><?php echo $totals['stock']; ?></td>
+                    <td align="center"><?php echo $totals['on_pms']; ?></td>
+                    <td align="center"><?php echo $totals['needs']; ?></td>
+                    <td align="center"><?php echo $totals['order']; ?></td>
+                    <td align="center"><?php echo $totals['over']; ?></td>
                 </tr>
             </tfoot>
         </table>
@@ -169,7 +141,6 @@ $current_filters = isset($current_filters) ? $current_filters : array();
     background-color: #f5f5f5;
 }
 
-/* Tooltip styling */
 td[title]:hover {
     background-color: #e3f2fd !important;
 }

@@ -42,11 +42,12 @@ class Report_model extends CI_Model {
         if ($exists == 0) {
             return false;
         }
-        
-        // Store color exactly as provided (VOH uses Display Names, OSC may be ' ')
-        
-        // id_needs akan di-generate otomatis oleh database (AUTO_INCREMENT)
-        return $this->db->insert('inv_needs', $data);
+
+        $result = $this->db->insert('inv_needs', $data);
+        if ($result) {
+            $this->syncNeedsToInvReport($data['id_dvc'], $data['dvc_size'], $data['dvc_col'], $data['dvc_qc']);
+        }
+        return $result;
     }
     
     public function updateNeedsData($id, $data) {
@@ -57,7 +58,16 @@ class Report_model extends CI_Model {
         
         // Store color exactly as provided (VOH uses Display Names, OSC may be ' ')
         
-        return $this->db->update('inv_needs', $data);
+        $result = $this->db->update('inv_needs', $data);
+        if ($result) {
+            // Load existing record to know the keys for syncing
+            $this->db->where('id_needs', $id);
+            $row = $this->db->get('inv_needs')->row_array();
+            if ($row) {
+                $this->syncNeedsToInvReport($row['id_dvc'], $row['dvc_size'], $row['dvc_col'], $row['dvc_qc']);
+            }
+        }
+        return $result;
     }
     
     public function getNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
@@ -253,7 +263,7 @@ class Report_model extends CI_Model {
                 // Get colors for this device
                 $colors = $this->getDeviceColors($device['id_dvc']);
 
-                if ($device['dvc_type'] === 'osc'){
+                if (strtoupper($device['dvc_type']) === 'OSC'){
                     $sizes = array('-');
                 } else {
                     // Use uppercase sizes for generated records
@@ -296,6 +306,16 @@ class Report_model extends CI_Model {
                                 if ($insert_result) {
                                     $generated_count++;
                                 }
+                            } else {
+                                // Update existing record with recalculated stock and needs
+                                $stock = $this->calculateStock($week_data, $device['id_dvc'], $size, $color, $qc);
+                                $needs = $this->calculateNeeds($week_data, $device['id_dvc'], $size, $color, $qc);
+                                $this->db->where('id_week', $id_week);
+                                $this->db->where('id_dvc', $device['id_dvc']);
+                                $this->db->where('dvc_size', $size);
+                                $this->db->where('dvc_col', $color);
+                                $this->db->where('dvc_qc', $qc);
+                                $this->db->update('inv_report', array('stock' => $stock, 'needs' => $needs));
                             }
                         }
                     }
@@ -474,7 +494,25 @@ class Report_model extends CI_Model {
         $this->db->where('dvc_size', $dvc_size);
         $this->db->where('dvc_col', $dvc_col);
         $this->db->where('dvc_qc', $dvc_qc);
-        return $this->db->delete('inv_needs');
+        $result = $this->db->delete('inv_needs');
+        // After deletion, set needs to 0 in inv_report for matching records
+        $this->syncNeedsToInvReport($id_dvc, $dvc_size, $dvc_col, $dvc_qc);
+        return $result;
+    }
+
+    /**
+     * Sync needs value from inv_needs to inv_report for all weeks
+     */
+    public function syncNeedsToInvReport($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
+        // Fetch current needs from inv_needs; if none, default to 0
+        $current = $this->getNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc);
+        $needs = $current ? intval($current['needs_qty']) : 0;
+
+        $this->db->where('id_dvc', $id_dvc);
+        $this->db->where('dvc_size', $dvc_size);
+        $this->db->where('dvc_col', $dvc_col);
+        $this->db->where('dvc_qc', $dvc_qc);
+        return $this->db->update('inv_report', array('needs' => $needs));
     }
     
     public function getExistingNeedsData($tech, $type, $filters = array()) {
@@ -603,7 +641,7 @@ class Report_model extends CI_Model {
         } elseif ($device['dvc_tech'] == 'ecbs' && $device['dvc_type'] == 'APP') {
             // ECBS APP devices
             $colors = array('Black');
-        } elseif ($device['dvc_type'] == 'OSC') {
+        } elseif ($device['dvc_type'] == 'osc') {
             $colors = array(' '); // Empty string for OSC
         }
         
@@ -649,7 +687,7 @@ class Report_model extends CI_Model {
     }
 
     /**
-     * Generate inv_report data for all weeks (manual trigger)
+     * Generate inventory report data
      */
     public function generateInventoryReportData() {
         try {
@@ -666,12 +704,14 @@ class Report_model extends CI_Model {
             // QC array
             $qc_types = array('LN', 'DN');
             
+            $total_inserted = 0;
+            
             foreach ($weeks as $week) {
                 foreach ($devices as $device) {
                     // Get colors for this device
                     $colors = $this->getDeviceColors($device['id_dvc']);
 
-                    if ($device['dvc_type'] === 'osc'){
+                    if (strtoupper($device['dvc_type']) === 'OSC'){
                         $sizes = array('-');
                     } else {
                         // Use uppercase sizes for generated records
@@ -711,6 +751,17 @@ class Report_model extends CI_Model {
                                     );
                                     
                                     $this->db->insert('inv_report', $insert_data);
+                                    $total_inserted++;
+                                } else {
+                                    // Update existing record with recalculated stock and needs
+                                    $stock = $this->calculateStock($week, $device['id_dvc'], $size, $color, $qc);
+                                    $needs = $this->calculateNeeds($week, $device['id_dvc'], $size, $color, $qc);
+                                    $this->db->where('id_week', $week['id_week']);
+                                    $this->db->where('id_dvc', $device['id_dvc']);
+                                    $this->db->where('dvc_size', $size);
+                                    $this->db->where('dvc_col', $color);
+                                    $this->db->where('dvc_qc', $qc);
+                                    $this->db->update('inv_report', array('stock' => $stock, 'needs' => $needs));
                                 }
                             }
                         }
@@ -782,8 +833,29 @@ class Report_model extends CI_Model {
         $this->db->select('COUNT(*) as stock_count');
         $this->db->from('inv_act');
         $this->db->where('id_dvc', $id_dvc);
-        $this->db->where('dvc_size', $size);
-        $this->db->where('dvc_col', $color);
+        
+        // Handle OSC devices differently
+        if ($size === '-') {
+            // For OSC devices, size doesn't matter, use IS NULL or empty
+            $this->db->group_start();
+            $this->db->where('dvc_size IS NULL');
+            $this->db->or_where('dvc_size', '');
+            $this->db->or_where('dvc_size', '-');
+            $this->db->group_end();
+        } else {
+            $this->db->where('dvc_size', $size);
+        }
+        
+        if ($color === '') {
+            // For OSC devices, color doesn't matter, use IS NULL or empty
+            $this->db->group_start();
+            $this->db->where('dvc_col IS NULL');
+            $this->db->or_where('dvc_col', '');
+            $this->db->group_end();
+        } else {
+            $this->db->where('dvc_col', $color);
+        }
+        
         $this->db->where('dvc_qc', $qc);
         
         // inv_in must be within the week period
@@ -804,8 +876,29 @@ class Report_model extends CI_Model {
         $this->db->select('needs_qty');
         $this->db->from('inv_needs');
         $this->db->where('id_dvc', $id_dvc);
-        $this->db->where('dvc_size', $size);
-        $this->db->where('dvc_col', $color);
+        
+        // Handle OSC devices differently
+        if ($size === '-') {
+            // For OSC devices, size doesn't matter, use IS NULL or empty
+            $this->db->group_start();
+            $this->db->where('dvc_size IS NULL');
+            $this->db->or_where('dvc_size', '');
+            $this->db->or_where('dvc_size', '-');
+            $this->db->group_end();
+        } else {
+            $this->db->where('dvc_size', $size);
+        }
+        
+        if ($color === '') {
+            // For OSC devices, color doesn't matter, use IS NULL or empty
+            $this->db->group_start();
+            $this->db->where('dvc_col IS NULL');
+            $this->db->or_where('dvc_col', '');
+            $this->db->group_end();
+        } else {
+            $this->db->where('dvc_col', $color);
+        }
+        
         $this->db->where('dvc_qc', $qc);
         
         $query = $this->db->get();
@@ -948,38 +1041,6 @@ class Report_model extends CI_Model {
         }
     }
 
-    public function updateInventoryReportNeeds() {
-        try {
-            // Get all existing inv_report records
-            $this->db->select('id_pms, id_week, id_dvc, dvc_size, dvc_col, dvc_qc');
-            $this->db->from('inv_report');
-            $report_records = $this->db->get()->result_array();
-            
-            foreach ($report_records as $record) {
-                // Get week info
-                $this->db->select('date_start, date_finish');
-                $this->db->from('inv_week');
-                $this->db->where('id_week', $record['id_week']);
-                $week_query = $this->db->get();
-                
-                if ($week_query->num_rows() > 0) {
-                    $week = $week_query->row_array();
-                    
-                    // Calculate new needs
-                    $needs = $this->calculateNeeds($week, $record['id_dvc'], $record['dvc_size'], $record['dvc_col'], $record['dvc_qc']);
-                    
-                    // Update needs
-                    $this->db->where('id_pms', $record['id_pms']);
-                    $this->db->update('inv_report', array('needs' => $needs));
-                }
-            }
-            
-            return true;
-        } catch (Exception $e) {
-            log_message('error', 'Update inventory report needs error: ' . $e->getMessage());
-            return false;
-        }
-    }
 
     public function getCurrentWeekPeriod() {
         $today = date('Y-m-d');
