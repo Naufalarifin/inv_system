@@ -318,9 +318,7 @@ class Inventory extends CI_Controller {
             
             if ($periods && is_array($periods)) {
                 $period_count = count($periods);
-                $message = "Periode berhasil di-generate untuk tahun $year bulan $month. ";
-                $message .= "Total $period_count periode mingguan telah dibuat. ";
-                $message .= "Data inv_report telah otomatis di-generate untuk setiap periode.";
+                $message = "Periode berhasil di-generate!";
                 
                 return $this->_json_response(true, $message, array(
                     'period_count' => $period_count,

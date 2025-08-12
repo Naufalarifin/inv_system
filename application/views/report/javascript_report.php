@@ -184,48 +184,37 @@ function searchByMonth() {
     showMessage(`Menampilkan data untuk bulan ${getMonthName(currentMonth)} ${currentYear}`, 'success');
 }
 
-// =================== YEAR DROPDOWN POPULATION FUNCTION ===================
-function populateYearDropdown() {
-    const yearFilter = document.getElementById('year_filter');
-    const currentYearValue = new Date().getFullYear();
-    const startYear = 2020; // Mulai dari tahun 2020
-    
-    // Clear existing options except the first one
-    yearFilter.innerHTML = '<option value="">Pilih Tahun</option>';
-    
-    // Add year options from startYear to currentYear + 1
-    for (let year = startYear; year <= currentYearValue + 1; year++) {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        
-        // Set current year as selected by default
-        if (year === currentYearValue) {
-            option.selected = true;
-        }
-        
-        yearFilter.appendChild(option);
-    }
-    
-    // Set global variables
-    currentYear = currentYearValue;
-    currentMonth = new Date().getMonth() + 1; // Current month (1-12)
-}
-
-// =================== INITIALIZATION FUNCTION ===================
+// =================== YEAR/MONTH FILTER TRIGGER (NO UI POPULATION) ===================
 function initializeFilters() {
-    populateYearDropdown();
-    
-    // Set current month as selected by default
-    const monthFilter = document.getElementById('month_filter');
-    if (monthFilter) {
-        monthFilter.value = currentMonth;
+    // Set default dropdown ke tahun & bulan saat ini jika opsi tersedia, lalu trigger filter sekali
+    const yearEl = document.getElementById('year_filter');
+    const monthEl = document.getElementById('month_filter');
+    if (!yearEl || !monthEl) return; // aman untuk halaman tanpa filter
+
+    const now = new Date();
+    const nowYear = String(now.getFullYear());
+    const nowMonth = String(now.getMonth() + 1);
+
+    const optionExists = (select, value) => !!(select && select.querySelector(`option[value="${value}"]`));
+
+    // Paksa default ke current year/month bila tersedia di opsi
+    if (optionExists(yearEl, nowYear)) yearEl.value = nowYear;
+    if (optionExists(monthEl, nowMonth)) monthEl.value = nowMonth;
+
+    // Gunakan fungsi pusat filter jika ada untuk hindari duplikasi logic
+    if (typeof searchByMonth === 'function') {
+        searchByMonth();
+        return;
     }
-    
-    // Load data for current month and year
-    if (currentYear && currentMonth) {
-        loadInvWeekData(currentYear, currentMonth);
-    }
+
+    // Fallback jika searchByMonth tidak tersedia
+    const selectedYear = yearEl.value;
+    const selectedMonth = monthEl.value;
+    if (!selectedYear || !selectedMonth) return;
+
+    currentYear = parseInt(selectedYear, 10);
+    currentMonth = parseInt(selectedMonth, 10);
+    loadInvWeekData(currentYear, currentMonth);
 }
 
 // =================== EXISTING FUNCTIONS ===================
@@ -358,7 +347,7 @@ function generateInvWeekPeriods() {
         loadingSpinner.style.display = 'inline-block';
     }
     
-    showModalMessage('Generating periods...', 'success');
+    showModalMessage('Generating periods...', 'success', true);
     
     const requestData = {
         year: parseInt(year),
@@ -381,9 +370,13 @@ function generateInvWeekPeriods() {
         if (data.success) {
             currentYear = parseInt(year);
             currentMonth = parseInt(month);
-            showModalMessage(data.message || 'Periode berhasil di-generate', 'success');
+            // Sinkronkan dropdown filter utama agar menampilkan periode yang baru dibuat
+            if (typeof syncFilterDropdowns === 'function') {
+                syncFilterDropdowns(currentYear, currentMonth);
+            }
+            showModalMessage(data.message || 'Periode berhasil di-generate', 'success', false, 2000);
             loadInvWeekData(currentYear, currentMonth);
-            setTimeout(() => closeModal('modal_input_all'), 600);
+            setTimeout(() => closeModal('modal_input_all'), 2000);
         } else {
             showModalMessage(data.message || 'Gagal generate periode', 'error');
             // Jika gagal (kemungkinan periode sudah ada), otomatis alihkan ke mode Regenerate
@@ -448,7 +441,7 @@ function executeRegenerate(year, month) {
     if (loadingSpinner) {
         loadingSpinner.style.display = 'inline-block';
     }
-    showModalMessage('Regenerating periods...', 'success');
+    showModalMessage('Regenerating periods...', 'success', true);
 
     const requestData = {
         year: parseInt(year),
@@ -472,9 +465,13 @@ function executeRegenerate(year, month) {
         if (data.success) {
             currentYear = parseInt(year);
             currentMonth = parseInt(month);
-            showModalMessage(data.message || 'Periode berhasil di-regenerate', 'success');
+            // Sinkronkan dropdown filter utama agar menampilkan periode yang baru di-regenerate
+            if (typeof syncFilterDropdowns === 'function') {
+                syncFilterDropdowns(currentYear, currentMonth);
+            }
+            showModalMessage(data.message || 'Periode berhasil di-regenerate', 'success', false, 2000);
             loadInvWeekData(currentYear, currentMonth);
-            setTimeout(() => closeModal('modal_input_all'), 600);
+            setTimeout(() => closeModal('modal_input_all'), 2000);
         } else {
             showModalMessage(data.message || 'Gagal regenerate periode', 'error');
         }
@@ -525,6 +522,10 @@ function viewExistingData(year, month) {
     try {
         currentYear = parseInt(year);
         currentMonth = parseInt(month);
+        // Pastikan dropdown filter ikut menampilkan periode yang dilihat
+        if (typeof syncFilterDropdowns === 'function') {
+            syncFilterDropdowns(currentYear, currentMonth);
+        }
         showModalMessage(`Menampilkan data untuk bulan ${getMonthName(currentMonth)} ${currentYear}`, 'success');
         loadInvWeekData(currentYear, currentMonth);
         setTimeout(() => closeModal('modal_input_all'), 300);
@@ -871,6 +872,34 @@ function getMonthName(month) {
     return months[month] || month;
 }
 
+// Sinkronkan nilai dropdown filter tahun/bulan pada toolbar dengan periode aktif
+function syncFilterDropdowns(year, month) {
+    const yearEl = document.getElementById('year_filter');
+    const monthEl = document.getElementById('month_filter');
+
+    if (yearEl) {
+        // Tambahkan opsi tahun jika belum ada
+        if (!yearEl.querySelector(`option[value="${year}"]`)) {
+            const opt = document.createElement('option');
+            opt.value = String(year);
+            opt.textContent = String(year);
+            yearEl.appendChild(opt);
+        }
+        yearEl.value = String(year);
+    }
+
+    if (monthEl) {
+        // Tambahkan opsi bulan jika belum ada (harusnya sudah ada dari 1-12)
+        if (!monthEl.querySelector(`option[value="${month}"]`)) {
+            const opt = document.createElement('option');
+            opt.value = String(month);
+            opt.textContent = getMonthName(parseInt(month, 10));
+            monthEl.appendChild(opt);
+        }
+        monthEl.value = String(month);
+    }
+}
+
 function formatDateTime(dateTimeStr) {
     const date = new Date(dateTimeStr);
     return date.toLocaleDateString('id-ID') + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'});
@@ -893,12 +922,33 @@ function showMessage(message, type) {
     }, 5000);
 }
 
-function showModalMessage(message, type) {
+function showModalMessage(message, type, withSpinner = false, durationMs = null) {
     const element = document.getElementById('modal_result_message');
-    
-    element.textContent = message;
+    if (!element) return;
+
     element.className = 'input-result-message ' + type;
     element.style.display = 'block';
+
+    if (withSpinner) {
+        element.innerHTML = `
+            <span style="display: inline-flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="#0074d9" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 188.4">
+                        <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                </svg>
+                <span>${message}</span>
+            </span>
+        `;
+    } else {
+        element.textContent = message;
+    }
+
+    if (durationMs && Number.isFinite(durationMs)) {
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, durationMs);
+    }
 }
 
 // Event listeners for inv_week
