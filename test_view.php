@@ -1,4 +1,47 @@
-<?php if (!empty($data)): ?>
+<?php
+// Test file untuk memverifikasi view data_inv_week_show.php
+echo "<h1>Test View data_inv_week_show.php</h1>";
+
+// Simulasi data yang seharusnya dikirim dari controller
+$data = [
+    [
+        'id_week' => 1,
+        'period_w' => 1,
+        'period_m' => 12,
+        'period_y' => 2024,
+        'date_start' => '2024-11-27 08:00:00',
+        'date_finish' => '2024-12-01 17:00:00'
+    ],
+    [
+        'id_week' => 2,
+        'period_w' => 2,
+        'period_m' => 12,
+        'period_y' => 2024,
+        'date_start' => '2024-12-02 08:00:00',
+        'date_finish' => '2024-12-06 17:00:00'
+    ]
+];
+
+echo "<h2>Test Data:</h2>";
+echo "<pre>" . print_r($data, true) . "</pre>";
+
+echo "<h2>Rendering View:</h2>";
+echo "<div style='border: 1px solid #ccc; padding: 20px; margin: 20px;'>";
+
+// Include helper functions yang dibutuhkan
+function getMonthName($month) {
+    $months = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 
+               7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+    return isset($months[$month]) ? $months[$month] : $month;
+}
+
+function getDayName($dayNumber) {
+    $days = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'];
+    return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
+}
+
+// Render view dengan data test
+if (!empty($data)): ?>
 <div class="card-table">
     <div class="table-responsive">
         <table class="table compact-table">
@@ -100,21 +143,30 @@
 .toggle-icon { transition: transform 0.3s ease; color: #666; }
 .toggle-icon.active { transform: rotate(180deg); color: #0074d9; }
 .info-panel { margin-top: 0; padding: 0; background: #fff; border: 1px solid #e9ecef; border-top: none; border-radius: 0 0 6px 6px; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease; }
-.info-panel.active { max-height: 300px; padding: 15px; opacity: 1; }
+.info-panel.active { max-height: 200px; padding: 15px; opacity: 1; }
 .info-panel h5 { margin: 0 0 10px 0; color: #333; font-size: 16px; font-weight: 600; }
 .info-item { margin: 5px 0; font-size: 13px; color: #666; }
 </style>
+<?php else: ?>
+<div class="no-data" style="text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px;">
+    No Data Available
+</div>
 <?php endif; ?>
 
-<?php
-function getMonthName($month) {
-    $months = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 
-               7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
-    return isset($months[$month]) ? $months[$month] : $month;
+</div>
+
+<script>
+function toggleInfoPanel() {
+    const infoPanel = document.getElementById('infoPanel');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    
+    if (infoPanel && toggleIcon) {
+        infoPanel.classList.toggle('active');
+        toggleIcon.classList.toggle('active');
+    }
 }
 
-function getDayName($dayNumber) {
-    $days = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'];
-    return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
+function editPeriod(id, start, finish) {
+    alert('Edit Period: ' + id + '\nStart: ' + start + '\nFinish: ' + finish);
 }
-?>
+</script>

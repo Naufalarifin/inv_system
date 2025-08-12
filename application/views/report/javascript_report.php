@@ -1,6 +1,20 @@
 <script type="text/javascript">
 var editMode = false;
 
+// Add missing showMenu function
+function showMenu(){
+    // This function is called by Load_model but not defined in this page
+    // Adding a dummy implementation to prevent errors
+    console.log('showMenu called - menu functionality not available on this page');
+}
+
+// Add missing delayLang function
+function delayLang(lang){
+    // This function is called by Load_model but not defined in this page
+    // Adding a dummy implementation to prevent errors
+    console.log('delayLang called with language:', lang);
+}
+
 function showToast(msg, type = 'success') {
     var t = document.getElementById('toast') || document.createElement('div');
     t.id = 'toast';
@@ -263,8 +277,12 @@ function showInvWeekData() {
         loadInvWeekData(currentYear, currentMonth);
     } else {
         console.log('No year/month set, showing empty state');
-        document.getElementById("show_data").innerHTML = '<div class="no-data" style="text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px;">No Data, Generate Please</div>';
+        showNoDataMessage();
     }
+}
+
+function showNoDataMessage() {
+    document.getElementById("show_data").innerHTML = '<div class="no-data">No Data, Generate Please</div>';
 }
 
 function loadInvWeekData(year, month) {
@@ -277,9 +295,6 @@ function loadInvWeekData(year, month) {
 function loadInvWeekDataFromServer(link) {
     console.log('loadInvWeekDataFromServer called with link:', link);
     
-    // Show loading indicator
-    document.getElementById("show_data").innerHTML = '<div style="padding: 20px; text-align: center;"><div class="loading-spinner"></div> Loading data...</div>';
-    
     if (typeof window.$ !== "undefined") {
         console.log('Using jQuery load method');
         window.$("#show_data").load(link, function(response, status, xhr) {
@@ -290,6 +305,12 @@ function loadInvWeekDataFromServer(link) {
                     '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + xhr.statusText + '</div>';
             } else {
                 console.log('jQuery load successful, response length:', response.length);
+                if (response.trim() === '') {
+                    showNoDataMessage();
+                } else {
+                    // Initialize info panel after data is loaded
+                    setTimeout(initializeInfoPanel, 100);
+                }
             }
         });
     } else {
@@ -306,11 +327,12 @@ function loadInvWeekDataFromServer(link) {
                 console.log('Fetch data received, length:', data.length);
                 if (data.trim() === '') {
                     console.log('Empty data received');
-                    document.getElementById("show_data").innerHTML = 
-                        '<div class="no-data" style="text-align: center; padding: 40px; font-style: italic; color: #666; font-size: 18px;">No Data, Generate Please</div>';
+                    showNoDataMessage();
                 } else {
                     console.log('Data loaded successfully');
                     document.getElementById("show_data").innerHTML = data;
+                    // Initialize info panel after data is loaded
+                    setTimeout(initializeInfoPanel, 100);
                 }
             })
             .catch((error) => {
@@ -394,12 +416,10 @@ function showRegenerateConfirmation(year, month) {
     const confirmationHtml = `
         <div id="regenerate_confirmation" class="confirmation-section" style="display: block;">
             <div class="confirmation-content">
-                <div class="confirmation-text">
-                    Yakin ingin regenerate? Data lama akan dihapus.
-                </div>
+                <div class="confirmation-text">Yakin ingin regenerate? Data lama akan dihapus.</div>
                 <div class="confirmation-buttons">
-                    <button class="btn-confirm" onclick="confirmRegenerate(${year}, ${month})">YA</button>
-                    <button class="btn-cancel" onclick="cancelRegenerate()">TIDAK</button>
+                    <button class="btn btn-regenerate btn-confirm" onclick="confirmRegenerate(${year}, ${month})">Ya</button>
+                    <button class="btn btn-lihat-data btn-cancel" onclick="cancelRegenerate()">Tidak</button>
                 </div>
             </div>
         </div>
@@ -475,7 +495,22 @@ function exportInvWeekData() {
         return;
     }
     
-    window.open(window.location.origin + '/cdummy/inventory/export_inv_week?year=' + year + '&month=' + month, '_blank');
+    try {
+        // Show export message
+        showMessage('Exporting data...', 'info');
+        
+        // Open export in new window
+        const exportUrl = window.location.origin + '/cdummy/inventory/export_inv_week?year=' + year + '&month=' + month;
+        window.open(exportUrl, '_blank');
+        
+        // Show success message after a short delay
+        setTimeout(() => {
+            showMessage('Export berhasil dibuka di tab baru', 'success');
+        }, 1000);
+    } catch (error) {
+        console.error('Export error:', error);
+        showMessage('Error saat export: ' + error.message, 'error');
+    }
 }
 
 // View existing data from modal action
@@ -524,12 +559,10 @@ function showUpdateConfirmation() {
     const confirmationHtml = `
         <div id="edit_confirmation" class="confirmation-section" style="display: block;">
             <div class="confirmation-content">
-                <div class="confirmation-text">
-                    Apakah Anda yakin ingin mengupdate periode ini?
-                </div>
+                <div class="confirmation-text">Apakah Anda yakin ingin mengupdate periode ini?</div>
                 <div class="confirmation-buttons">
-                    <button class="btn-confirm" onclick="confirmUpdatePeriod()">YA</button>
-                    <button class="btn-cancel" onclick="cancelUpdatePeriod()">TIDAK</button>
+                    <button class="btn btn-regenerate btn-confirm" onclick="confirmUpdatePeriod()">Ya</button>
+                    <button class="btn btn-lihat-data btn-cancel" onclick="cancelUpdatePeriod()">Tidak</button>
                 </div>
             </div>
         </div>
@@ -552,6 +585,12 @@ function executeUpdatePeriod() {
     const id_week = document.getElementById('edit_id_week').value;
     const date_start = document.getElementById('edit_date_start').value;
     const date_finish = document.getElementById('edit_date_finish').value;
+
+    // Show loading state
+    const updateBtn = document.querySelector('#modal_edit .btn-primary');
+    const originalText = updateBtn.textContent;
+    updateBtn.textContent = 'Updating...';
+    updateBtn.disabled = true;
 
     fetch('<?= base_url('inventory/update_inv_week_period') ?>', {
         method: 'POST',
@@ -580,7 +619,13 @@ function executeUpdatePeriod() {
         }
     })
     .catch(error => {
+        console.error('Error updating period:', error);
         showMessage('Error: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        updateBtn.textContent = originalText;
+        updateBtn.disabled = false;
     });
 }
 
@@ -685,7 +730,12 @@ function checkPeriodsExist() {
     checkPeriodsTimeout = setTimeout(() => {
         // Check if periods exist
         fetch(window.location.origin + '/cdummy/inventory/check_inv_week_periods?year=' + year + '&month=' + month)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.exists) {
                     // Update modal footer for existing periods
@@ -693,8 +743,8 @@ function checkPeriodsExist() {
                     if (modalFooter) {
                         modalFooter.innerHTML = `
                             <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-                            <button class="btn btn-lihat-data" onclick="console.log('Lihat Data clicked'); viewExistingData(${year}, ${month})">Lihat Data</button>
-                            <button class="btn btn-regenerate" onclick="console.log('Regenerate clicked'); regeneratePeriods(${year}, ${month})">
+                            <button class="btn btn-lihat-data" onclick="viewExistingData(${year}, ${month})">Lihat Data</button>
+                            <button class="btn btn-regenerate" onclick="regeneratePeriods(${year}, ${month})">
                                 Regenerate
                             </button>
                         `;
@@ -714,8 +764,18 @@ function checkPeriodsExist() {
                 }
             })
             .catch(error => {
-                // On error, ensure we're in default state
+                console.error('Error checking periods:', error);
+                // On error, ensure we're in default state and show error message
                 resetModalState();
+                if (modalResultDiv) {
+                    modalResultDiv.innerHTML = `
+                        <div style="margin-bottom: 10px; color: #721c24;">
+                            <strong>Error:</strong> Gagal memeriksa status periode. Silakan coba lagi.
+                        </div>
+                    `;
+                    modalResultDiv.className = 'input-result-message error';
+                    modalResultDiv.style.display = 'block';
+                }
             });
     }, 300); // 300ms debounce delay
 }
@@ -732,7 +792,6 @@ function generateYearOptions() {
 }
 
 function generateMonthOptions() {
-    const currentMonth = new Date().getMonth() + 1;
     const months = [
         'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -741,10 +800,64 @@ function generateMonthOptions() {
     let options = '';
     months.forEach((month, index) => {
         const monthNumber = index + 1;
-        const selected = monthNumber === currentMonth ? 'selected' : '';
-        options += `<option value="${monthNumber}" ${selected}>${month}</option>`;
+        // Do not preselect any month for the modal input; keep placeholder "Pilih Bulan"
+        options += `<option value="${monthNumber}">${month}</option>`;
     });
     return options;
+}
+
+// Toggle info panel function
+function toggleInfoPanel() {
+    const infoPanel = document.getElementById('infoPanel');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    const toggleBtn = document.querySelector('.info-toggle-btn');
+    
+    if (infoPanel && toggleIcon && toggleBtn) {
+        infoPanel.classList.toggle('active');
+        toggleIcon.classList.toggle('active');
+        
+        // Update button text - fix the text content update
+        const toggleText = toggleBtn.querySelector('span');
+        if (toggleText) {
+            if (infoPanel.classList.contains('active')) {
+                toggleText.textContent = 'Sembunyikan Informasi';
+            } else {
+                toggleText.textContent = 'Informasi Periode';
+            }
+        }
+    }
+}
+
+// Initialize info panel when data is loaded
+function initializeInfoPanel() {
+    const infoPanel = document.getElementById('infoPanel');
+    const toggleBtn = document.querySelector('.info-toggle-btn');
+    
+    if (infoPanel && toggleBtn) {
+        // Ensure info panel starts in closed state
+        infoPanel.classList.remove('active');
+        
+        // Reset toggle icon and text state
+        const toggleIcon = document.querySelector('.toggle-icon');
+        if (toggleIcon) {
+            toggleIcon.classList.remove('active');
+        }
+        const toggleText = toggleBtn.querySelector('span');
+        if (toggleText) {
+            toggleText.textContent = 'Informasi Periode';
+        }
+
+        // Remove inline onclick to prevent double trigger
+        if (toggleBtn.hasAttribute('onclick')) {
+            toggleBtn.removeAttribute('onclick');
+        }
+        
+        // Add click event listener if not already added
+        if (!toggleBtn.hasAttribute('data-initialized')) {
+            toggleBtn.setAttribute('data-initialized', 'true');
+            toggleBtn.addEventListener('click', toggleInfoPanel);
+        }
+    }
 }
 
 function getMonthName(month) {
@@ -780,21 +893,7 @@ function showMessage(message, type) {
 function showModalMessage(message, type) {
     const element = document.getElementById('modal_result_message');
     
-    // Check if message contains "Generating" or "Regenerating" to show loading spinner
-    if (message.includes('Generating') || message.includes('Regenerating')) {
-        const isRegenerating = message.includes('Regenerating');
-        const actionText = isRegenerating ? 'Regenerating' : 'Generating';
-        
-        element.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div class="loading-spinner" style="width: 20px; height: 20px; border: 2px solid #e9ecef; border-top: 2px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <span style="color: #28a745; font-weight: 500;">${actionText} periods...</span>
-            </div>
-        `;
-    } else {
-        element.textContent = message;
-    }
-    
+    element.textContent = message;
     element.className = 'input-result-message ' + type;
     element.style.display = 'block';
 }
