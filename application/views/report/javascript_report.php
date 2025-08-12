@@ -418,8 +418,8 @@ function showRegenerateConfirmation(year, month) {
             <div class="confirmation-content">
                 <div class="confirmation-text">Yakin ingin regenerate? Data lama akan dihapus.</div>
                 <div class="confirmation-buttons">
-                    <button class="btn btn-regenerate btn-confirm" onclick="confirmRegenerate(${year}, ${month})">Ya</button>
-                    <button class="btn btn-lihat-data btn-cancel" onclick="cancelRegenerate()">Tidak</button>
+                    <button class="btn-confirm" onclick="confirmRegenerate(${year}, ${month})">Ya</button>
+                    <button class="btn-cancel" onclick="cancelRegenerate()">Tidak</button>
                 </div>
             </div>
         </div>
@@ -487,23 +487,30 @@ function executeRegenerate(year, month) {
 
 // Export function
 function exportInvWeekData() {
-    const year = currentYear || new Date().getFullYear();
-    const month = currentMonth || (new Date().getMonth() + 1);
-    
+    // Ambil nilai langsung dari dropdown jika tersedia, agar UI mengikuti export
+    const yearEl = document.getElementById('year_filter');
+    const monthEl = document.getElementById('month_filter');
+
+    let usedYear = (yearEl && yearEl.value) ? parseInt(yearEl.value, 10) : (currentYear || new Date().getFullYear());
+    let usedMonth = (monthEl && monthEl.value) ? parseInt(monthEl.value, 10) : (currentMonth || (new Date().getMonth() + 1));
+
+    // Sinkronkan ke variabel global agar konsisten di seluruh halaman
+    currentYear = usedYear;
+    currentMonth = usedMonth;
+
+    // Pastikan dropdown menampilkan nilai yang akan diexport
+    if (yearEl) yearEl.value = String(usedYear);
+    if (monthEl) monthEl.value = String(usedMonth);
+
     if (!currentYear || !currentMonth) {
-        showMessage('Generate periode terlebih dahulu sebelum export', 'error');
+        showMessage('Pilih tahun dan bulan terlebih dahulu sebelum export', 'error');
         return;
     }
-    
+
     try {
-        // Show export message
         showMessage('Exporting data...', 'info');
-        
-        // Open export in new window
-        const exportUrl = window.location.origin + '/cdummy/inventory/export_inv_week?year=' + year + '&month=' + month;
+        const exportUrl = window.location.origin + '/cdummy/inventory/export_inv_week?year=' + usedYear + '&month=' + usedMonth;
         window.open(exportUrl, '_blank');
-        
-        // Show success message after a short delay
         setTimeout(() => {
             showMessage('Export berhasil dibuka di tab baru', 'success');
         }, 1000);
@@ -561,8 +568,8 @@ function showUpdateConfirmation() {
             <div class="confirmation-content">
                 <div class="confirmation-text">Apakah Anda yakin ingin mengupdate periode ini?</div>
                 <div class="confirmation-buttons">
-                    <button class="btn btn-regenerate btn-confirm" onclick="confirmUpdatePeriod()">Ya</button>
-                    <button class="btn btn-lihat-data btn-cancel" onclick="cancelUpdatePeriod()">Tidak</button>
+                    <button class="btn-confirm" onclick="confirmUpdatePeriod()">Ya</button>
+                    <button class="btn-cancel" onclick="cancelUpdatePeriod()">Tidak</button>
                 </div>
             </div>
         </div>
@@ -745,7 +752,7 @@ function checkPeriodsExist() {
                             <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
                             <button class="btn btn-lihat-data" onclick="viewExistingData(${year}, ${month})">Lihat Data</button>
                             <button class="btn btn-regenerate" onclick="regeneratePeriods(${year}, ${month})">
-                                Regenerate
+                                Regenerate <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
                             </button>
                         `;
                     }
@@ -816,14 +823,10 @@ function toggleInfoPanel() {
         infoPanel.classList.toggle('active');
         toggleIcon.classList.toggle('active');
         
-        // Update button text - fix the text content update
+        // Keep button text constant
         const toggleText = toggleBtn.querySelector('span');
         if (toggleText) {
-            if (infoPanel.classList.contains('active')) {
-                toggleText.textContent = 'Sembunyikan Informasi';
-            } else {
-                toggleText.textContent = 'Informasi Periode';
-            }
+            toggleText.textContent = 'Informasi Periode';
         }
     }
 }
@@ -844,7 +847,7 @@ function initializeInfoPanel() {
         }
         const toggleText = toggleBtn.querySelector('span');
         if (toggleText) {
-            toggleText.textContent = 'Informasi Periode';
+            toggleText.textContent = 'Informasi Periode'; // keep constant
         }
 
         // Remove inline onclick to prevent double trigger

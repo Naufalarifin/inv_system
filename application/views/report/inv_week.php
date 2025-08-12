@@ -128,9 +128,6 @@
 .btn-light:hover { background-color: #f8f9fa !important; border-color: #0074d9 !important; box-shadow: none !important; }
 .btn-light:focus { outline: none !important; box-shadow: 0 0 0 2px rgba(0,116,217,0.2) !important; }
 .btn-light:active { background-color: #e9ecef !important; border-color: #0074d9 !important; }
-/* Loading spinner used in Generate/Regenerate actions */
-.loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-left: 8px; }
-@keyframes spin { to { transform: rotate(360deg); } }
 /* Custom buttons for modal actions */
 .btn-lihat-data { background-color: #ffffff !important; color: var(--primary) !important; border: 1px solid var(--primary) !important; box-shadow: none !important; border-radius: 4px !important; }
 .btn-lihat-data:hover { background-color: #f8f9fa !important; }
@@ -139,7 +136,7 @@
 /* Confirmation area styles */
 .confirmation-section { background: #fff !important; border-top: 1px solid var(--border) !important; padding: 12px 20px !important; }
 .confirmation-content { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; }
-.confirmation-text { font-size: 16px !important; color: #333 !important; font-weight: 450 !important; }
+.confirmation-text { font-size: 16px !important; color: #333 !important; font-weight:  !important; }
 .confirmation-buttons { margin-left: auto !important; display: flex !important; align-items: center !important; gap: 8px !important; }
 .confirmation-buttons .btn-confirm { background-color: var(--primary) !important; color: #ffffff !important; border: 1px solid var(--primary) !important; padding: 0 12px !important; height: 2rem !important; min-width: 100px !important; border-radius: 4px !important; text-align: center !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }
 .confirmation-buttons .btn-confirm:hover { background-color: #0056b3 !important; border-color: #0056b3 !important; }

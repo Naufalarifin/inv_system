@@ -1,10 +1,10 @@
 <?php if (!empty($data)): ?>
 <div class="card-table">
     <div class="table-responsive">
-        <table class="table compact-table">
+        <table class="table week-table">
             <thead>
                 <tr>
-                    <th style="width: 80px; text-align: center;">Week</th>
+                    <!-- <th style="width: 80px; text-align: center;">Week</th> -->
                     <th>Periode</th>
                     <th style="text-align: center;">Tanggal Mulai</th>
                     <th style="text-align: center;">Tanggal Selesai</th>
@@ -25,18 +25,18 @@
                     $duration = $start_date->diff($finish_date)->days + 1;
                 ?>
                 <tr>
-                    <td class="text-center fw-bold"><?= $row['period_w'] ?></td>
+                    <!-- <td class="text-center fw-bold"><?= $row['period_w'] ?></td> -->
                     <td>
-                        <strong><?= getMonthName($row['period_m']) ?> <?= $row['period_y'] ?></strong><br>
-                        <small class="text-muted">Minggu ke-<?= $row['period_w'] ?></small>
+                        <strong><?= getMonthName($row['period_m']) ?> <?= $row['period_y'] ?></strong>
+                        <span class="text-muted">Minggu ke-<?= $row['period_w'] ?></span>
                     </td>
                     <td class="text-center">
-                        <?= $start_date->format('d/m/Y H:i') ?><br>
-                        <small class="text-muted"><?= getDayName($start_date->format('N')) ?></small>
+                        <span class="text-muted"><?= getDayName($start_date->format('N')) ?></span>
+                        <?= $start_date->format('d/m/Y H:i') ?>
                     </td>
                     <td class="text-center">
-                        <?= $finish_date->format('d/m/Y H:i') ?><br>
-                        <small class="text-muted"><?= getDayName($finish_date->format('N')) ?></small>
+                        <span class="text-muted"><?= getDayName($finish_date->format('N')) ?></span>
+                        <?= $finish_date->format('d/m/Y H:i') ?>
                     </td>
                     <td class="text-center">
                         <span class="duration-badge"><?= $duration ?> hari</span>
@@ -64,7 +64,6 @@
                 </svg>
             </button>
             <div class="info-panel" id="infoPanel">
-                <h5>Informasi Periode</h5>
                 <div class="info-item">
                     <strong>Total Minggu:</strong> <?= count($data) ?> minggu
                 </div>
@@ -82,13 +81,16 @@
 </div>
 
 <style>
-.compact-table { font-size: 13px; }
-.compact-table th, .compact-table td { padding: 8px 10px; line-height: 1.4; vertical-align: middle; }
-.compact-table th { font-size: 14px; font-weight: 600; background-color: #f8f9fa; }
+/* Larger, clean table styling aligned with modal theme */
+.week-table { font-size: 14px; border-collapse: separate; border-spacing: 0; width: 100%; }
+.week-table th, .week-table td { padding: 10px 12px; line-height: 1.5; vertical-align: middle; }
+.week-table th { font-size: 15px; font-weight: 600; background-color: #f8f9fa; color: #333; border-top: 1px solid #e9ecef; border-bottom: 1px solid #e9ecef; }
+.week-table tbody tr:nth-child(even) { background: #fcfcfd; }
+.week-table tbody tr:hover { background: rgba(0,116,217,0.04); }
 .text-center { text-align: center; }
 .fw-bold { font-weight: bold; }
 .text-muted { color: #6c757d; font-size: 12px; }
-.duration-badge { background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+.duration-badge {padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; background: #e3f2fd; color: #0d47a1; }
 .edit-btn { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.2s ease; }
 .edit-btn:hover { background-color: rgba(0, 116, 217, 0.1); transform: scale(1.1); }
 .edit-btn.disabled { cursor: not-allowed; opacity: 0.5; }
