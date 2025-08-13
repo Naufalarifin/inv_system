@@ -564,20 +564,4 @@
     font-size: 14px;
 }
 
-.btn {
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-primary {
-    background: #007bff;
-    color: white;
-}
 </style>

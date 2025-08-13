@@ -153,4 +153,6 @@
 @media (min-width: 1280px) { .container-fixed { padding: 0 2rem !important; } }
 .card { background-color: #fff !important; border: 1px solid #e5e5e5 !important; border-radius: 0.5rem !important; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; }
 .card-header { background-color: #fff !important; border-bottom: 1px solid #e5e5e5 !important; border-top-left-radius: 0.5rem !important; border-top-right-radius: 0.5rem !important; }
+.select-bulan { cursor: pointer !important; }
+.select-bulan:hover, #year_filter:hover, #month_filter:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; }
 </style>
