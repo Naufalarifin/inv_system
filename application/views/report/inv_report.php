@@ -15,29 +15,29 @@
                 
                 <!-- ECBS/ECCT Group -->
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-primary" id="btn_ecbs" onclick="selectTech('ecbs')">ECBS</button>
-                    <button class="btn btn-sm btn-light" id="btn_ecct" onclick="selectTech('ecct')">ECCT</button>
+                    <button class="btn btn-sm btn-primary" id="btn_ecbs" onclick="selectTech_report('ecbs')">ECBS</button>
+                    <button class="btn btn-sm btn-light" id="btn_ecct" onclick="selectTech_report('ecct')">ECCT</button>
                 </div>
                 
                 <!-- APP/OSC Group -->
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-primary" id="btn_app" onclick="selectType('app')">APP</button>
-                    <button class="btn btn-sm btn-light" id="btn_osc" onclick="selectType('osc')">OSC</button>
+                    <button class="btn btn-sm btn-primary" id="btn_app" onclick="selectType_report('app')">APP</button>
+                    <button class="btn btn-sm btn-light" id="btn_osc" onclick="selectType_report('osc')">OSC</button>
                 </div>
             </div>
             <div id="toolbar_right" class="flex items-center gap-2">
                 <!-- Search, Filter, dan Export di kanan -->
                 <div class="input-group input-sm">
                     <input class="input input-sm" placeholder="Search Device Name..." type="text" id="device_search" />
-                    <span class="btn btn-light btn-sm" onclick="openModal('modal_filter_report')">Filter</span>
+                    <span class="btn btn-light btn-sm" onclick="openModal_report('modal_filter_report')">Filter</span>
                     <span class="btn btn-primary btn-sm" onclick="applyFilters()">Search</span>
                 </div>
-                <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportData();">
+                <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportData_report();">
                     <i class="ki-filled ki-exit-down !text-base"></i>Export
                 </a>
             </div>
         </div>
-        <div id="show_data">Loading...</div>
+        <div id="show_data_report">Loading...</div>
     </div>
 </div>
 
@@ -45,7 +45,7 @@
 <div id="modal_filter_report" class="modal-container">
     <div class="modal-header">
         <h3 class="modal-title">Filter Report</h3>
-        <button class="btn-close" onclick="closeModal('modal_filter_report')">&times;</button>
+        <button class="btn-close" onclick="closeModal_report('modal_filter_report')">&times;</button>
     </div>
     <div class="modal-body">
         <div class="form-group">
@@ -124,13 +124,15 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('modal_filter_report')">Cancel</button>
+        <button class="btn btn-secondary" onclick="closeModal_report('modal_filter_report')">Cancel</button>
         <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
     </div>
 </div>
 
 <!-- Modal Overlay -->
 <div id="modal_overlay" class="modal-overlay"></div>
+
+
 
 <!-- Input On PMS Modal -->
 <div class="modal fade" id="inputPmsModal" tabindex="-1" role="dialog" aria-labelledby="inputPmsModalLabel" aria-hidden="true">
@@ -214,354 +216,36 @@
     </div>
 </div>
 
-<script type="text/javascript">
-    var selectedTech = 'ecbs';
-    var selectedType = 'app';
-    
-    function selectTech(tech) {
-        selectedTech = tech;
-        
-        // Update button states
-        document.getElementById('btn_ecbs').className = tech === 'ecbs' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
-        document.getElementById('btn_ecct').className = tech === 'ecct' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
-        
-        showData();
-    }
-    
-    function selectType(type) {
-        selectedType = type;
-        
-        // Update button states
-        document.getElementById('btn_app').className = type === 'app' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
-        document.getElementById('btn_osc').className = type === 'osc' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
-        
-        showData();
-    }
-    
-    function showData() {
-        var link = "<?php echo base_url(); ?>inventory/inv_report_data/report_" + selectedTech + "_" + selectedType + "_show";
-        
-        // Add current search parameters
-        var deviceSearch = document.getElementById('device_search').value;
-        var year = document.getElementById('filter_year') ? document.getElementById('filter_year').value : '';
-        var month = document.getElementById('filter_month') ? document.getElementById('filter_month').value : '';
-        var week = document.getElementById('filter_week') ? document.getElementById('filter_week').value : '';
-        
-        if (deviceSearch) {
-            link += '?device_search=' + encodeURIComponent(deviceSearch);
-        }
-        if (year) {
-            link += (link.includes('?') ? '&' : '?') + 'year=' + encodeURIComponent(year);
-        }
-        if (month) {
-            link += (link.includes('?') ? '&' : '?') + 'month=' + encodeURIComponent(month);
-        }
-        if (week) {
-            link += (link.includes('?') ? '&' : '?') + 'week=' + encodeURIComponent(week);
-        }
-        
-        document.getElementById('show_data').innerHTML = '<div style="text-align: center; padding: 20px;">Loading data...</div>';
-        $("#show_data").load(link);
-    }
-    
-    function exportData() {
-        var link = "<?php echo base_url(); ?>inventory/inv_report_data/report_" + selectedTech + "_" + selectedType + "_export";
-        window.open(link, '_blank').focus();
-    }
-    
-    // Generate inventory report data
-    function generateInventoryReport() {
-        if (!confirm('This will generate inventory report data from existing tables. This may take some time. Continue?')) {
-            return;
-        }
-        
-        var btn = document.getElementById('btn_generate');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="ki-filled ki-loading !text-base"></i>Generating...';
-        
-        $.post("<?php echo base_url(); ?>inventory/generate_inventory_report", function(response) {
-            if (response.success) {
-                showToast('Inventory report data generated successfully', 'success');
-                showData(); // Refresh the table
-            } else {
-                showToast('Failed to generate: ' + (response.message || 'Unknown error'), 'error');
-            }
-        }, 'json').fail(function() {
-            showToast('Failed to generate inventory report data', 'error');
-        }).always(function() {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ki-filled ki-setting !text-base"></i>Generate Data';
-        });
-    }
-    
-    function showInputPmsModal() {
-        // Load week periods and devices data
-        loadWeekPeriods();
-        loadDevices();
-        $('#inputPmsModal').modal('show');
-    }
-    
-    function loadWeekPeriods() {
-        $.get("<?php echo base_url(); ?>inventory/get_week_periods", function(data) {
-            var options = '<option value="">-- Select Week --</option>';
-            if (data.success && data.weeks) {
-                data.weeks.forEach(function(week) {
-                    var startDate = new Date(week.date_start);
-                    var endDate = new Date(week.date_finish);
-                    var label = 'W' + week.period_w + '/' + week.period_m + '/' + week.period_y + ' (' + 
-                               startDate.toLocaleDateString() + ' - ' + endDate.toLocaleDateString() + ')';
-                    options += '<option value="' + week.id_week + '">' + label + '</option>';
-                });
-            }
-            $('#select_week').html(options);
-        }, 'json');
-    }
-    
-    function loadDevices() {
-        $.get("<?php echo base_url(); ?>inventory/get_devices_for_report", {tech: selectedTech, type: selectedType}, function(data) {
-            var options = '<option value="">-- Select Device --</option>';
-            if (data.success && data.devices) {
-                data.devices.forEach(function(device) {
-                    options += '<option value="' + device.id_dvc + '">' + device.dvc_code + ' - ' + device.dvc_name + '</option>';
-                });
-            }
-            $('#select_device').html(options);
-        }, 'json');
-    }
-    
-    // Update color options based on selected device
-    $('#select_device').change(function() {
-        var deviceId = $(this).val();
-        if (deviceId) {
-            $.get("<?php echo base_url(); ?>inventory/get_device_colors", {id_dvc: deviceId}, function(data) {
-                var options = '<option value="">-- Select Color --</option>';
-                if (data.success && data.colors) {
-                    data.colors.forEach(function(color) {
-                        var displayColor = color === '' ? '(Empty)' : color;
-                        options += '<option value="' + color + '">' + displayColor + '</option>';
-                    });
-                }
-                $('#select_color').html(options);
-            }, 'json');
-        } else {
-            $('#select_color').html('<option value="">-- Select Color --</option>');
-        }
-    });
-    
-    function saveOnPms() {
-        var formData = {
-            id_week: $('#select_week').val(),
-            id_dvc: $('#select_device').val(),
-            dvc_size: $('#select_size').val(),
-            dvc_col: $('#select_color').val(),
-            dvc_qc: $('#select_qc').val(),
-            on_pms: $('#input_on_pms').val()
-        };
-        
-        // Validate form
-        if (!formData.id_week || !formData.id_dvc || !formData.dvc_size || 
-            formData.dvc_col === '' || !formData.dvc_qc || !formData.on_pms) {
-            showToast('Please fill all required fields', 'error');
-            return;
-        }
-        
-        $.post("<?php echo base_url(); ?>inventory/save_on_pms", formData, function(response) {
-            if (response.success) {
-                showToast('On PMS data saved successfully', 'success');
-                $('#inputPmsModal').modal('hide');
-                $('#pmsInputForm')[0].reset();
-                showData(); // Refresh the table
-            } else {
-                showToast('Failed to save: ' + (response.message || 'Unknown error'), 'error');
-            }
-        }, 'json').fail(function() {
-            showToast('Failed to save data', 'error');
-        });
-    }
-    
-    function showToast(msg, type = 'success') {
-        var t = document.getElementById('toast') || document.createElement('div');
-        t.id = 'toast';
-        t.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:6px;color:white;z-index:9999;transition:all 0.3s;';
-        t.style.backgroundColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981';
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
-    }
-    
-    // Apply filters function
-    function applyFilters() {
-        closeModal('modal_filter_report');
-        showData();
-    }
-    
-    // Auto search functionality
-    let searchTimeout = null;
-    
-    function setupAutoSearch() {
-        const searchInput = document.getElementById("device_search");
-        
-        if (searchInput) {
-            // Remove existing event listeners to avoid duplicate
-            searchInput.removeEventListener("input", handleAutoSearch);
-            
-            // Add event listener for auto search
-            searchInput.addEventListener("input", handleAutoSearch);
-            
-            // Keep enter key functionality
-            searchInput.addEventListener("keyup", function(event) {
-                if (event.key === 'Enter') {
-                    // Clear timeout and search immediately
-                    if (searchTimeout) {
-                        clearTimeout(searchTimeout);
-                    }
-                    showData();
-                }
-            });
-        }
-    }
-    
-    // Handle auto search with debounce
-    function handleAutoSearch(event) {
-        const searchTerm = event.target.value.trim();
-        
-        // Clear existing timeout
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        
-        // Set timeout for debounce (500ms delay)
-        searchTimeout = setTimeout(() => {
-            showData();
-        }, 500);
-    }
-    
-    // Modal functions
-    function openModal(modalId) {
-        document.getElementById(modalId).style.display = 'block';
-        document.getElementById('modal_overlay').style.display = 'block';
-    }
-    
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-        document.getElementById('modal_overlay').style.display = 'none';
-    }
-    
-    // Close modal when clicking overlay
-    document.addEventListener('click', function(event) {
-        if (event.target.id === 'modal_overlay') {
-            const modals = document.querySelectorAll('.modal-container');
-            modals.forEach(modal => {
-                modal.style.display = 'none';
-            });
-            document.getElementById('modal_overlay').style.display = 'none';
-        }
-    });
-    
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            const modals = document.querySelectorAll('.modal-container');
-            modals.forEach(modal => {
-                if (modal.style.display === 'block') {
-                    modal.style.display = 'none';
-                }
-            });
-            document.getElementById('modal_overlay').style.display = 'none';
-        }
-    });
-    
-    // Load default data on page load
-    $(document).ready(function() {
-        setupAutoSearch();
-        showData();
-    });
-</script>
-
-<!-- <style>
-/* Modal */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    display: none;
-}
-
-.modal-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    z-index: 1001;
-    width: 400px;
-    display: none;
-}
-
-.modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #666;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.modal-footer {
-    padding: 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.input-form-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-.input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.input-info {
-    padding: 10px;
-    background: #f5f5f5;
-    border-radius: 4px;
-    color: #666;
-    font-size: 14px;
-}
-
-</style> -->
+<style>
+/* =================== REPORT STYLES =================== */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
+.modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1001; width: 400px; display: none; }
+.modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.modal-title { margin: 0; font-size: 18px; font-weight: 600; }
+.btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; }
+.form-group { margin-bottom: 15px; }
+.input-form-label { display: block; margin-bottom: 5px; font-weight: 500; }
+.input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+.input-info { padding: 10px; background: #f5f5f5; border-radius: 4px; color: #666; font-size: 14px; }
+.btn  border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s ease; }
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-secondary { background: #6c757d; color: white; }
+.btn-primary { background: #007bff; color: white; }
+.btn-success { background: #28a745; color: white; }
+.btn-light { background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; }
+.compact-table { font-size: 13px !important; }
+.compact-table th, .compact-table td { padding: 8px 4px !important; line-height: 1.4 !important; }
+.compact-table th { font-size: 14px !important; background-color: #f8f9fa; }
+.compact-table tbody tr:hover { background-color: #f5f5f5; }
+td[title]:hover { background-color: #e3f2fd !important; }
+.filter-info { background: #f8f9fa; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #e9ecef; }
+.badge { padding: 2px 8px; border-radius: 3px; margin-left: 5px; font-size: 12px; font-weight: 500; }
+.badge-primary { background: #007bff; color: white; }
+.badge-secondary { background: #6c757d; color: white; }
+.badge-info { background: #17a2b8; color: white; }
+.loading-spinner { width: 20px; height: 20px; border: 2px solid #e9ecef; border-top: 2px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@media (max-width: 768px) { .modal-container { width: 90%; max-width: 400px; } .card-header { flex-direction: column; gap: 10px; align-items: stretch; } #toolbar_left, #toolbar_right { justify-content: center; } .btn-group { flex-wrap: wrap; justify-content: center; } }
+</style>

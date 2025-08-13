@@ -12,171 +12,127 @@ class Inventory extends CI_Controller {
     }
     
     public function index() {
-        try {
-            $data = array(); // Initialize $data first
-            $data = $this->load_top($data);
-            $config = $this->config_model->getConfig();
-            redirect($config['base_url'] . 'inventory/inv_ecct');
-        } catch (Exception $e) {
-            log_message('error', 'Inventory index error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data = array();
+        $data = $this->load_top($data);
+        $config = $this->config_model->getConfig();
+        redirect($config['base_url'] . 'inventory/inv_ecct');
     }
     
     public function all_item() {
-        try {
-            $data['onload'] = "showDataItem();";
-            $data = $this->load_top($data);
-            $data['title_page'] = "All Items";
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('inventory/all_item', $data);
-            $this->load->view('inventory/javascript', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'All item error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
-    }
+        $data['onload'] = "showDataItem();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "All Items";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/all_item', $data);
+        $this->load->view('inventory/javascript', $data);
+        $this->load_bot($data);
+}
 
     public function inv_report() {
-        try {
-            $data['onload'] = "showData();";
-            $data = $this->load_top($data);
-            $data['title_page'] = "Inventory Report";
-            $data['dvc_code'] = $this->report_model->getDevicesForReport('ecbs', 'app'); // Default data
-            $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
-            $data['available_years'] = $this->report_model->getAvailableYears();
-            $data['available_months'] = $this->report_model->getAvailableMonths();
-            $data['available_weeks'] = $this->report_model->getAvailableWeeks();
-            $data['current_filters'] = array(
-                'device_search' => '',
-                'year' => '',
-                'month' => '',
-                'week' => '',
-                'id_week' => ''
-            );
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('report/inv_report', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'Inventory report page error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data['onload'] = "";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory Report";
+        $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
+        $data['available_years'] = $this->report_model->getAvailableYears();
+        $data['available_months'] = $this->report_model->getAvailableMonths();
+        $data['available_weeks'] = $this->report_model->getAvailableWeeks();
+        $data['current_filters'] = array(
+            'device_search' => '',
+            'year' => '',
+            'month' => '',
+            'week' => '',
+            'id_week' => ''
+        );
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('report/inv_report', $data);
+        $this->load->view('report/javascript_report', $data);
+        $this->load_bot($data);
     }
     
     public function massive_input() {
-        try {
-            $data['onload'] = "";
-            $data = $this->load_top($data);
-            $data['title_page'] = "Massive Inventory Input";
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('inventory/massive_input', $data);
-            $this->load->view('inventory/javascript', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'Massive input error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data['onload'] = "";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Massive Inventory Input";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/massive_input', $data);
+        $this->load->view('inventory/javascript', $data);
+        $this->load_bot($data);
     }
     
     public function inv_ecct() {
-        try {
-            $data['onload'] = "showDataEcct();";
-            $data = $this->load_top($data);
-            $data['title_page'] = "Inventory ECCT";
-            $data['dvc_code'] = $this->inventory_model->getDeviceTypes('ecct');
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('inventory/inv_ecct', $data);
-            $this->load->view('inventory/javascript', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'ECCT inventory error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data['onload'] = "showDataEcct();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory ECCT";
+        $data['dvc_code'] = $this->inventory_model->getDeviceTypes('ecct');
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/inv_ecct', $data);
+        $this->load->view('inventory/javascript', $data);
+        $this->load_bot($data);
     }
     
     public function inv_ecbs() {
-        try {
-            $data['onload'] = "showDataEcbs();";
-            $data = $this->load_top($data);
-            $data['title_page'] = "Inventory ECBS";
-            $data['dvc_code'] = $this->inventory_model->getDeviceTypes('ecbs');
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('inventory/inv_ecbs', $data);
-            $this->load->view('inventory/javascript', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'ECBS inventory error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data['onload'] = "showDataEcbs();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory ECBS";
+        $data['dvc_code'] = $this->inventory_model->getDeviceTypes('ecbs');
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('inventory/inv_ecbs', $data);
+        $this->load->view('inventory/javascript', $data);
+        $this->load_bot($data);
     }
     
     public function inv_week() {
-        try {
-            $data['onload'] = "showInvWeekData();";
-            $current_week = $this->report_model->getCurrentWeekPeriod();
-            $data = $this->load_top($data);
-            $data['title_page'] = "Inventory Weekly Period Management";
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('report/inv_week', $data);
-            $this->load->view('report/javascript_report', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'Inv week error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data['onload'] = "showInvWeekData();";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory Weekly Period Management";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('report/inv_week', $data);
+        $this->load->view('report/javascript_report', $data);
+        $this->load_bot($data);
     }
 
     public function inv_report_needs() {
-        try {
-            $data['onload'] = "";
-            $data = $this->load_top($data);
-            $data['title_page'] = "Inventory Report Needs";
-            $this->load->view('inventory/banner', $data);
-            $this->load->view('report/inv_report_needs', $data);
-            $this->load->view('report/javascript_report', $data);
-            $this->load_bot($data);
-        } catch (Exception $e) {
-            log_message('error', 'Report needs error: ' . $e->getMessage());
-            show_error('An error occurred while loading the page.');
-        }
+        $data['onload'] = "";
+        $data = $this->load_top($data);
+        $data['title_page'] = "Inventory Report Needs";
+        $this->load->view('inventory/banner', $data);
+        $this->load->view('report/inv_report_needs', $data);
+        $this->load->view('report/javascript_report', $data);
+        $this->load_bot($data);
     }
     
     public function input_process() {
         try {
-            $data = $this->_get_json_input();
-            
-            if (!$data) {
-                $this->_json_response(false, 'Invalid input data');
-                return;
+            $input_data = $this->_get_json_input();
+            if (!$input_data) {
+                return $this->_output_json($this->_json_response(false, 'Invalid JSON input'));
             }
-            
-            // Process the input data
-            $result = $this->data_model->processInventoryInput($data);
-            
-            if ($result) {
-                // Auto-update stock values for active weeks when inv_act changes
-                $this->report_model->updateInventoryReportStockAuto();
-                
-                $this->_json_response(true, 'Data processed successfully');
-            } else {
-                $this->_json_response(false, 'Failed to process data');
+
+            $type = isset($input_data['type']) ? $input_data['type'] : null;
+
+            switch ($type) {
+                case 'in':
+                    $result = $this->inventory_model->processInventoryIn($input_data);
+                    break;
+                case 'out':
+                    $result = $this->inventory_model->processInventoryOut($input_data);
+                    break;
+                case 'move':
+                    $result = $this->inventory_model->processInventoryMove($input_data);
+                    break;
+                default:
+                    $result = $this->_json_response(false, 'Invalid process type');
             }
-            
+
+            return $this->_output_json($result);
         } catch (Exception $e) {
-            $this->_handle_error($e, 'Input process error', true);
+            return $this->_output_json($this->_json_response(false, 'Error: ' . $e->getMessage()));
         }
     }
 
     public function data($type = "", $input = "") {
         try {
             $data = $this->load_top("", "no_view");
-            
-            // Validate type parameter
-            if (empty($type)) {
-                show_404();
-                return;
-            }
             
             if ($type == 'data_inv_week_show') {
                 $year = $this->uri->segment(4);
@@ -243,14 +199,6 @@ class Inventory extends CI_Controller {
                     }
                     $this->load->view('inventory/data/data_item_export', $data);
                     break;
-                case 'osc_sync_differences':
-                    $tech = $this->input->get('tech') ?: 'ecct';
-                    $data['differences'] = $this->inventory_model->getOscSyncDifferences($tech);
-                    $this->load->view('inventory/data/osc_sync_differences', $data);
-                    break;
-                default:
-                    show_404();
-                    return;
             }
             $this->load_bot($data, "no_view");
         } catch (Exception $e) {
@@ -813,45 +761,6 @@ class Inventory extends CI_Controller {
             return $this->_json_response(false, 'Error: ' . $e->getMessage());
         }
     }
-        
-    /**
-     * Auto-update stock when inv_act changes
-     */
-    public function update_inventory_stock() {
-        try {
-            $result = $this->report_model->updateInventoryReportStockAuto();
-            $message = $result ? 'Stock values auto-updated successfully' : 'Failed to auto-update stock values';
-            
-            if ($this->input->is_ajax_request()) {
-                $this->_json_response($result, $message);
-            } else {
-                echo $message;
-            }
-            
-        } catch (Exception $e) {
-            $this->_handle_error($e, 'Auto-update inventory stock error', $this->input->is_ajax_request());
-        }
-    }
-    
-    /**
-     * Auto-update needs when inv_needs changes
-     */
-    public function update_inventory_needs() {
-        try {
-            $result = $this->report_model->updateInventoryReportNeedsAuto();
-            $message = $result ? 'Needs values auto-updated successfully' : 'Failed to auto-update needs values';
-            
-            if ($this->input->is_ajax_request()) {
-                $this->_json_response($result, $message);
-            } else {
-                echo $message;
-            }
-            
-        } catch (Exception $e) {
-            $this->_handle_error($e, 'Auto-update inventory needs error', $this->input->is_ajax_request());
-        }
-    }
-    
     // =============== PRIVATE HELPER METHODS ===============
     
     private function _prepare_view_data() {
@@ -936,22 +845,13 @@ class Inventory extends CI_Controller {
     protected function _get_json_input() {
         $json = file_get_contents('php://input');
         
-        // Log the raw input for debugging
-        log_message('debug', 'Raw JSON input: ' . $json);
-        
-        // Check if input is empty
         if (empty($json)) {
-            log_message('error', 'Empty JSON input received');
             return null;
         }
         
-        // Try to decode JSON
         $decoded = json_decode($json, true);
         
-        // Check for JSON errors
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $error_msg = 'JSON decode error: ' . json_last_error_msg() . ' at position ' . json_last_error();
-            log_message('error', $error_msg . ' - Raw input: ' . $json);
             return null;
         }
         
@@ -969,6 +869,7 @@ class Inventory extends CI_Controller {
         if ($data !== null) {
             $response = array_merge($response, $data);
         }
+        
         $this->_output_json($response);
     }
     
@@ -976,7 +877,7 @@ class Inventory extends CI_Controller {
         log_message('error', $log_message . ': ' . $e->getMessage());
         
         if ($is_json) {
-            $this->_json_response(false, 'An error occurred');
+            $this->_json_response(false, 'An error occurred: ' . $e->getMessage());
         } else {
             show_error('An error occurred while processing your request.');
         }
