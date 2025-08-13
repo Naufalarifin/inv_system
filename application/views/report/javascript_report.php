@@ -328,7 +328,19 @@ function showInvWeekData() {
 }
 
 function showNoDataMessage() {
-    document.getElementById("show_data").innerHTML = '<div class="no-data">No Data, Generate Please</div>';
+    document.getElementById("show_data").innerHTML = '<div class="no-data" style="text-align:center;font-style:italic;">No Data, Generate Please</div>';
+}
+
+// Treat HTML as empty if it only contains whitespace, comments, or empty tags
+function isEmptyHtmlContent(html) {
+    if (html == null) return true;
+    const cleaned = String(html)
+        .replace(/<!--([\s\S]*?)-->/g, '')
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]*>/g, '')
+        .trim();
+    return cleaned.length === 0;
 }
 
 function loadInvWeekData(year, month) {
@@ -351,7 +363,7 @@ function loadInvWeekDataFromServer(link) {
                     '<div style="padding: 20px; text-align: center; color: red;">Error loading data: ' + xhr.statusText + '</div>';
             } else {
                 console.log('jQuery load successful, response length:', response.length);
-                if (response.trim() === '') {
+                if (isEmptyHtmlContent(response)) {
                     showNoDataMessage();
                 } else {
                     // Initialize info panel after data is loaded
@@ -371,7 +383,7 @@ function loadInvWeekDataFromServer(link) {
             })
             .then((data) => {
                 console.log('Fetch data received, length:', data.length);
-                if (data.trim() === '') {
+                if (isEmptyHtmlContent(data)) {
                     console.log('Empty data received');
                     showNoDataMessage();
                 } else {
@@ -413,7 +425,7 @@ function generateInvWeekPeriods() {
     
     fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(requestData)
     })
     .then(response => {
@@ -442,7 +454,25 @@ function generateInvWeekPeriods() {
     })
     .catch(error => {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
-        showModalMessage('Error: ' + error.message, 'error');
+        // Fallback: verify if periods actually exist despite error (e.g., server returned 500 after processing)
+        verifyPeriodsCreated(year, month)
+            .then(exist => {
+                if (exist) {
+                    currentYear = parseInt(year);
+                    currentMonth = parseInt(month);
+                    if (typeof syncFilterDropdowns === 'function') {
+                        syncFilterDropdowns(currentYear, currentMonth);
+                    }
+                    showModalMessage('Periode berhasil di-generate', 'success', false, 2000);
+                    loadInvWeekData(currentYear, currentMonth);
+                    setTimeout(() => closeModal('modal_input_all'), 2000);
+                } else {
+                    showModalMessage('Error: ' + error.message, 'error');
+                }
+            })
+            .catch(() => {
+                showModalMessage('Error: ' + error.message, 'error');
+            });
     });
 }
 
@@ -454,28 +484,11 @@ function regeneratePeriods(year, month) {
 }
 
 function showRegenerateConfirmation(year, month) {
-    const existingConfirmation = document.getElementById('regenerate_confirmation');
-    if (existingConfirmation) {
-        return;
-    }
-    
-    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
-    if (!modalFooter) return;
-    
-    // Add confirmation section after modal footer
-    const confirmationHtml = `
-        <div id="regenerate_confirmation" class="confirmation-section" style="display: block;">
-            <div class="confirmation-content">
-                <div class="confirmation-text">Yakin ingin regenerate? Data lama akan dihapus.</div>
-                <div class="confirmation-buttons">
-                    <button class="btn-confirm" onclick="confirmRegenerate(${year}, ${month})">Ya</button>
-                    <button class="btn-cancel" onclick="cancelRegenerate()">Tidak</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    modalFooter.insertAdjacentHTML('afterend', confirmationHtml);
+    renderConfirmation('#modal_input_all .modal-footer', 'regenerate_confirmation',
+        'Yakin ingin regenerate? Data lama akan dihapus.',
+        () => confirmRegenerate(year, month),
+        () => cancelRegenerate()
+    );
 }
 
 function confirmRegenerate(year, month) {
@@ -508,7 +521,7 @@ function executeRegenerate(year, month) {
 
     fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(requestData)
     })
     .then(response => {
@@ -535,8 +548,34 @@ function executeRegenerate(year, month) {
     })
     .catch(error => {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
-        showModalMessage('Error: ' + error.message, 'error');
+        verifyPeriodsCreated(year, month)
+            .then(exist => {
+                if (exist) {
+                    currentYear = parseInt(year);
+                    currentMonth = parseInt(month);
+                    if (typeof syncFilterDropdowns === 'function') {
+                        syncFilterDropdowns(currentYear, currentMonth);
+                    }
+                    showModalMessage('Periode berhasil di-regenerate', 'success', false, 2000);
+                    loadInvWeekData(currentYear, currentMonth);
+                    setTimeout(() => closeModal('modal_input_all'), 2000);
+                } else {
+                    showModalMessage('Error: ' + error.message, 'error');
+                }
+            })
+            .catch(() => {
+                showModalMessage('Error: ' + error.message, 'error');
+            });
     });
+}
+
+// Helper to verify if periods exist for given year/month
+function verifyPeriodsCreated(year, month) {
+    const url = window.location.origin + '/cdummy/inventory/check_inv_week_periods?year=' + year + '&month=' + month;
+    return fetch(url)
+        .then(res => res.ok ? res.json() : Promise.reject(new Error('HTTP ' + res.status)))
+        .then(json => !!(json && json.exists))
+        .catch(() => false);
 }
 
 // Export function
@@ -616,23 +655,11 @@ function updatePeriod() {
 
 // Konfirmasi update periode (mirip dengan konfirmasi regenerate)
 function showUpdateConfirmation() {
-    const existing = document.getElementById('edit_confirmation');
-    if (existing) return;
-    const modalFooter = document.querySelector('#modal_edit .modal-footer');
-    if (!modalFooter) return;
-
-    const confirmationHtml = `
-        <div id="edit_confirmation" class="confirmation-section" style="display: block;">
-            <div class="confirmation-content">
-                <div class="confirmation-text">Apakah Anda yakin ingin mengupdate periode ini?</div>
-                <div class="confirmation-buttons">
-                    <button class="btn-confirm" onclick="confirmUpdatePeriod()">Ya</button>
-                    <button class="btn-cancel" onclick="cancelUpdatePeriod()">Tidak</button>
-                </div>
-            </div>
-        </div>
-    `;
-    modalFooter.insertAdjacentHTML('afterend', confirmationHtml);
+    renderConfirmation('#modal_edit .modal-footer', 'edit_confirmation',
+        'Apakah Anda yakin ingin mengupdate periode ini?',
+        () => confirmUpdatePeriod(),
+        () => cancelUpdatePeriod()
+    );
 }
 
 function confirmUpdatePeriod() {
@@ -644,6 +671,32 @@ function confirmUpdatePeriod() {
 function cancelUpdatePeriod() {
     const section = document.getElementById('edit_confirmation');
     if (section) section.remove();
+}
+
+// Generic confirmation renderer
+function renderConfirmation(footerSelector, elementId, text, onConfirm, onCancel) {
+    const existing = document.getElementById(elementId);
+    if (existing) return;
+    const modalFooter = document.querySelector(footerSelector);
+    if (!modalFooter) return;
+    const confirmationHtml = `
+        <div id="${elementId}" class="confirmation-section" style="display: block;">
+            <div class="confirmation-content">
+                <div class="confirmation-text">${text}</div>
+                <div class="confirmation-buttons">
+                    <button class="btn-confirm" data-role="confirm">Ya</button>
+                    <button class="btn-cancel" data-role="cancel">Tidak</button>
+                </div>
+            </div>
+        </div>
+    `;
+    modalFooter.insertAdjacentHTML('afterend', confirmationHtml);
+    const container = document.getElementById(elementId);
+    if (!container) return;
+    const btnConfirm = container.querySelector('button[data-role="confirm"]');
+    const btnCancel = container.querySelector('button[data-role="cancel"]');
+    if (btnConfirm) btnConfirm.addEventListener('click', onConfirm);
+    if (btnCancel) btnCancel.addEventListener('click', onCancel);
 }
 
 function executeUpdatePeriod() {
@@ -726,12 +779,7 @@ function renderInvWeekInputMode() {
     
     const modalFooter = document.querySelector('#modal_input_all .modal-footer');
     if (modalFooter) {
-        modalFooter.innerHTML = `
-            <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-            <button class="btn btn-primary" onclick="generateInvWeekPeriods()" id="generate_btn">
-                Generate Periode <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
-            </button>
-        `;
+        setDefaultGenerateFooter();
     }
     
     // Reset modal state when opening
@@ -756,12 +804,7 @@ function resetModalState() {
     
     // Reset modal footer to default state
     if (modalFooter) {
-        modalFooter.innerHTML = `
-            <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
-            <button class="btn btn-primary" onclick="generateInvWeekPeriods()" id="generate_btn">
-                Generate Periode <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
-            </button>
-        `;
+        setDefaultGenerateFooter();
     }
     
     // Reset result message
@@ -770,6 +813,18 @@ function resetModalState() {
         modalResultDiv.innerHTML = '';
         modalResultDiv.className = 'input-result-message';
     }
+}
+
+// Set default modal footer for Generate action
+function setDefaultGenerateFooter() {
+    const modalFooter = document.querySelector('#modal_input_all .modal-footer');
+    if (!modalFooter) return;
+    modalFooter.innerHTML = `
+        <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
+        <button class="btn btn-primary" onclick="generateInvWeekPeriods()" id="generate_btn">
+            Generate Periode <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
+        </button>
+    `;
 }
 
 // Check if periods exist for selected year/month
@@ -957,10 +1012,7 @@ function syncFilterDropdowns(year, month) {
     }
 }
 
-function formatDateTime(dateTimeStr) {
-    const date = new Date(dateTimeStr);
-    return date.toLocaleDateString('id-ID') + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'});
-}
+// Removed unused formatDateTime (kept formatDateTimeForInput which is used)
 
 function formatDateTimeForInput(dateTimeStr) {
     const date = new Date(dateTimeStr);
@@ -1012,6 +1064,48 @@ function showModalMessage(message, type, withSpinner = false, durationMs = null)
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize filters and populate year dropdown
     initializeFilters();
+
+    // Custom select for year/month (inv_week toolbar)
+    const csYear = document.getElementById('cs_year');
+    const csMonth = document.getElementById('cs_month');
+
+    function bindCustomSelect(csRoot, onChange) {
+        if (!csRoot) return;
+        const btn = csRoot.querySelector('.cs-button');
+        const menu = csRoot.querySelector('.cs-menu');
+        csRoot.addEventListener('click', function(e){
+            if (e.target.classList.contains('cs-option')) {
+                const value = e.target.getAttribute('data-value');
+                const label = e.target.textContent;
+                csRoot.querySelectorAll('.cs-option').forEach(o => o.classList.remove('active'));
+                e.target.classList.add('active');
+                if (btn) btn.firstChild.nodeValue = label + ' ';
+                if (typeof onChange === 'function') onChange(value, label);
+                csRoot.classList.remove('open');
+            } else if (e.target === btn || btn.contains(e.target)) {
+                csRoot.classList.toggle('open');
+            }
+        });
+        document.addEventListener('click', function(e){
+            if (!csRoot.contains(e.target)) csRoot.classList.remove('open');
+        });
+    }
+
+    bindCustomSelect(csYear, function(value){
+        const yf = document.getElementById('year_filter');
+        if (yf) { yf.value = String(value); }
+        if (document.getElementById('month_filter')?.value) {
+            searchByMonth();
+        }
+    });
+
+    bindCustomSelect(csMonth, function(value){
+        const mf = document.getElementById('month_filter');
+        if (mf) { mf.value = String(value); }
+        if (document.getElementById('year_filter')?.value) {
+            searchByMonth();
+        }
+    });
     
     console.log('DOMContentLoaded - Initialized year:', currentYear, 'month:', currentMonth);
     
@@ -1053,29 +1147,32 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Close modal when clicking overlay
+// Unified overlay and ESC handlers
 document.addEventListener('click', function(event) {
-    if (event.target === document.getElementById('modal_overlay')) {
-        // Close any open modal
-        const modals = ['modal_input_all', 'modal_edit', 'modal_period_info'];
-        modals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
+    const overlay = document.getElementById('modal_overlay');
+    if (event.target === overlay) {
+        const modals = document.querySelectorAll('.modal-container');
+        modals.forEach(modal => {
             if (modal && modal.style.display === 'block') {
-                closeModal(modalId);
+                if (typeof closeModal === 'function') closeModal(modal.id); else modal.style.display = 'none';
             }
         });
+        overlay.style.display = 'none';
     }
 });
 
-// ESC key untuk menutup modal
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-        const modals = ['modal_input_all', 'modal_edit', 'modal_period_info'];
-        modals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
+        const overlay = document.getElementById('modal_overlay');
+        const modals = document.querySelectorAll('.modal-container');
+        let hasOpen = false;
+        modals.forEach(modal => {
             if (modal && modal.style.display === 'block') {
-                closeModal(modalId);
+                hasOpen = true;
+                if (typeof closeModal === 'function') closeModal(modal.id); else modal.style.display = 'none';
             }
         });
+        if (hasOpen && overlay) overlay.style.display = 'none';
     }
 });
 
@@ -1407,13 +1504,23 @@ function handleAutoSearch(event) {
 
 // Modal functions for inv_report
 function openModal_report(modalId) {
-    document.getElementById(modalId).style.display = 'block';
-    document.getElementById('modal_overlay').style.display = 'block';
+    // Delegate to unified modal opener
+    if (typeof openModal === 'function') {
+        openModal(modalId);
+    } else {
+        document.getElementById(modalId).style.display = 'block';
+        document.getElementById('modal_overlay').style.display = 'block';
+    }
 }
 
 function closeModal_report(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-    document.getElementById('modal_overlay').style.display = 'none';
+    // Delegate to unified modal closer
+    if (typeof closeModal === 'function') {
+        closeModal(modalId);
+    } else {
+        document.getElementById(modalId).style.display = 'none';
+        document.getElementById('modal_overlay').style.display = 'none';
+    }
 }
 
 // Event listeners for inv_report
@@ -1433,29 +1540,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Close modal when clicking overlay for inv_report
-document.addEventListener('click', function(event) {
-    if (event.target.id === 'modal_overlay') {
-        const modals = document.querySelectorAll('.modal-container');
-        modals.forEach(modal => {
-            modal.style.display = 'none';
-        });
-        document.getElementById('modal_overlay').style.display = 'none';
-    }
-});
-
-// ESC key untuk menutup modal inv_report
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal-container');
-        modals.forEach(modal => {
-            if (modal.style.display === 'block') {
-                modal.style.display = 'none';
-            }
-        });
-        document.getElementById('modal_overlay').style.display = 'none';
-    }
-});
+// (handlers consolidated above)
     
     function selectTech_needs(tech) {
         selectedTech = tech;
