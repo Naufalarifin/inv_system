@@ -215,37 +215,3 @@
         </div>
     </div>
 </div>
-
-<style>
-/* =================== REPORT STYLES =================== */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
-.modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1001; width: 400px; display: none; }
-.modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-.modal-title { margin: 0; font-size: 18px; font-weight: 600; }
-.btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
-.modal-body { padding: 20px; }
-.modal-footer { padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; }
-.form-group { margin-bottom: 15px; }
-.input-form-label { display: block; margin-bottom: 5px; font-weight: 500; }
-.input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-.input-info { padding: 10px; background: #f5f5f5; border-radius: 4px; color: #666; font-size: 14px; }
-.btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.2s ease; }
-.btn:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-secondary { background: #6c757d; color: white; }
-.btn-primary { background: #007bff; color: white; }
-.btn-success { background: #28a745; color: white; }
-.btn-light { background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; }
-.compact-table { font-size: 13px !important; }
-.compact-table th, .compact-table td { padding: 8px 4px !important; line-height: 1.4 !important; }
-.compact-table th { font-size: 14px !important; background-color: #f8f9fa; }
-.compact-table tbody tr:hover { background-color: #f5f5f5; }
-td[title]:hover { background-color: #e3f2fd !important; }
-.filter-info { background: #f8f9fa; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #e9ecef; }
-.badge { padding: 2px 8px; border-radius: 3px; margin-left: 5px; font-size: 12px; font-weight: 500; }
-.badge-primary { background: #007bff; color: white; }
-.badge-secondary { background: #6c757d; color: white; }
-.badge-info { background: #17a2b8; color: white; }
-.loading-spinner { width: 20px; height: 20px; border: 2px solid #e9ecef; border-top: 2px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@media (max-width: 768px) { .modal-container { width: 90%; max-width: 400px; } .card-header { flex-direction: column; gap: 10px; align-items: stretch; } #toolbar_left, #toolbar_right { justify-content: center; } .btn-group { flex-wrap: wrap; justify-content: center; } }
-</style>

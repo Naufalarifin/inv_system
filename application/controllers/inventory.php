@@ -12,7 +12,7 @@ class Inventory extends CI_Controller {
     }
     
     public function index() {
-        $data = array(); // Initialize $data first
+        $data = array();
         $data = $this->load_top($data);
         $config = $this->config_model->getConfig();
         redirect($config['base_url'] . 'inventory/inv_ecct');
