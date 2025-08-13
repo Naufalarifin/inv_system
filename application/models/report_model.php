@@ -13,7 +13,11 @@ class Report_model extends CI_Model {
 
         // Apply filters
         if (isset($filters['device_search']) && $filters['device_search']) {
-            $this->applySearchOnColumns(['dvc_name','dvc_code'], $filters['device_search'], $qb);
+            $search_term = $this->db->escape_like_str($filters['device_search']);
+            $qb->group_start()
+               ->like('dvc_name', $search_term)
+               ->or_like('dvc_code', $search_term)
+               ->group_end();
         }
 
         $qb->order_by('dvc_priority', 'ASC');
@@ -402,11 +406,17 @@ class Report_model extends CI_Model {
         $current = $this->getNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc);
         $needs = $current ? intval($current['needs_qty']) : 0;
 
-        $this->db->where('id_dvc', $id_dvc);
-        $this->db->where('dvc_size', $dvc_size);
-        $this->db->where('dvc_col', $dvc_col);
-        $this->db->where('dvc_qc', $dvc_qc);
-        return $this->db->update('inv_report', array('needs' => $needs));
+        // Update only for active and future weeks (today within or before week finish)
+        $now = date('Y-m-d H:i:s');
+        // Use direct UPDATE JOIN to avoid Query Builder limitations with subqueries in where_in
+        $sql = "
+            UPDATE inv_report ir
+            JOIN inv_week iw ON iw.id_week = ir.id_week
+            SET ir.needs = ?
+            WHERE ir.id_dvc = ? AND ir.dvc_size = ? AND ir.dvc_col = ? AND ir.dvc_qc = ?
+              AND iw.date_finish >= ?
+        ";
+        return $this->db->query($sql, array($needs, $id_dvc, $dvc_size, $dvc_col, $dvc_qc, $now));
     }
     
     public function getExistingNeedsData($tech, $type, $filters = array()) {
@@ -419,7 +429,11 @@ class Report_model extends CI_Model {
         
         // Apply filters
         if (isset($filters['device_search']) && $filters['device_search']) {
-            $this->applySearchOnColumns(['d.dvc_name','d.dvc_code'], $filters['device_search']);
+            $search_term = $this->db->escape_like_str($filters['device_search']);
+            $this->db->group_start()
+                     ->like('d.dvc_name', $search_term)
+                     ->or_like('d.dvc_code', $search_term)
+                     ->group_end();
         }
         
         $query = $this->db->get();
@@ -458,7 +472,11 @@ class Report_model extends CI_Model {
         $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
         
         if (isset($filters['device_search']) && $filters['device_search']) {
-            $this->applySearchOnColumns(['id.dvc_name','id.dvc_code'], $filters['device_search']);
+            $search_term = $this->db->escape_like_str($filters['device_search']);
+            $this->db->group_start()
+                     ->like('id.dvc_name', $search_term)
+                     ->or_like('id.dvc_code', $search_term)
+                     ->group_end();
         }
         
         $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
@@ -731,6 +749,11 @@ class Report_model extends CI_Model {
     }
 
     private function calculateNeeds($week, $id_dvc, $size, $color, $qc) {
+        // Only apply needs to current and future weeks; past weeks get 0
+        if (!$this->isWeekActiveOrFuture($week)) {
+            return 0;
+        }
+
         // Get needs data
         $this->db->select('needs_qty');
         $this->db->from('inv_needs');
@@ -750,11 +773,11 @@ class Report_model extends CI_Model {
         return 0;
     }
 
-    /**
-     * Apply common size and color filters to the current query builder
-     * - For size '-' treat as NULL/''/'-'
-     * - For color '' treat as NULL/''
-     */
+    private function isWeekActiveOrFuture($week) {
+        $now = date('Y-m-d H:i:s');
+        return isset($week['date_finish']) && $week['date_finish'] >= $now;
+    }
+
     private function applySizeColorFilters($size, $color) {
         if ($size === '-') {
             $this->db->group_start();
@@ -765,7 +788,6 @@ class Report_model extends CI_Model {
         } else {
             $this->db->where('dvc_size', $size);
         }
-
         if ($color === '') {
             $this->db->group_start();
             $this->db->where('dvc_col IS NULL');
@@ -776,14 +798,9 @@ class Report_model extends CI_Model {
         }
     }
     
-    
-    
-
     public function updateInventoryReportStockAuto() {
         try {
             $current_date = date('Y-m-d H:i:s');
-            
-            // Get only active weeks (current date is within the week period)
             $this->db->select('id_week, date_start, date_finish');
             $this->db->from('inv_week');
             $this->db->where('date_start <=', $current_date);
@@ -792,12 +809,9 @@ class Report_model extends CI_Model {
             
             if (empty($active_weeks)) {
                 log_message('info', 'No active weeks found for auto-update stock');
-                return true; // No active weeks to update
+                return true;
             }
-            
             $updated_count = 0;
-            
-            // Update stock for active weeks only
             foreach ($active_weeks as $week) {
                 $this->db->select('ir.id_pms, ir.id_dvc, ir.dvc_size, ir.dvc_col, ir.dvc_qc');
                 $this->db->from('inv_report ir');
@@ -805,28 +819,21 @@ class Report_model extends CI_Model {
                 $report_records = $this->db->get()->result_array();
                 
                 foreach ($report_records as $record) {
-                    // Calculate new stock
                     $stock = $this->calculateStock($week, $record['id_dvc'], $record['dvc_size'], $record['dvc_col'], $record['dvc_qc']);
-                    
-                    // Update stock in inv_report
                     $this->db->where('id_pms', $record['id_pms']);
                     $result = $this->db->update('inv_report', array('stock' => $stock));
-                    
                     if ($result) {
                         $updated_count++;
                     }
                 }
             }
-            
             log_message('info', 'Auto-updated stock for ' . $updated_count . ' records in active weeks');
             return true;
-            
         } catch (Exception $e) {
             log_message('error', 'Auto update inventory report stock error: ' . $e->getMessage());
             return false;
         }
     }
-
 
     public function getCurrentWeekPeriod() {
         $today = date('Y-m-d');
@@ -875,11 +882,12 @@ class Report_model extends CI_Model {
      */
     private function getDistinctFromInvWeek($column, $orderDirection = 'ASC', $alias = null) {
         $alias = $alias ?: $column;
-        $this->db->select('DISTINCT(' . $column . ') as ' . $alias, false);
-        $this->db->from('inv_week');
-        $this->db->order_by($column . ' ' . $orderDirection);
-        $query = $this->db->get();
-        return $query->result_array();
+        return $this->db
+            ->select('DISTINCT(' . $column . ') as ' . $alias, false)
+            ->from('inv_week')
+            ->order_by($column . ' ' . $orderDirection)
+            ->get()
+            ->result_array();
     }
 }
 ?>
