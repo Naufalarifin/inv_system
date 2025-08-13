@@ -478,7 +478,7 @@
     });
 </script>
 
-<style>
+<!-- <style>
 /* Modal */
 .modal-overlay {
     position: fixed;
@@ -564,4 +564,4 @@
     font-size: 14px;
 }
 
-</style>
+</style> -->
