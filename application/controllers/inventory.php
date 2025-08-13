@@ -36,13 +36,7 @@ class Inventory extends CI_Controller {
         $data['available_years'] = $this->report_model->getAvailableYears();
         $data['available_months'] = $this->report_model->getAvailableMonths();
         $data['available_weeks'] = $this->report_model->getAvailableWeeks();
-        $data['current_filters'] = array(
-            'device_search' => '',
-            'year' => '',
-            'month' => '',
-            'week' => '',
-            'id_week' => ''
-        );
+        $data['current_filters'] = array('device_search' => '', 'year' => '', 'month' => '', 'week' => '', 'id_week' => '');
         $this->load->view('inventory/banner', $data);
         $this->load->view('report/inv_report', $data);
         $this->load->view('report/javascript_report', $data);
@@ -518,11 +512,10 @@ class Inventory extends CI_Controller {
             }
             if ($id_week !== null && $id_week !== '') {
                 $filters['id_week'] = $id_week;
+            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
+                // Default to current week if no specific filters are provided
+                $filters['id_week'] = $current_week['id_week'];
             }
-            // } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
-            //     // Default to current week if no filters specified
-            //     $filters['id_week'] = $current_week['id_week'];
-            // }
             
             $data['data'] = $this->report_model->getInventoryReportData($config['tech'], $config['type'], $filters);
             

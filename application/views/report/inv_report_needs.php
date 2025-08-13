@@ -20,7 +20,7 @@
                     </div>
                     
                     <!-- Export Button -->
-                    <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportData();">
+                    <a class="btn btn-sm btn-icon-lg btn-light" onclick="exportData_needs();">
                         <i class="ki-filled ki-exit-down !text-base"></i>Export
                     </a>
                 </div>

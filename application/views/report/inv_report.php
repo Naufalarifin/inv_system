@@ -37,7 +37,7 @@
                 </a>
             </div>
         </div>
-        <div id="show_data_report">Loading...</div>
+        <div id="show_data_report"></div>
     </div>
 </div>
 
@@ -245,7 +245,6 @@ td[title]:hover { background-color: #e3f2fd !important; }
 .badge-primary { background: #007bff; color: white; }
 .badge-secondary { background: #6c757d; color: white; }
 .badge-info { background: #17a2b8; color: white; }
-.loading-spinner { width: 20px; height: 20px; border: 2px solid #e9ecef; border-top: 2px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @media (max-width: 768px) { .modal-container { width: 90%; max-width: 400px; } .card-header { flex-direction: column; gap: 10px; align-items: stretch; } #toolbar_left, #toolbar_right { justify-content: center; } .btn-group { flex-wrap: wrap; justify-content: center; } }
 </style>

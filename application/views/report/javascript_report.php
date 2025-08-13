@@ -1135,9 +1135,7 @@ function showData() {
     if (params.length > 0) {
         link += '?' + params.join('&');
     }
-    
-    document.getElementById('show_data_report').innerHTML = '<div style="text-align: center; padding: 20px;">Loading data...</div>';
-    
+        
     if (typeof window.$ !== "undefined") {
         window.$("#show_data_report").load(link);
     } else {
@@ -1226,65 +1224,8 @@ function proceedWithGeneration() {
 }
 
 function showInputPmsModal() {
-    // Load week periods and devices data
-    loadWeekPeriods();
-    loadDevices();
-    
-    // Show modal using Bootstrap or custom modal
-    const modal = document.getElementById('inputPmsModal');
-    if (modal) {
-        if (typeof window.$ !== "undefined" && window.$().modal) {
-            window.$('#inputPmsModal').modal('show');
-        } else {
-            modal.style.display = 'block';
-        }
-    }
-}
 
-function loadWeekPeriods() {
-    fetch(window.location.origin + '/cdummy/inventory/get_week_periods')
-        .then(response => response.json())
-        .then(data => {
-            var options = '<option value="">-- Select Week --</option>';
-            if (data.success && data.weeks) {
-                data.weeks.forEach(function(week) {
-                    var startDate = new Date(week.date_start);
-                    var endDate = new Date(week.date_finish);
-                    var label = 'W' + week.period_w + '/' + week.period_m + '/' + week.period_y + ' (' + 
-                               startDate.toLocaleDateString() + ' - ' + endDate.toLocaleDateString() + ')';
-                    options += '<option value="' + week.id_week + '">' + label + '</option>';
-                });
-            }
-            document.getElementById('select_week').innerHTML = options;
-        })
-        .catch(error => {
-            console.error('Error loading week periods:', error);
-        });
 }
-
-function loadDevices() {
-    var params = new URLSearchParams({
-        tech: selectedTech,
-        type: selectedType
-    });
-    
-    fetch(window.location.origin + '/cdummy/inventory/get_devices_for_report?' + params)
-        .then(response => response.json())
-        .then(data => {
-            var options = '<option value="">-- Select Device --</option>';
-            if (data.success && data.devices) {
-                data.devices.forEach(function(device) {
-                    options += '<option value="' + device.id_dvc + '">' + device.dvc_code + ' - ' + device.dvc_name + '</option>';
-                });
-            }
-            document.getElementById('select_device').innerHTML = options;
-        })
-        .catch(error => {
-            console.error('Error loading devices:', error);
-        });
-}
-
-// Update color options based on selected device
 function updateDeviceColors() {
     var deviceId = document.getElementById('select_device').value;
     if (deviceId) {
