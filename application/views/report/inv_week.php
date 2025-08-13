@@ -8,7 +8,8 @@
       </div>
       <div id="toolbar_right" class="flex items-center gap-2">
         <div class="input-group input-sm">
-          <select class="select select-bulan" id="year_filter">
+          <!-- Hidden native selects to preserve existing JS logic -->
+          <select class="select select-bulan" id="year_filter" style="display:none;">
             <option value="2020">2020</option>
             <option value="2021">2021</option>
             <option value="2022">2022</option>
@@ -16,7 +17,7 @@
             <option value="2024">2024</option>
             <option value="2025">2025</option>
           </select>
-          <select class="select select-bulan" id="month_filter">
+          <select class="select select-bulan" id="month_filter" style="display:none;">
             <option value="1">Januari</option>
             <option value="2">Februari</option>
             <option value="3">Maret</option>
@@ -30,6 +31,39 @@
             <option value="11">November</option>
             <option value="12">Desember</option>
           </select>
+
+          <div class="cs-select" id="cs_year">
+            <button type="button" class="cs-button" id="cs_year_btn">2025
+              <svg class="cs-caret" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="cs-menu" id="cs_year_menu">
+              <div class="cs-option" data-value="2020">2020</div>
+              <div class="cs-option" data-value="2021">2021</div>
+              <div class="cs-option" data-value="2022">2022</div>
+              <div class="cs-option" data-value="2023">2023</div>
+              <div class="cs-option" data-value="2024">2024</div>
+              <div class="cs-option active" data-value="2025">2025</div>
+            </div>
+          </div>
+          <div class="cs-select" id="cs_month">
+            <button type="button" class="cs-button" id="cs_month_btn">Agustus
+              <svg class="cs-caret" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="cs-menu" id="cs_month_menu">
+              <div class="cs-option" data-value="1">Januari</div>
+              <div class="cs-option" data-value="2">Februari</div>
+              <div class="cs-option" data-value="3">Maret</div>
+              <div class="cs-option" data-value="4">April</div>
+              <div class="cs-option" data-value="5">Mei</div>
+              <div class="cs-option" data-value="6">Juni</div>
+              <div class="cs-option" data-value="7">Juli</div>
+              <div class="cs-option active" data-value="8">Agustus</div>
+              <div class="cs-option" data-value="9">September</div>
+              <div class="cs-option" data-value="10">Oktober</div>
+              <div class="cs-option" data-value="11">November</div>
+              <div class="cs-option" data-value="12">Desember</div>
+            </div>
+          </div>
           <a class="btn btn-sm btn-light export-btn" onclick="exportInvWeekData();" style="border: 1px solid #ddd !important; background-color: #ffffff !important; color: #333 !important;">
             <i class="ki-filled ki-exit-down !text-base"></i>Export
           </a>
@@ -155,4 +189,19 @@
 .card-header { background-color: #fff !important; border-bottom: 1px solid #e5e5e5 !important; border-top-left-radius: 0.5rem !important; border-top-right-radius: 0.5rem !important; }
 .select-bulan { cursor: pointer !important; }
 .select-bulan:hover, #year_filter:hover, #month_filter:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; }
+
+/* Custom dropdown menu (options list) */
+.cs-select { position: relative; display: inline-block; min-width: 150px; }
+.cs-button { width: 100%; min-height: 32px; padding: 6px 32px 6px 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; text-align: left; font-size: 14px; color: #333; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: box-shadow .2s ease, border-color .2s ease; }
+.cs-button:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.cs-button:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,116,217,0.2); }
+.cs-caret { margin-left: auto; width: 16px; height: 16px; color: #666; }
+.cs-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; box-shadow: 0 12px 28px rgba(0,0,0,0.15); z-index: 10000; padding: 6px 0; max-height: 260px; overflow: auto; display: none; }
+.cs-select.open .cs-menu { display: block; }
+.cs-option { padding: 8px 12px; font-size: 14px; color: #333; cursor: pointer; display: flex; align-items: center; }
+.cs-option:hover { background: rgba(0,116,217,0.06); }
+.cs-option.active { background: #e6f2ff; color: #0056b3; font-weight: 600; }
+
+/* Keep spacing in toolbar */
+.input-group .cs-select { min-width: 150px; }
 </style>

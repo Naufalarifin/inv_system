@@ -4,7 +4,7 @@
         <div class="card-header flex items-center justify-between">
             <div id="toolbar_left" class="flex items-center gap-2">
                 <!-- Generate Data Button -->
-                <button class="btn btn-sm btn-success" id="btn_generate" onclick="generateInventoryReport()" title="Generate inventory report data from database">
+                <button class="btn btn-sm btn-success" id="btn_generate" onclick="proceedWithGeneration()" title="Generate inventory report data from database">
                     <i class="ki-filled ki-setting !text-base"></i>Generate Data
                 </button>
                 

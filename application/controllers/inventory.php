@@ -330,45 +330,28 @@ class Inventory extends CI_Controller {
             }
 
             $data = $this->report_model->get_inv_week_data($year, $month);
-            $this->exportInvWeekData($data, 'inv_week_' . $year . '_' . $month);
+            $headers = array('ID Week', 'Year', 'Month', 'Week', 'Date Start', 'Date Finish', 'Duration (Days)');
+            $this->_export_csv($data, 'inv_week_' . $year . '_' . $month, $headers, function($row) {
+                $start_date = new DateTime($row['date_start']);
+                $finish_date = new DateTime($row['date_finish']);
+                $duration = $start_date->diff($finish_date)->days + 1;
+                return array(
+                    $row['id_week'],
+                    $row['period_y'],
+                    $row['period_m'],
+                    $row['period_w'],
+                    $start_date->format('d/m/Y H:i'),
+                    $finish_date->format('d/m/Y H:i'),
+                    $duration
+                );
+            });
         } catch (Exception $e) {
             log_message('error', 'Export inv week error: ' . $e->getMessage());
             redirect('inventory/inv_week');
         }
     }
 
-    private function exportInvWeekData($data, $filename) {
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '_' . date('Y-m-d') . '.csv"');
-        
-        $output = fopen('php://output', 'w');
-        
-        // Add BOM for UTF-8
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-        
-        // Header
-        fputcsv($output, array('ID Week', 'Year', 'Month', 'Week', 'Date Start', 'Date Finish', 'Duration (Days)'));
-        
-        // Data
-        foreach ($data as $row) {
-            $start_date = new DateTime($row['date_start']);
-            $finish_date = new DateTime($row['date_finish']);
-            $duration = $start_date->diff($finish_date)->days + 1;
-            
-            fputcsv($output, array(
-                $row['id_week'],
-                $row['period_y'],
-                $row['period_m'],
-                $row['period_w'],
-                $start_date->format('d/m/Y H:i'),
-                $finish_date->format('d/m/Y H:i'),
-                $duration
-            ));
-        }
-        
-        fclose($output);
-        exit;
-    }
+    // (exportInvWeekData removed; using _export_csv for consistency)
 
     private $report_configs = array(
         'report_ecbs_app' => array('tech' => 'ecbs', 'type' => 'app', 'view' => 'report/needs/report_app_show', 'export' => 'ECBS_APP_Report'),

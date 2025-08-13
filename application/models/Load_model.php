@@ -5,13 +5,6 @@ class load_model extends CI_Model {
 	public function load_top_v3($data="",$view="",$access=""){
 		$data['lt_start']=microtime(true);
 
-		if(!isset($data['onload'])) { $data['onload']=""; }
-		$data['onload'].="showMenu();";
-
-		$lang= isset($_SESSION['ccare']['lang']) ? $_SESSION['ccare']['lang'] : "en";
-		$data['onload'].="delayLang('".$lang."');";
-		
-
 		$this->load->database();
 		$this->load->model("data_model");
 		$this->load->model("config_model");

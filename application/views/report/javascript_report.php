@@ -1,20 +1,6 @@
 <script type="text/javascript">
 var editMode = false;
 
-// Add missing showMenu function
-function showMenu(){
-    // This function is called by Load_model but not defined in this page
-    // Adding a dummy implementation to prevent errors
-    console.log('showMenu called - menu functionality not available on this page');
-}
-
-// Add missing delayLang function
-function delayLang(lang){
-    // This function is called by Load_model but not defined in this page
-    // Adding a dummy implementation to prevent errors
-    console.log('delayLang called with language:', lang);
-}
-
 function showToast(msg, type = 'success') {
     var t = document.getElementById('toast') || document.createElement('div');
     t.id = 'toast';
@@ -1226,6 +1212,7 @@ function proceedWithGeneration() {
 function showInputPmsModal() {
 
 }
+
 function updateDeviceColors() {
     var deviceId = document.getElementById('select_device').value;
     if (deviceId) {
