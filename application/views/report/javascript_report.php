@@ -111,8 +111,7 @@ function calculateTotals() {
     var grand = 0, rowTotals = {};
     
     $('.needs-input').each(function() {
-        var colorKey = String($(this).data('color')).replace(/\s+/g,'-');
-        var key = $(this).data('id-dvc') + '_' + colorKey;
+        var key = $(this).data('id-dvc') + '_' + $(this).data('color');
         rowTotals[key] = (rowTotals[key] || 0) + (parseInt($(this).val()) || 0);
     });
     
