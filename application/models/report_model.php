@@ -11,7 +11,6 @@ class Report_model extends CI_Model {
         $qb = $this->buildDevicesBaseQuery($tech, $type);
         $qb->select('id_dvc, dvc_code, dvc_name, dvc_tech, dvc_type, status');
 
-        // Apply filters
         if (isset($filters['device_search']) && $filters['device_search']) {
             $search_term = $this->db->escape_like_str($filters['device_search']);
             $qb->group_start()
@@ -26,12 +25,10 @@ class Report_model extends CI_Model {
     }
     
     public function saveNeedsData($data) {
-        // Validasi id_dvc
         if (empty($data['id_dvc']) || $data['id_dvc'] == '0') {
             return false;
         }
         
-        // Cek keberadaan id_dvc di inv_dvc
         $this->db->where('id_dvc', $data['id_dvc']);
         $exists = $this->db->get('inv_dvc')->num_rows();
         
@@ -39,11 +36,7 @@ class Report_model extends CI_Model {
             return false;
         }
 
-        $result = $this->db->insert('inv_needs', $data);
-        if ($result) {
-            $this->syncNeedsToInvReport($data['id_dvc'], $data['dvc_size'], $data['dvc_col'], $data['dvc_qc']);
-        }
-        return $result;
+        return $this->db->insert('inv_needs', $data);
     }
     
     public function updateNeedsData($id, $data) {
@@ -51,23 +44,11 @@ class Report_model extends CI_Model {
         if (isset($data['id_needs'])) {
             unset($data['id_needs']);
         }
-        
-        // Store color exactly as provided (VOH uses Display Names, OSC may be ' ')
-        
-        $result = $this->db->update('inv_needs', $data);
-        if ($result) {
-            // Load existing record to know the keys for syncing
-            $this->db->where('id_needs', $id);
-            $row = $this->db->get('inv_needs')->row_array();
-            if ($row) {
-                $this->syncNeedsToInvReport($row['id_dvc'], $row['dvc_size'], $row['dvc_col'], $row['dvc_qc']);
-            }
-        }
-        return $result;
+                
+        return $this->db->update('inv_needs', $data);
     }
     
     public function getNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
-        // Match color exactly as stored (VOH uses Display Names, OSC may be ' ')
         $sanitized_dvc_col = $dvc_col;
         
         $this->db->where('id_dvc', $id_dvc);
@@ -95,10 +76,7 @@ class Report_model extends CI_Model {
         $query = $this->db->get();
         return $query->result_array();
     }
-    
-    /**
-     * Check if periods already exist for given year/month
-     */
+
     public function periods_exist($year, $month) {
         $this->db->where('period_y', $year);
         $this->db->where('period_m', $month);
@@ -106,10 +84,6 @@ class Report_model extends CI_Model {
         return $this->db->count_all_results() > 0;
     }
     
-    /**
-     * Generate weekly periods with proper 5-day work week logic (Monday-Friday)
-     * Period runs from 26th of previous month to 25th of current month (DATE only)
-     */
     public function generate_weekly_periods($year, $month, $regenerate = false) {
         try {
             // Validate input
@@ -134,7 +108,7 @@ class Report_model extends CI_Model {
             $periods = array();
             $week_number = 1;
             
-            // Calculate the period start (26th of previous month)
+            // Calculate the period start (27th of previous month at 08:00)
             if ($month == 1) {
                 $prev_month = 12;
                 $prev_year = $year - 1;
@@ -143,40 +117,41 @@ class Report_model extends CI_Model {
                 $prev_year = $year;
             }
             
-            // Period boundaries (DATE only)
-            $period_start = new DateTime("$prev_year-$prev_month-26");
-            $period_end = new DateTime("$year-$month-25");
+            // Period boundaries
+            $period_start = new DateTime("$prev_year-$prev_month-27 08:00:00");
+            $period_end = new DateTime("$year-$month-26 17:00:00");
             
-            log_message('info', "Period boundaries: " . $period_start->format('Y-m-d') . " to " . $period_end->format('Y-m-d'));
+            log_message('info', "Period boundaries: " . $period_start->format('Y-m-d H:i:s') . " to " . $period_end->format('Y-m-d H:i:s'));
             
-            // Find first Saturday on or after period start
-            $current_monday = clone $period_start; // reuse variable name but it's now Saturday anchor
-            while ($current_monday->format('N') != 6) { // 6 = Saturday
+            // Find first Monday on or after period start
+            $current_monday = clone $period_start;
+            while ($current_monday->format('N') != 1) { // 1 = Monday
                 $current_monday->add(new DateInterval('P1D'));
             }
+            $current_monday->setTime(8, 0, 0);
             
-            // Generate weekly periods (Saturday to Friday)
             while ($current_monday <= $period_end) {
                 $week_start = clone $current_monday;
+                $week_start->setTime(8, 0, 0);
                 
-                // Calculate Friday of the same week (Saturday + 6 days = Friday)
                 $week_end = clone $current_monday;
-                $week_end->add(new DateInterval('P6D'));
+                $week_end->add(new DateInterval('P4D'));
+                $week_end->setTime(17, 0, 0);
                 
-                // If week end goes beyond period end, adjust it but keep Friday logic
                 if ($week_end > $period_end) {
                     $week_end = clone $period_end;
-                    // Ensure the adjusted end is Friday; move backward until Friday
-                    while ($week_end->format('N') != 5) { // 5 = Friday
+                    
+                    while ($week_end->format('N') > 5) { // 6=Saturday, 7=Sunday
                         $week_end->sub(new DateInterval('P1D'));
                     }
+                    $week_end->setTime(17, 0, 0);
                 }
                 
                 // Only create period if week_start is within the period bounds
                 if ($week_start <= $period_end) {
                     $data = array(
-                        'date_start' => $week_start->format('Y-m-d'),
-                        'date_finish' => $week_end->format('Y-m-d'),
+                        'date_start' => $week_start->format('Y-m-d H:i:s'),
+                        'date_finish' => $week_end->format('Y-m-d H:i:s'),
                         'period_y' => $year,
                         'period_m' => $month,
                         'period_w' => $week_number
@@ -187,6 +162,8 @@ class Report_model extends CI_Model {
                         $data['id_week'] = $this->db->insert_id();
                         $periods[] = $data;
                         log_message('info', "Created week $week_number: " . $data['date_start'] . " to " . $data['date_finish']);
+                        
+                        $this->generateInventoryReportForWeek($data['id_week'], $data);
                     } else {
                         log_message('error', "Failed to insert week $week_number");
                     }
@@ -194,7 +171,7 @@ class Report_model extends CI_Model {
                     $week_number++;
                 }
                 
-                // Move to next Saturday (7 days later)
+                // Move to next Monday (7 days later)
                 $current_monday->add(new DateInterval('P7D'));
                 
                 // Safety break to prevent infinite loop
@@ -213,14 +190,11 @@ class Report_model extends CI_Model {
         }
     }
 
-    /**
-     * Generate inv_report data for a specific week period
-     */
+
     public function generateInventoryReportForWeek($id_week, $week_data = null) {
         try {
             log_message('info', "Generating inv_report data for week ID: $id_week");
             
-            // If week_data is not provided, get it from database
             if (!$week_data) {
                 $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
                 $this->db->from('inv_week');
@@ -235,13 +209,11 @@ class Report_model extends CI_Model {
                 $week_data = $week_query->row_array();
             }
             
-            // Get all devices
             $devices = $this->buildDevicesBaseQuery(null, null, true)
                 ->select('id_dvc, dvc_code, dvc_tech, dvc_type')
                 ->get()
                 ->result_array();
             
-            // QC array
             $qc_types = $this->getQcTypes();
             
             $generated_count = 0;
@@ -272,7 +244,7 @@ class Report_model extends CI_Model {
     }
 
     /**
-     * Update weekly period using DATE-only fields
+     * Update weekly period with proper time enforcement
      */
     public function update_inv_week($id_week, $date_start, $date_finish) {
         try {
@@ -284,9 +256,9 @@ class Report_model extends CI_Model {
                 return false;
             }
             
-            // Parse dates (DATE only)
-            $start_dt = DateTime::createFromFormat('Y-m-d', $date_start);
-            $finish_dt = DateTime::createFromFormat('Y-m-d', $date_finish);
+            // Parse dates
+            $start_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_start);
+            $finish_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_finish);
             
             if (!$start_dt || !$finish_dt) {
                 log_message('error', 'Invalid date format provided');
@@ -299,6 +271,10 @@ class Report_model extends CI_Model {
                 return false;
             }
             
+            // Enforce time constraints
+            $start_dt->setTime(8, 0, 0);  // Always 08:00
+            $finish_dt->setTime(17, 0, 0); // Always 17:00
+            
             // Check if the week exists
             $this->db->where('id_week', $id_week);
             $existing = $this->db->get('inv_week');
@@ -310,10 +286,10 @@ class Report_model extends CI_Model {
             
             $old_data = $existing->row_array();
             
-            // Update the week (DATE only)
+            // Update the week
             $update_data = array(
-                'date_start' => $start_dt->format('Y-m-d'),
-                'date_finish' => $finish_dt->format('Y-m-d')
+                'date_start' => $start_dt->format('Y-m-d H:i:s'),
+                'date_finish' => $finish_dt->format('Y-m-d H:i:s')
             );
             
             $this->db->where('id_week', $id_week);
@@ -321,6 +297,10 @@ class Report_model extends CI_Model {
             
             if ($update_result) {
                 log_message('info', "Successfully updated inv_week ID: $id_week");
+                
+                // Regenerate inv_report data for this week since the period has changed
+                $this->regenerateInventoryReportForWeek($id_week);
+                
                 return true;
             } else {
                 log_message('error', "Failed to update inv_week ID: $id_week");
@@ -368,51 +348,6 @@ class Report_model extends CI_Model {
         }
     }
     
-    /**
-     * Delete a week period by ID (cascades to inv_report via FK)
-     */
-    public function delete_inv_week($id_week) {
-        try {
-            if (!$id_week) {
-                return false;
-            }
-
-            // Get the week info before delete
-            $this->db->select('period_y, period_m, period_w');
-            $this->db->from('inv_week');
-            $this->db->where('id_week', $id_week);
-            $row = $this->db->get()->row_array();
-            if (!$row) {
-                return false;
-            }
-
-            $year = intval($row['period_y']);
-            $month = intval($row['period_m']);
-            $deleted_week_no = intval($row['period_w']);
-
-            // Transaction: delete then compact week numbers (shift down subsequent weeks)
-            $this->db->trans_start();
-
-            // Delete the target week (inv_report will cascade delete via FK if configured)
-            $this->db->where('id_week', $id_week);
-            $this->db->delete('inv_week');
-
-            // Shift subsequent weeks within the same period
-            $this->db->set('period_w', 'period_w - 1', false);
-            $this->db->where('period_y', $year);
-            $this->db->where('period_m', $month);
-            $this->db->where('period_w >', $deleted_week_no);
-            $this->db->update('inv_week');
-
-            $this->db->trans_complete();
-
-            return $this->db->trans_status();
-        } catch (Exception $e) {
-            log_message('error', 'Error deleting week ID ' . $id_week . ': ' . $e->getMessage());
-            return false;
-        }
-    }
-
     
     
     public function deleteNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
@@ -421,32 +356,10 @@ class Report_model extends CI_Model {
         $this->db->where('dvc_size', $dvc_size);
         $this->db->where('dvc_col', $dvc_col);
         $this->db->where('dvc_qc', $dvc_qc);
-        $result = $this->db->delete('inv_needs');
-        // After deletion, set needs to 0 in inv_report for matching records
-        $this->syncNeedsToInvReport($id_dvc, $dvc_size, $dvc_col, $dvc_qc);
-        return $result;
+        return $this->db->delete('inv_needs');
     }
 
-    /**
-     * Sync needs value from inv_needs to inv_report for all weeks
-     */
-    public function syncNeedsToInvReport($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
-        // Fetch current needs from inv_needs; if none, default to 0
-        $current = $this->getNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc);
-        $needs = $current ? intval($current['needs_qty']) : 0;
-
-        // Update only for active and future weeks (today within or before week finish)
-        $now = date('Y-m-d H:i:s');
-        // Use direct UPDATE JOIN to avoid Query Builder limitations with subqueries in where_in
-        $sql = "
-            UPDATE inv_report ir
-            JOIN inv_week iw ON iw.id_week = ir.id_week
-            SET ir.needs = ?
-            WHERE ir.id_dvc = ? AND ir.dvc_size = ? AND ir.dvc_col = ? AND ir.dvc_qc = ?
-              AND iw.date_finish >= ?
-        ";
-        return $this->db->query($sql, array($needs, $id_dvc, $dvc_size, $dvc_col, $dvc_qc, $now));
-    }
+    // syncNeedsToInvReport removed by request: needs updates no longer propagate to inv_report
     
     public function getExistingNeedsData($tech, $type, $filters = array()) {
         $this->db->select('n.id_dvc, n.dvc_size, n.dvc_col, n.dvc_qc, n.needs_qty');
@@ -600,9 +513,7 @@ class Report_model extends CI_Model {
         }
     }
 
-    /**
-     * Upsert helper for inv_report: insert if not exists else update stock/needs
-     */
+
     private function upsertInvReport($id_week, $id_dvc, $size, $color, $qc, $week_data) {
         $this->db->where('id_week', $id_week);
         $this->db->where('id_dvc', $id_dvc);
@@ -663,30 +574,23 @@ class Report_model extends CI_Model {
         return array('LN', 'DN');
     }
 
-    /**
-     * Return sizes for a device record
-     */
     private function getSizesForDeviceRecord($device) {
         return (strtoupper($device['dvc_type']) === 'OSC')
             ? array('-')
             : array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'CUS');
     }
 
-    /**
-     * Apply optional filter helper
-     */
     private function applyOptionalFilter($filters, $key, $column) {
-        if (isset($filters[$key]) && $filters[$key]) {
-            $this->db->where($column, $filters[$key]);
+        if (isset($filters[$key])) {
+            if ($filters[$key] !== '' && $filters[$key] !== null) {
+                $this->db->where($column, $filters[$key]);
+            }
         }
     }
 
-    /**
-     * Generate inventory report data
-     */
+
     public function generateInventoryReportData() {
         try {
-            // Generate per-week using the single week generator to avoid duplicated logic
             $weeks = $this->getWeekPeriods();
             $all_ok = true;
             foreach ($weeks as $week) {
@@ -706,7 +610,6 @@ class Report_model extends CI_Model {
         try {
             log_message('info', "Generating inv_report data for period: year $year, month $month");
             
-            // Get weeks for this period
             $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
             $this->db->from('inv_week');
             $this->db->where('period_y', $year);
@@ -759,18 +662,14 @@ class Report_model extends CI_Model {
         $this->db->select('COUNT(*) as stock_count');
         $this->db->from('inv_act');
         $this->db->where('id_dvc', $id_dvc);
-        // Apply uniform size/color filters
         $this->applySizeColorFilters($size, $color);
         
         $this->db->where('dvc_qc', $qc);
         
-        // inv_in must be within the week period [date_start, date_finish] (use < finish+1day to include full day)
-        $finish_plus_one = date('Y-m-d', strtotime($week['date_finish'] . ' +1 day'));
         $this->db->where('inv_in >=', $week['date_start']);
-        $this->db->where('inv_in <', $finish_plus_one);
+        $this->db->where('inv_in <=', $week['date_finish']);
         
-        // inv_out must NOT be within the week period (or be null)
-        $this->db->where('(inv_out IS NULL OR inv_out < "' . $week['date_start'] . '" OR inv_out >= "' . $finish_plus_one . '")');
+        $this->db->where('(inv_out IS NULL OR inv_out < "' . $week['date_start'] . '" OR inv_out > "' . $week['date_finish'] . '")');
         
         $query = $this->db->get();
         $result = $query->row_array();
@@ -779,16 +678,13 @@ class Report_model extends CI_Model {
     }
 
     private function calculateNeeds($week, $id_dvc, $size, $color, $qc) {
-        // Only apply needs to current and future weeks; past weeks get 0
         if (!$this->isWeekActiveOrFuture($week)) {
             return 0;
         }
 
-        // Get needs data
         $this->db->select('needs_qty');
         $this->db->from('inv_needs');
         $this->db->where('id_dvc', $id_dvc);
-        // Apply uniform size/color filters
         $this->applySizeColorFilters($size, $color);
         
         $this->db->where('dvc_qc', $qc);
@@ -804,8 +700,8 @@ class Report_model extends CI_Model {
     }
 
     private function isWeekActiveOrFuture($week) {
-        $today = date('Y-m-d');
-        return isset($week['date_finish']) && $week['date_finish'] >= $today;
+        $now = date('Y-m-d H:i:s');
+        return isset($week['date_finish']) && $week['date_finish'] >= $now;
     }
 
     private function applySizeColorFilters($size, $color) {
@@ -830,7 +726,7 @@ class Report_model extends CI_Model {
     
     public function updateInventoryReportStockAuto() {
         try {
-            $current_date = date('Y-m-d');
+            $current_date = date('Y-m-d H:i:s');
             $this->db->select('id_week, date_start, date_finish');
             $this->db->from('inv_week');
             $this->db->where('date_start <=', $current_date);
@@ -867,32 +763,14 @@ class Report_model extends CI_Model {
 
     public function getCurrentWeekPeriod() {
         $today = date('Y-m-d');
-        
-        $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
-        $this->db->from('inv_week');
-        $this->db->where('date_start <=', $today);
-        $this->db->where('date_finish >=', $today);
-        $this->db->limit(1);
-        
+        $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w')
+                 ->from('inv_week')
+                 ->where("(date_start <= '$today' AND date_finish >= '$today') OR date_finish <= '$today'", null, false)
+                 ->order_by("(date_start <= '$today' AND date_finish >= '$today')", 'DESC', false)
+                 ->order_by('date_finish', 'DESC')
+                 ->limit(1);
         $query = $this->db->get();
-        
-        if ($query->num_rows() > 0) {
-            return $query->row_array();
-        }
-        
-        $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
-        $this->db->from('inv_week');
-        $this->db->where('date_finish <=', $today);
-        $this->db->order_by('date_finish DESC');
-        $this->db->limit(1);
-        
-        $query = $this->db->get();
-        
-        if ($query->num_rows() > 0) {
-            return $query->row_array();
-        }
-        
-        return null;
+        return $query->num_rows() ? $query->row_array() : null;
     }
 
     public function getAvailableYears() {
@@ -907,9 +785,6 @@ class Report_model extends CI_Model {
         return $this->getDistinctFromInvWeek('period_w', 'ASC', 'week');
     }
 
-    /**
-     * Generic distinct fetcher for inv_week
-     */
     private function getDistinctFromInvWeek($column, $orderDirection = 'ASC', $alias = null) {
         $alias = $alias ?: $column;
         return $this->db
