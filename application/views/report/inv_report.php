@@ -116,7 +116,7 @@
             <div class="input-info">
                 <?php if (isset($current_week) && $current_week): ?>
                     Week <?php echo $current_week['period_w']; ?>/<?php echo $current_week['period_m']; ?>/<?php echo $current_week['period_y']; ?>
-                    (<?php echo $current_week['date_start']; ?> - <?php echo $current_week['date_finish']; ?>)
+                    (<?php echo date('d/m/Y', strtotime($current_week['date_start'])); ?> - <?php echo date('d/m/Y', strtotime($current_week['date_finish'])); ?>)
                 <?php else: ?>
                     No current week found
                 <?php endif; ?>

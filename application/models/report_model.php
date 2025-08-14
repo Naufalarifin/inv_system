@@ -108,7 +108,7 @@ class Report_model extends CI_Model {
     
     /**
      * Generate weekly periods with proper 5-day work week logic (Monday-Friday)
-     * Period runs from 27th of previous month (08:00) to 26th of current month (17:00)
+     * Period runs from 26th of previous month to 25th of current month (DATE only)
      */
     public function generate_weekly_periods($year, $month, $regenerate = false) {
         try {
@@ -134,7 +134,7 @@ class Report_model extends CI_Model {
             $periods = array();
             $week_number = 1;
             
-            // Calculate the period start (27th of previous month at 08:00)
+            // Calculate the period start (26th of previous month)
             if ($month == 1) {
                 $prev_month = 12;
                 $prev_year = $year - 1;
@@ -143,45 +143,40 @@ class Report_model extends CI_Model {
                 $prev_year = $year;
             }
             
-            // Period boundaries
-            $period_start = new DateTime("$prev_year-$prev_month-27 08:00:00");
-            $period_end = new DateTime("$year-$month-26 17:00:00");
+            // Period boundaries (DATE only)
+            $period_start = new DateTime("$prev_year-$prev_month-26");
+            $period_end = new DateTime("$year-$month-25");
             
-            log_message('info', "Period boundaries: " . $period_start->format('Y-m-d H:i:s') . " to " . $period_end->format('Y-m-d H:i:s'));
+            log_message('info', "Period boundaries: " . $period_start->format('Y-m-d') . " to " . $period_end->format('Y-m-d'));
             
-            // Find first Monday on or after period start
-            $current_monday = clone $period_start;
-            while ($current_monday->format('N') != 1) { // 1 = Monday
+            // Find first Saturday on or after period start
+            $current_monday = clone $period_start; // reuse variable name but it's now Saturday anchor
+            while ($current_monday->format('N') != 6) { // 6 = Saturday
                 $current_monday->add(new DateInterval('P1D'));
             }
-            $current_monday->setTime(8, 0, 0);
             
-            // Generate weekly periods (Monday to Friday only)
+            // Generate weekly periods (Saturday to Friday)
             while ($current_monday <= $period_end) {
                 $week_start = clone $current_monday;
-                $week_start->setTime(8, 0, 0);
                 
-                // Calculate Friday of the same week (Monday + 4 days = Friday)
+                // Calculate Friday of the same week (Saturday + 6 days = Friday)
                 $week_end = clone $current_monday;
-                $week_end->add(new DateInterval('P4D'));
-                $week_end->setTime(17, 0, 0);
+                $week_end->add(new DateInterval('P6D'));
                 
                 // If week end goes beyond period end, adjust it but keep Friday logic
                 if ($week_end > $period_end) {
                     $week_end = clone $period_end;
-                    
-                    // If adjusted end is not a weekday, find last weekday before period end
-                    while ($week_end->format('N') > 5) { // 6=Saturday, 7=Sunday
+                    // Ensure the adjusted end is Friday; move backward until Friday
+                    while ($week_end->format('N') != 5) { // 5 = Friday
                         $week_end->sub(new DateInterval('P1D'));
                     }
-                    $week_end->setTime(17, 0, 0);
                 }
                 
                 // Only create period if week_start is within the period bounds
                 if ($week_start <= $period_end) {
                     $data = array(
-                        'date_start' => $week_start->format('Y-m-d H:i:s'),
-                        'date_finish' => $week_end->format('Y-m-d H:i:s'),
+                        'date_start' => $week_start->format('Y-m-d'),
+                        'date_finish' => $week_end->format('Y-m-d'),
                         'period_y' => $year,
                         'period_m' => $month,
                         'period_w' => $week_number
@@ -192,9 +187,6 @@ class Report_model extends CI_Model {
                         $data['id_week'] = $this->db->insert_id();
                         $periods[] = $data;
                         log_message('info', "Created week $week_number: " . $data['date_start'] . " to " . $data['date_finish']);
-                        
-                        // Generate inv_report data for this specific week
-                        $this->generateInventoryReportForWeek($data['id_week'], $data);
                     } else {
                         log_message('error', "Failed to insert week $week_number");
                     }
@@ -202,7 +194,7 @@ class Report_model extends CI_Model {
                     $week_number++;
                 }
                 
-                // Move to next Monday (7 days later)
+                // Move to next Saturday (7 days later)
                 $current_monday->add(new DateInterval('P7D'));
                 
                 // Safety break to prevent infinite loop
@@ -280,7 +272,7 @@ class Report_model extends CI_Model {
     }
 
     /**
-     * Update weekly period with proper time enforcement
+     * Update weekly period using DATE-only fields
      */
     public function update_inv_week($id_week, $date_start, $date_finish) {
         try {
@@ -292,9 +284,9 @@ class Report_model extends CI_Model {
                 return false;
             }
             
-            // Parse dates
-            $start_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_start);
-            $finish_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_finish);
+            // Parse dates (DATE only)
+            $start_dt = DateTime::createFromFormat('Y-m-d', $date_start);
+            $finish_dt = DateTime::createFromFormat('Y-m-d', $date_finish);
             
             if (!$start_dt || !$finish_dt) {
                 log_message('error', 'Invalid date format provided');
@@ -307,10 +299,6 @@ class Report_model extends CI_Model {
                 return false;
             }
             
-            // Enforce time constraints
-            $start_dt->setTime(8, 0, 0);  // Always 08:00
-            $finish_dt->setTime(17, 0, 0); // Always 17:00
-            
             // Check if the week exists
             $this->db->where('id_week', $id_week);
             $existing = $this->db->get('inv_week');
@@ -322,10 +310,10 @@ class Report_model extends CI_Model {
             
             $old_data = $existing->row_array();
             
-            // Update the week
+            // Update the week (DATE only)
             $update_data = array(
-                'date_start' => $start_dt->format('Y-m-d H:i:s'),
-                'date_finish' => $finish_dt->format('Y-m-d H:i:s')
+                'date_start' => $start_dt->format('Y-m-d'),
+                'date_finish' => $finish_dt->format('Y-m-d')
             );
             
             $this->db->where('id_week', $id_week);
@@ -333,10 +321,6 @@ class Report_model extends CI_Model {
             
             if ($update_result) {
                 log_message('info', "Successfully updated inv_week ID: $id_week");
-                
-                // Regenerate inv_report data for this week since the period has changed
-                $this->regenerateInventoryReportForWeek($id_week);
-                
                 return true;
             } else {
                 log_message('error', "Failed to update inv_week ID: $id_week");
@@ -384,6 +368,51 @@ class Report_model extends CI_Model {
         }
     }
     
+    /**
+     * Delete a week period by ID (cascades to inv_report via FK)
+     */
+    public function delete_inv_week($id_week) {
+        try {
+            if (!$id_week) {
+                return false;
+            }
+
+            // Get the week info before delete
+            $this->db->select('period_y, period_m, period_w');
+            $this->db->from('inv_week');
+            $this->db->where('id_week', $id_week);
+            $row = $this->db->get()->row_array();
+            if (!$row) {
+                return false;
+            }
+
+            $year = intval($row['period_y']);
+            $month = intval($row['period_m']);
+            $deleted_week_no = intval($row['period_w']);
+
+            // Transaction: delete then compact week numbers (shift down subsequent weeks)
+            $this->db->trans_start();
+
+            // Delete the target week (inv_report will cascade delete via FK if configured)
+            $this->db->where('id_week', $id_week);
+            $this->db->delete('inv_week');
+
+            // Shift subsequent weeks within the same period
+            $this->db->set('period_w', 'period_w - 1', false);
+            $this->db->where('period_y', $year);
+            $this->db->where('period_m', $month);
+            $this->db->where('period_w >', $deleted_week_no);
+            $this->db->update('inv_week');
+
+            $this->db->trans_complete();
+
+            return $this->db->trans_status();
+        } catch (Exception $e) {
+            log_message('error', 'Error deleting week ID ' . $id_week . ': ' . $e->getMessage());
+            return false;
+        }
+    }
+
     
     
     public function deleteNeedsData($id_dvc, $dvc_size, $dvc_col, $dvc_qc) {
@@ -735,12 +764,13 @@ class Report_model extends CI_Model {
         
         $this->db->where('dvc_qc', $qc);
         
-        // inv_in must be within the week period
+        // inv_in must be within the week period [date_start, date_finish] (use < finish+1day to include full day)
+        $finish_plus_one = date('Y-m-d', strtotime($week['date_finish'] . ' +1 day'));
         $this->db->where('inv_in >=', $week['date_start']);
-        $this->db->where('inv_in <=', $week['date_finish']);
+        $this->db->where('inv_in <', $finish_plus_one);
         
         // inv_out must NOT be within the week period (or be null)
-        $this->db->where('(inv_out IS NULL OR inv_out < "' . $week['date_start'] . '" OR inv_out > "' . $week['date_finish'] . '")');
+        $this->db->where('(inv_out IS NULL OR inv_out < "' . $week['date_start'] . '" OR inv_out >= "' . $finish_plus_one . '")');
         
         $query = $this->db->get();
         $result = $query->row_array();
@@ -774,8 +804,8 @@ class Report_model extends CI_Model {
     }
 
     private function isWeekActiveOrFuture($week) {
-        $now = date('Y-m-d H:i:s');
-        return isset($week['date_finish']) && $week['date_finish'] >= $now;
+        $today = date('Y-m-d');
+        return isset($week['date_finish']) && $week['date_finish'] >= $today;
     }
 
     private function applySizeColorFilters($size, $color) {
@@ -800,7 +830,7 @@ class Report_model extends CI_Model {
     
     public function updateInventoryReportStockAuto() {
         try {
-            $current_date = date('Y-m-d H:i:s');
+            $current_date = date('Y-m-d');
             $this->db->select('id_week, date_start, date_finish');
             $this->db->from('inv_week');
             $this->db->where('date_start <=', $current_date);

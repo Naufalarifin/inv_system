@@ -46,7 +46,7 @@
             </div>
           </div>
           <div class="cs-select" id="cs_month">
-            <button type="button" class="cs-button" id="cs_month_btn">Agustus
+             <button type="button" class="cs-button" id="cs_month_btn">Agustus
               <svg class="cs-caret" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="cs-menu" id="cs_month_menu">
@@ -64,7 +64,7 @@
               <div class="cs-option" data-value="12">Desember</div>
             </div>
           </div>
-          <a class="btn btn-sm btn-light export-btn" onclick="exportInvWeekData();" style="border: 1px solid #ddd !important; background-color: #ffffff !important; color: #333 !important;">
+           <a class="btn btn-sm btn-light export-btn" onclick="exportInvWeekData();" style="border: 1px solid #ddd !important; background-color: #ffffff !important; color: #333 !important;">
             <i class="ki-filled ki-exit-down !text-base"></i>Export
           </a>
         </div>
@@ -97,13 +97,11 @@
   <div class="modal-body">
     <div class="form-group">
       <span class="form-hint">Tanggal Mulai</span>
-      <input type="datetime-local" class="input" id="edit_date_start">
-      <small style="color: #666; font-size: 12px;">Waktu akan otomatis diset ke 08:00</small>
+      <input type="date" class="input" id="edit_date_start">
     </div>
     <div class="form-group">
       <span class="form-hint">Tanggal Selesai</span>
-      <input type="datetime-local" class="input" id="edit_date_finish">
-      <small style="color: #666; font-size: 12px;">Waktu akan otomatis diset ke 17:00</small>
+      <input type="date" class="input" id="edit_date_finish">
     </div>
     <input type="hidden" id="edit_id_week">
   </div>
@@ -115,16 +113,15 @@
 
 <!-- Modal Period Info -->
 <div id="modal_period_info" class="modal-container" style="max-width: 600px;">
-  <div class="modal-header">
-    <h3 class="modal-title">Informasi Periode Kantor</h3>
+     <div class="modal-header">
+     <h3 class="modal-title">Informasi Periode Kantor</h3>
     <button class="btn-close" onclick="closeModal('modal_period_info')">&times;</button>
   </div>
-  <div class="modal-body">
-    <p><strong>Logika Periode:</strong> 1 bulan di kantor dimulai dari tanggal 27 bulan sebelumnya sampai tanggal 26 bulan ini</p>
-    <p><strong>Waktu Kerja:</strong> Mulai jam 08:00 pagi, selesai jam 17:00 sore</p>
-    <p><strong>Minggu Kerja:</strong> Senin-Jumat (5 hari kerja per minggu)</p>
-    <p><strong>Contoh:</strong> Periode Januari 2024 = 27 Desember 2023 (08:00) s/d 26 Januari 2024 (17:00)</p>
-  </div>
+    <div class="modal-body">
+      <p><strong>Logika Periode:</strong> 1 bulan dimulai dari tanggal 26 bulan sebelumnya sampai tanggal 25 bulan ini</p>
+      <p><strong>Minggu Kerja:</strong> Sabtu–Jumat (6 hari kerja per minggu)</p>
+      <p><strong>Contoh:</strong> Periode Januari 2024 = 26 Desember 2023 s/d 25 Januari 2024</p>
+    </div>
   <div class="modal-footer">
     <button class="btn btn-primary" onclick="closeModal('modal_period_info')">Tutup</button>
   </div>
