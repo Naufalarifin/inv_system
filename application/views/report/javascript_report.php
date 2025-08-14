@@ -464,96 +464,7 @@ function generateInvWeekPeriods() {
 
 // Removed invalid jQuery ready block that caused parse errors
 
-// Regenerate periods function
-function regeneratePeriods(year, month) {
-    showRegenerateConfirmation(year, month);
-}
-
-function showRegenerateConfirmation(year, month) {
-    renderConfirmation('#modal_input_all .modal-footer', 'regenerate_confirmation',
-        'Yakin ingin regenerate? Data lama akan dihapus.',
-        () => confirmRegenerate(year, month),
-        () => cancelRegenerate()
-    );
-}
-
-function confirmRegenerate(year, month) {
-    const confirmationSection = document.getElementById('regenerate_confirmation');
-    if (confirmationSection) {
-        confirmationSection.remove();
-    }
-    executeRegenerate(year, month);
-}
-
-function cancelRegenerate() {
-    const confirmationSection = document.getElementById('regenerate_confirmation');
-    if (confirmationSection) {
-        confirmationSection.remove();
-    }
-}
-
-function executeRegenerate(year, month) {
-    const loadingSpinner = document.getElementById('generate_loading_spinner');
-    if (loadingSpinner) {
-        loadingSpinner.style.display = 'inline-block';
-    }
-    showModalMessage('Regenerating periods...', 'success', true);
-
-    const requestData = {
-        year: parseInt(year),
-        month: parseInt(month),
-        regenerate: true
-    };
-
-    fetch(window.location.origin + '/cdummy/inventory/generate_inv_week_periods', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
-        if (data.success) {
-            currentYear = parseInt(year);
-            currentMonth = parseInt(month);
-            // Sinkronkan dropdown filter utama agar menampilkan periode yang baru di-regenerate
-            if (typeof syncFilterDropdowns === 'function') {
-                syncFilterDropdowns(currentYear, currentMonth);
-            }
-            showModalMessage(data.message || 'Periode berhasil di-regenerate', 'success', false, 2000);
-            loadInvWeekData(currentYear, currentMonth);
-            setTimeout(() => closeModal('modal_input_all'), 2000);
-        } else {
-            showModalMessage(data.message || 'Gagal regenerate periode', 'error');
-        }
-    })
-    .catch(error => {
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
-        verifyPeriodsCreated(year, month)
-            .then(exist => {
-                if (exist) {
-                    currentYear = parseInt(year);
-                    currentMonth = parseInt(month);
-                    if (typeof syncFilterDropdowns === 'function') {
-                        syncFilterDropdowns(currentYear, currentMonth);
-                    }
-                    showModalMessage('Periode berhasil di-regenerate', 'success', false, 2000);
-                    loadInvWeekData(currentYear, currentMonth);
-                    setTimeout(() => closeModal('modal_input_all'), 2000);
-                } else {
-                    showModalMessage('Error: ' + error.message, 'error');
-                }
-            })
-            .catch(() => {
-                showModalMessage('Error: ' + error.message, 'error');
-            });
-    });
-}
+// (regenerate functionality removed)
 
 // Helper to verify if periods exist for given year/month
 function verifyPeriodsCreated(year, month) {
@@ -813,11 +724,7 @@ function resetModalState() {
     const modalResultDiv = document.getElementById('modal_result_message');
     const modalFooter = document.querySelector('#modal_input_all .modal-footer');
     
-    // Remove any existing confirmation dialog
-    const confirmationSection = document.getElementById('regenerate_confirmation');
-    if (confirmationSection) {
-        confirmationSection.remove();
-    }
+    // Remove any existing confirmation dialog (legacy id removed)
     
     // Reset modal footer to default state
     if (modalFooter) {
@@ -875,15 +782,12 @@ function checkPeriodsExist() {
             })
             .then(data => {
                 if (data.exists) {
-                    // Update modal footer for existing periods
+                    // Update modal footer for existing periods (no regenerate)
                     const modalFooter = document.querySelector('#modal_input_all .modal-footer');
                     if (modalFooter) {
                         modalFooter.innerHTML = `
                             <button class="btn btn-secondary" onclick="closeModal('modal_input_all')">Batal</button>
                             <button class="btn btn-lihat-data" onclick="viewExistingData(${year}, ${month})">Lihat Data</button>
-                            <button class="btn btn-regenerate" onclick="regeneratePeriods(${year}, ${month})">
-                                Regenerate <span id="generate_loading_spinner" class="loading-spinner" style="display:none;"></span>
-                            </button>
                         `;
                     }
                     
@@ -891,8 +795,7 @@ function checkPeriodsExist() {
                         modalResultDiv.innerHTML = `
                             <div style="margin-bottom: 10px;">
                                 <strong>Periode untuk tahun ${year} bulan ${getMonthName(month)} sudah ada.</strong><br>
-                                • Klik "Lihat Data" untuk menampilkan data yang sudah ada<br>
-                                • Atau klik "Regenerate" untuk membuat ulang periode (akan menghapus data lama)
+                                • Klik "Lihat Data" untuk menampilkan data yang sudah ada
                             </div>
                         `;
                         modalResultDiv.className = 'input-result-message error';

@@ -240,7 +240,6 @@ class Inventory extends CI_Controller {
 
             $year = isset($input_data['year']) ? intval($input_data['year']) : null;
             $month = isset($input_data['month']) ? intval($input_data['month']) : null;
-            $regenerate = isset($input_data['regenerate']) ? boolval($input_data['regenerate']) : false;
 
             if (!$year || !$month) {
                 return $this->_json_response(false, 'Year and month are required');
@@ -255,8 +254,8 @@ class Inventory extends CI_Controller {
                 return $this->_json_response(false, 'Invalid month range (1-12)');
             }
 
-            // Generate periods using report model
-            $periods = $this->report_model->generate_weekly_periods($year, $month, $regenerate);
+            // Generate periods using report model (regenerate disabled)
+            $periods = $this->report_model->generate_weekly_periods($year, $month, false);
             
             if ($periods && is_array($periods)) {
                 $period_count = count($periods);

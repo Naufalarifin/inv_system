@@ -161,8 +161,7 @@
 /* Custom buttons for modal actions */
 .btn-lihat-data { background-color: #ffffff !important; color: var(--primary) !important; border: 1px solid var(--primary) !important; box-shadow: none !important; border-radius: 4px !important; }
 .btn-lihat-data:hover { background-color: #f8f9fa !important; }
-.btn-regenerate { background-color: var(--primary) !important; color: #ffffff !important; border: 1px solid var(--primary) !important; box-shadow: none !important; border-radius: 4px !important; }
-.btn-regenerate:hover { background-color: #0056b3 !important; border-color: #0056b3 !important; }
+/* .btn-regenerate removed */
 /* Confirmation area styles */
 .confirmation-section { background: #fff !important; border-top: 1px solid var(--border) !important; padding: 12px 20px !important; }
 .confirmation-content { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; }

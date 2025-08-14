@@ -117,19 +117,14 @@ class Report_model extends CI_Model {
                 throw new Exception('Invalid year or month provided');
             }
             
-            log_message('info', "Generating weekly periods for year: $year, month: $month, regenerate: " . ($regenerate ? 'true' : 'false'));
+            log_message('info', "Generating weekly periods for year: $year, month: $month");
             
-            // Check if periods already exist for this year/month (unless regenerating)
-            if (!$regenerate && $this->periods_exist($year, $month)) {
+            // Check if periods already exist for this year/month
+            if ($this->periods_exist($year, $month)) {
                 throw new Exception('Periode untuk tahun ' . $year . ' bulan ' . $month . ' sudah ada. Silakan pilih tahun/bulan lain atau gunakan data yang sudah ada.');
             }
             
-            // Clear existing data for this year/month
-            $this->db->where('period_y', $year);
-            $this->db->where('period_m', $month);
-            $this->db->delete('inv_week');
-            
-            log_message('info', "Cleared existing periods for year: $year, month: $month");
+            // Do not delete existing periods; regenerate disabled
             
             $periods = array();
             $week_number = 1;
