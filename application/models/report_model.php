@@ -574,26 +574,17 @@ class Report_model extends CI_Model {
         return array('LN', 'DN');
     }
 
-    /**
-     * Return sizes for a device record
-     */
     private function getSizesForDeviceRecord($device) {
         return (strtoupper($device['dvc_type']) === 'OSC')
             ? array('-')
             : array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'CUS');
     }
 
-    /**
-     * Apply optional filter helper
-     * - If filter value is empty string (All), don't apply filter
-     * - If filter value exists and not empty, apply filter
-     */
     private function applyOptionalFilter($filters, $key, $column) {
         if (isset($filters[$key])) {
             if ($filters[$key] !== '' && $filters[$key] !== null) {
                 $this->db->where($column, $filters[$key]);
             }
-            // If $filters[$key] is empty string, don't apply any filter (show all)
         }
     }
 

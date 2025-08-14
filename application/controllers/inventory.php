@@ -265,8 +265,7 @@ class Inventory extends CI_Controller {
                 return $this->_json_response(true, $message, array(
                     'period_count' => $period_count,
                     'year' => $year,
-                    'month' => $month,
-                    'auto_report_generated' => true
+                    'month' => $month
                 ));
             } else {
                 return $this->_json_response(false, 'Gagal generate periode');
@@ -293,9 +292,9 @@ class Inventory extends CI_Controller {
                 return $this->_json_response(false, 'All fields are required');
             }
 
-            // Validate date format
-            $start_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_start);
-            $finish_dt = DateTime::createFromFormat('Y-m-d\TH:i', $date_finish);
+            // Validate date format (DATE only)
+            $start_dt = DateTime::createFromFormat('Y-m-d', $date_start);
+            $finish_dt = DateTime::createFromFormat('Y-m-d', $date_finish);
             
             if (!$start_dt || !$finish_dt) {
                 return $this->_json_response(false, 'Invalid date format');
@@ -308,13 +307,34 @@ class Inventory extends CI_Controller {
             $result = $this->report_model->update_inv_week($id_week, $date_start, $date_finish);
             
             if ($result) {
-                $message = "Period updated successfully. Times automatically set to 08:00-17:00";
+                $message = "Period updated successfully";
                 return $this->_json_response(true, $message);
             } else {
                 return $this->_json_response(false, 'Failed to update period');
             }
         } catch (Exception $e) {
             log_message('error', 'Update period error: ' . $e->getMessage());
+            return $this->_json_response(false, 'Error: ' . $e->getMessage());
+        }
+    }
+
+    public function delete_inv_week_period() {
+        try {
+            $input_data = $this->_get_json_input();
+            if (!$input_data) {
+                return $this->_json_response(false, 'Invalid JSON input or empty data');
+            }
+            $id_week = isset($input_data['id_week']) ? intval($input_data['id_week']) : null;
+            if (!$id_week) {
+                return $this->_json_response(false, 'id_week is required');
+            }
+            $result = $this->report_model->delete_inv_week($id_week);
+            if ($result) {
+                return $this->_json_response(true, 'Week deleted successfully');
+            }
+            return $this->_json_response(false, 'Failed to delete week');
+        } catch (Exception $e) {
+            log_message('error', 'Delete week error: ' . $e->getMessage());
             return $this->_json_response(false, 'Error: ' . $e->getMessage());
         }
     }
@@ -340,8 +360,8 @@ class Inventory extends CI_Controller {
                     $row['period_y'],
                     $row['period_m'],
                     $row['period_w'],
-                    $start_date->format('d/m/Y H:i'),
-                    $finish_date->format('d/m/Y H:i'),
+                    $start_date->format('d/m/Y'),
+                    $finish_date->format('d/m/Y'),
                     $duration
                 );
             });
