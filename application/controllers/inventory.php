@@ -380,13 +380,10 @@ class Inventory extends CI_Controller {
             
             $config = $this->report_configs[$base_type];
             
-            // Get current week by default
             $current_week = $this->report_model->getCurrentWeekPeriod();
             
-            // Prepare filters
             $filters = array();
             
-            // Get filter parameters from GET request
             $device_search = $this->input->get('device_search');
             $year = $this->input->get('year');
             $month = $this->input->get('month');
@@ -413,7 +410,6 @@ class Inventory extends CI_Controller {
             if ($id_week) {
                 $filters['id_week'] = $id_week;
             } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
-                // Default to current week if no filters specified
                 $filters['id_week'] = $current_week['id_week'];
             }
             
@@ -484,6 +480,11 @@ class Inventory extends CI_Controller {
             if ($device_search) {
                 $filters['device_search'] = $device_search;
             }
+            $has_any_filter = ($year !== null) || ($month !== null) || ($week !== null) || ($id_week !== null);
+            
+            if ($id_week !== null && $id_week !== '') {
+                $filters['id_week'] = $id_week;
+            }
             if ($year !== null && $year !== '') {
                 $filters['year'] = $year;
             }
@@ -493,10 +494,8 @@ class Inventory extends CI_Controller {
             if ($week !== null && $week !== '') {
                 $filters['week'] = $week;
             }
-            if ($id_week !== null && $id_week !== '') {
-                $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
-                // Default to current week if no specific filters are provided
+
+            if (!$has_any_filter && $current_week && !$no_default_week && $this->input->get('use_default_week')) {
                 $filters['id_week'] = $current_week['id_week'];
             }
             
@@ -675,9 +674,7 @@ class Inventory extends CI_Controller {
         }
     }
     
-    /**
-     * Generate inventory report data
-     */
+
     public function generate_inventory_report() {
         try {
             $result = $this->report_model->generateInventoryReportData();

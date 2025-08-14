@@ -294,10 +294,6 @@ class inventory_model extends CI_Model {
         );
 
         if ($this->db->insert('inv_act', $insert_data)) {
-            // After successful IN, update inv_report stock for the affected week
-            $this->load->model('report_model');
-            $this->report_model->updateInventoryReportStockAuto();
-
             return $this->_response(true, 'Data berhasil diinput dengan ID: ' . $insert_data['id_act']);
         } else {
             return $this->_response(false, 'Gagal menyimpan data ke database');
@@ -346,10 +342,6 @@ class inventory_model extends CI_Model {
         }
 
         if ($this->db->where('dvc_sn', $serial_number)->update('inv_act', $update_data)) {
-
-            $this->load->model('report_model');
-            $this->report_model->updateInventoryReportStockAuto();
-
             return $this->_response(true, 'Data berhasil di-update untuk OUT: ' . $serial_number);
         } else {
             return $this->_response(false, 'Gagal mengupdate data');
