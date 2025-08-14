@@ -93,7 +93,36 @@ class Report_model extends CI_Model {
         $this->db->order_by('period_y DESC, period_m DESC, period_w ASC');
         
         $query = $this->db->get();
-        return $query->result_array();
+        $weeks = $query->result_array();
+
+        // Augment with has_report flag per id_week to drive UI edit/delete availability
+        if (!empty($weeks)) {
+            $weekIds = array();
+            foreach ($weeks as $w) {
+                if (isset($w['id_week'])) {
+                    $weekIds[] = intval($w['id_week']);
+                }
+            }
+
+            if (!empty($weekIds)) {
+                $this->db->select('id_week, COUNT(*) as cnt');
+                $this->db->from('inv_report');
+                $this->db->where_in('id_week', $weekIds);
+                $this->db->group_by('id_week');
+                $rep = $this->db->get()->result_array();
+                $hasMap = array();
+                foreach ($rep as $row) {
+                    $hasMap[intval($row['id_week'])] = intval($row['cnt']) > 0 ? 1 : 0;
+                }
+                foreach ($weeks as &$w) {
+                    $id = intval($w['id_week']);
+                    $w['has_report'] = isset($hasMap[$id]) ? $hasMap[$id] : 0;
+                }
+                unset($w);
+            }
+        }
+
+        return $weeks;
     }
     
     /**

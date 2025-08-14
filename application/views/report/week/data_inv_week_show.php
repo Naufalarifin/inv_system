@@ -17,12 +17,18 @@
                 $month_start = new DateTime($data[0]['date_start']);
                 $month_end = new DateTime(end($data)['date_finish']);
                 $current_date = new DateTime();
-                $can_edit = ($current_date >= $month_start && $current_date <= $month_end);
+                // Rule:
+                // - Tombol edit/hapus aktif jika (bulan ini atau masa depan) OR (belum ada data inv_report utk minggu tsb)
+                // - Nonaktif hanya jika seluruh periode bulan sudah lewat DAN minggu tsb sudah punya data di inv_report
                 
                 foreach ($data as $row): 
                     $start_date = new DateTime($row['date_start']);
                     $finish_date = new DateTime($row['date_finish']);
                     $duration = $start_date->diff($finish_date)->days + 1;
+                    // Per-minggu eligibility
+                    $is_month_past = ($month_end < $current_date); // seluruh bulan sudah terlewat
+                    $row_has_report = isset($row['has_report']) ? (bool)$row['has_report'] : false;
+                    $row_can_edit = !($is_month_past && $row_has_report);
                 ?>
                 <tr>
                     <!-- <td class="text-center fw-bold"><?= $row['period_w'] ?></td> -->
@@ -43,17 +49,17 @@
                     </td>
                     <td class="text-center">
                         <div style="display:inline-flex; align-items:center; gap:6px;">
-                            <button class="edit-btn <?= $can_edit ? '' : 'disabled' ?>" 
-                                    onclick="<?= $can_edit ? "editPeriod('{$row['id_week']}', '{$row['date_start']}', '{$row['date_finish']}')" : '' ?>"
-                                    title="<?= $can_edit ? 'Edit periode' : 'Tidak dapat edit di luar periode aktif' ?>">
+                            <button class="edit-btn <?= $row_can_edit ? '' : 'disabled' ?>" 
+                                    onclick="<?= $row_can_edit ? "editPeriod('{$row['id_week']}', '{$row['date_start']}', '{$row['date_finish']}')" : '' ?>"
+                                    title="<?= $row_can_edit ? 'Edit periode' : 'Tidak dapat edit karena periode telah lewat dan sudah ada data laporan' ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M18.5 2.50023C18.8978 2.10244 19.4374 1.87891 20 1.87891C20.5626 1.87891 21.1022 2.10244 21.5 2.50023C21.8978 2.89801 22.1213 3.43762 22.1213 4.00023C22.1213 4.56284 21.8978 5.10244 21.5 5.50023L12 15.0002L8 16.0002L9 12.0002L18.5 2.50023Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <button class="edit-btn <?= $can_edit ? '' : 'disabled' ?>" 
-                                    onclick="<?= $can_edit ? "deleteWeek('{$row['id_week']}')" : '' ?>"
-                                    title="<?= $can_edit ? 'Hapus periode' : 'Tidak dapat hapus di luar periode aktif' ?>">
+                            <button class="edit-btn <?= $row_can_edit ? '' : 'disabled' ?>" 
+                                    onclick="<?= $row_can_edit ? "deleteWeek('{$row['id_week']}')" : '' ?>"
+                                    title="<?= $row_can_edit ? 'Hapus periode' : 'Tidak dapat hapus karena periode telah lewat dan sudah ada data laporan' ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
