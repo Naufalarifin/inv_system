@@ -82,8 +82,9 @@ foreach ($regular_items as $item) {
                         
                         if ($is_voh) {
                             foreach ($voh_colors as $color_idx => $color_info) {
-                                // Use exact color name as stored in database
+                                // Use exact color for DB, and a hyphenated key for DOM ids
                                 $color_name = $color_info['name'];
+                                $color_key = str_replace(' ', '-', $color_name);
                             ?>
                                 <tr>
                                     <?php if ($color_idx == 0) { ?>
@@ -114,7 +115,7 @@ foreach ($regular_items as $item) {
                                                     value="<?php echo $existing_value_ln; ?>"
                                                     min="0"
                                                     disabled
-                                                    style="width: 50px; text-align: center;"
+                                                    style="width: 40px; text-align: right;"
                                                    data-id-dvc="<?php echo $item['id_dvc']; ?>"
                                                    data-size="<?php echo $sz; ?>"
                                                    data-color="<?php echo $color_name; ?>"
@@ -128,7 +129,7 @@ foreach ($regular_items as $item) {
                                                     value="<?php echo $existing_value_dn; ?>"
                                                     min="0"
                                                     disabled
-                                                    style="width: 50px; text-align: center;"
+                                                    style="width: 40px; text-align: right;"
                                                    data-id-dvc="<?php echo $item['id_dvc']; ?>"
                                                    data-size="<?php echo $sz; ?>"
                                                    data-color="<?php echo $color_name; ?>"
@@ -136,8 +137,8 @@ foreach ($regular_items as $item) {
                                                    onchange="calculateTotals()">
                                         </td>
                                     <?php } ?>
-                                    <td align="center"><strong><span id="subtotal_<?php echo $item['id_dvc']; ?>_<?php echo $color_name; ?>">0</span></strong></td>
-                                    <td align="center"><span id="percentage_<?php echo $item['id_dvc']; ?>_<?php echo $color_name; ?>">0</span>%</td>
+                                    <td align="center"><strong><span id="subtotal_<?php echo $item['id_dvc']; ?>_<?php echo $color_key; ?>">0</span></strong></td>
+                                    <td align="center"><span id="percentage_<?php echo $item['id_dvc']; ?>_<?php echo $color_key; ?>">0</span>%</td>
                                 </tr>
                             <?php }
                             $row_display_no++;
@@ -172,7 +173,7 @@ foreach ($regular_items as $item) {
                                                 value="<?php echo $existing_value_ln; ?>"
                                                 min="0"
                                                 disabled
-                                                style="width: 50px; text-align: center;"
+                                                style="width: 40px; text-align: right;"
                                                data-id-dvc="<?php echo $item['id_dvc']; ?>"
                                                data-size="<?php echo $sz; ?>"
                                                data-color="<?php echo $item_color; ?>"
@@ -186,7 +187,7 @@ foreach ($regular_items as $item) {
                                                 value="<?php echo $existing_value_dn; ?>"
                                                 min="0"
                                                 disabled
-                                                style="width: 50px; text-align: center;"
+                                                style="width: 40px; text-align: right;"
                                                data-id-dvc="<?php echo $item['id_dvc']; ?>"
                                                data-size="<?php echo $sz; ?>"
                                                data-color="<?php echo $item_color; ?>"
@@ -194,8 +195,8 @@ foreach ($regular_items as $item) {
                                                onchange="calculateTotals()">
                                     </td>
                                 <?php } ?>
-                                <td align="center"><strong><span id="subtotal_<?php echo $item['id_dvc']; ?>_<?php echo $item_color; ?>">0</span></strong></td>
-                                <td align="center"><span id="percentage_<?php echo $item['id_dvc']; ?>_<?php echo $item_color; ?>">0</span>%</td>
+                                <td align="center"><strong><span id="subtotal_<?php echo $item['id_dvc']; ?>_<?php echo str_replace(' ', '-', $item_color); ?>">0</span></strong></td>
+                                <td align="center"><span id="percentage_<?php echo $item['id_dvc']; ?>_<?php echo str_replace(' ', '-', $item_color); ?>">0</span>%</td>
                             </tr>
                         <?php }
                     }

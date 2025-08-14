@@ -294,10 +294,6 @@ class inventory_model extends CI_Model {
         );
 
         if ($this->db->insert('inv_act', $insert_data)) {
-            // After successful IN, update inv_report stock for the affected week
-            $this->load->model('report_model');
-            $this->report_model->updateInventoryReportStockAuto();
-
             return $this->_response(true, 'Data berhasil diinput dengan ID: ' . $insert_data['id_act']);
         } else {
             return $this->_response(false, 'Gagal menyimpan data ke database');
@@ -346,10 +342,6 @@ class inventory_model extends CI_Model {
         }
 
         if ($this->db->where('dvc_sn', $serial_number)->update('inv_act', $update_data)) {
-
-            $this->load->model('report_model');
-            $this->report_model->updateInventoryReportStockAuto();
-
             return $this->_response(true, 'Data berhasil di-update untuk OUT: ' . $serial_number);
         } else {
             return $this->_response(false, 'Gagal mengupdate data');
@@ -540,7 +532,7 @@ class inventory_model extends CI_Model {
             }
             $combined_78 = intval($char_7 . $char_8);
             if ($combined_78 <= 50 && strlen($serial_number) == 15) {
-                if ($combined_78 == 27){
+                if ($combined_78 == 27 || $combined_78 == 26){
                     $color_chars = substr($serial_number, 10, 2);
                     $color = $this->_getColorFromChars($color_chars);
                 }else{

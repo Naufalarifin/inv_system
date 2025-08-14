@@ -6,7 +6,7 @@ class Inventory extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->database();
-        $this->load->model(array('data_model', 'config_model', 'inventory_model','report_model'));
+        $this->load->model(array('config_model', 'inventory_model','report_model'));
         $this->load->helper('url');
         // Remove session_start() - CodeIgniter handles sessions automatically
     }
@@ -514,10 +514,8 @@ class Inventory extends CI_Controller {
             }
             if ($id_week !== null && $id_week !== '') {
                 $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
-                // Default to current week if no specific filters are provided
-                $filters['id_week'] = $current_week['id_week'];
             }
+            // No default week - show all data when no filters are specified
             
             $data['data'] = $this->report_model->getInventoryReportData($config['tech'], $config['type'], $filters);
             
@@ -672,7 +670,6 @@ class Inventory extends CI_Controller {
         try {
             $weeks = $this->report_model->getWeekPeriods();
             $this->_json_response(true, 'Week periods loaded', array('weeks' => $weeks));
-            
         } catch (Exception $e) {
             $this->_handle_error($e, 'Error loading week periods', true);
         }
@@ -685,10 +682,8 @@ class Inventory extends CI_Controller {
         try {
             $tech = $this->input->get('tech');
             $type = $this->input->get('type');
-            
             $devices = $this->report_model->getDevicesForReport($tech, $type);
             $this->_json_response(true, 'Devices loaded', array('devices' => $devices));
-            
         } catch (Exception $e) {
             $this->_handle_error($e, 'Error loading devices', true);
         }
