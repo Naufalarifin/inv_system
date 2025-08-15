@@ -587,7 +587,7 @@ class Report_model extends CI_Model {
     /**
      * Upsert helper for inv_report: insert if not exists else update stock/needs
      */
-    private function upsertInvReport($id_week, $id_dvc, $size, $color, $qc, $week_data) {
+    public function upsertInvReport($id_week, $id_dvc, $size, $color, $qc, $week_data) {
         $this->db->where('id_week', $id_week);
         $this->db->where('id_dvc', $id_dvc);
         $this->db->where('dvc_size', $size);

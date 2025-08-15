@@ -1,0 +1,113 @@
+# Contoh Data Test untuk Massive Input On PMS
+
+## Format Input:
+# KODE_ALAT[TAB]UKURAN[TAB]WARNA[TAB]STATUS[TAB]STOCK(opsional)
+
+## Test Case 1: Data Normal (4 kolom - stock default 1)
+ABC123	M	Merah	DN
+XYZ789	L	Biru	LN
+DEF456	XL	Hitam	DN
+
+## Test Case 2: Data dengan Stock Manual (5 kolom)
+GHI101	S	Putih	DN	5
+JKL202	M	Kuning	LN	3
+MNO303	L	Hijau	DN	2
+
+## Test Case 3: Data Duplikat (untuk test perhitungan stock otomatis)
+# Data ini akan menghasilkan stock = 3 untuk item yang sama
+PQR404	M	Merah	DN
+PQR404	M	Merah	DN
+PQR404	M	Merah	DN
+
+## Test Case 4: Data Duplikat dengan Stock Manual
+# Data ini akan menggunakan stock manual = 4
+STU505	L	Biru	LN	4
+STU505	L	Biru	LN	4
+STU505	L	Biru	LN	4
+STU505	L	Biru	LN	4
+
+## Test Case 5: Data Campuran (normal + duplikat)
+VWX606	S	Hitam	DN
+VWX606	S	Hitam	DN
+YZA707	M	Putih	LN	2
+BCD808	L	Merah	DN
+
+## Test Case 6: Data dengan Ukuran Berbeda (case sensitive)
+EFG909	s	Biru	DN	1
+HIJ010	S	Biru	DN	1
+KLM111	xl	Hitam	LN	3
+NOP212	XL	Hitam	LN	3
+
+## Test Case 7: Data Invalid (untuk test error handling)
+# Status invalid (bukan DN/LN)
+QRS313	M	Merah	XX
+
+# Ukuran kosong
+TUV414		Biru	DN
+
+# Kode alat kosong
+	L	Hitam	LN
+
+## Test Case 8: Data Besar (untuk test performa)
+WXY515	M	Merah	DN
+WXY515	M	Merah	DN
+WXY515	M	Merah	DN
+WXY515	M	Merah	DN
+WXY515	M	Merah	DN
+ZAB616	S	Biru	LN
+ZAB616	S	Biru	LN
+ZAB616	S	Biru	LN
+CDE717	L	Hitam	DN	2
+CDE717	L	Hitam	DN	2
+FGH818	M	Putih	LN
+IJK919	XL	Kuning	DN	4
+IJK919	XL	Kuning	DN	4
+IJK919	XL	Kuning	DN	4
+IJK919	XL	Kuning	DN	4
+IJK919	XL	Kuning	DN	4
+
+## Expected Results:
+
+### Test Case 1:
+- ABC123: stock = 1
+- XYZ789: stock = 1  
+- DEF456: stock = 1
+
+### Test Case 2:
+- GHI101: stock = 5
+- JKL202: stock = 3
+- MNO303: stock = 2
+
+### Test Case 3:
+- PQR404: stock = 3 (otomatis dari 3 data duplikat)
+
+### Test Case 4:
+- STU505: stock = 4 (menggunakan stock manual)
+
+### Test Case 5:
+- VWX606: stock = 2 (otomatis dari 2 data duplikat)
+- YZA707: stock = 2 (menggunakan stock manual)
+- BCD808: stock = 1
+
+### Test Case 6:
+- EFG909: stock = 1
+- HIJ010: stock = 1
+- KLM111: stock = 3
+- NOP212: stock = 3
+
+### Test Case 7:
+- Semua data invalid akan ditolak dengan error message
+
+### Test Case 8:
+- WXY515: stock = 5 (otomatis dari 5 data duplikat)
+- ZAB616: stock = 3 (otomatis dari 3 data duplikat)
+- CDE717: stock = 2 (menggunakan stock manual)
+- FGH818: stock = 1
+- IJK919: stock = 4 (menggunakan stock manual)
+
+## Catatan:
+1. Semua ukuran akan dikonversi ke UPPERCASE
+2. Status harus DN atau LN
+3. Stock minimal 1
+4. Data duplikat akan dihitung otomatis
+5. Stock manual akan override perhitungan otomatis

@@ -1,4 +1,17 @@
 <script type="text/javascript">
+// Add CSS for massive textarea
+const style = document.createElement('style');
+style.textContent = `
+    .massive-textarea { 
+        min-height: 120px; 
+        resize: vertical; 
+        font: 14px/1 monospace; 
+        font-family: 'Courier New', monospace;
+        line-height: 1.4;
+    }
+`;
+document.head.appendChild(style);
+
 var editMode = false;
 
 function showToast(msg, type = 'success') {
@@ -1244,65 +1257,48 @@ function proceedWithGeneration() {
 }
 
 function showInputPmsModal() {
-    // Load week periods and devices data
-    loadWeekPeriods();
-    loadDevices();
+    // Use the same custom modal system as Filter
+    openModal_report('modal_input_pms');
     
-    // Show modal using Bootstrap or custom modal
-    const modal = document.getElementById('inputPmsModal');
-    if (modal) {
-        if (typeof window.$ !== "undefined" && window.$().modal) {
-            window.$('#inputPmsModal').modal('show');
-        } else {
-            modal.style.display = 'block';
-        }
+    // Add event listener for preview
+    const textarea = document.getElementById('massive_pms_input');
+    if (textarea) {
+        textarea.focus();
+        textarea.addEventListener('input', updatePmsPreview);
     }
 }
 
-function loadWeekPeriods() {
-    fetch(window.location.origin + '/cdummy/inventory/get_week_periods')
-        .then(response => response.json())
-        .then(data => {
-            var options = '<option value="">-- Select Week --</option>';
-            if (data.success && data.weeks) {
-                data.weeks.forEach(function(week) {
-                    var startDate = new Date(week.date_start);
-                    var endDate = new Date(week.date_finish);
-                    var label = 'W' + week.period_w + '/' + week.period_m + '/' + week.period_y + ' (' + 
-                               startDate.toLocaleDateString() + ' - ' + endDate.toLocaleDateString() + ')';
-                    options += '<option value="' + week.id_week + '">' + label + '</option>';
-                });
-            }
-            document.getElementById('select_week').innerHTML = options;
-        })
-        .catch(error => {
-            console.error('Error loading week periods:', error);
-        });
+function closeInputPmsModal() {
+    // Close modal via the shared handler
+    closeModal_report('modal_input_pms');
+    // Clear textarea and preview after closing
+    const textarea = document.getElementById('massive_pms_input');
+    if (textarea) textarea.value = '';
+    const preview = document.getElementById('preview_pms_data');
+    if (preview) {
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+    }
 }
 
-function loadDevices() {
-    var params = new URLSearchParams({
-        tech: selectedTech,
-        type: selectedType
-    });
-    
-    fetch(window.location.origin + '/cdummy/inventory/get_devices_for_report?' + params)
-        .then(response => response.json())
-        .then(data => {
-            var options = '<option value="">-- Select Device --</option>';
-            if (data.success && data.devices) {
-                data.devices.forEach(function(device) {
-                    options += '<option value="' + device.id_dvc + '">' + device.dvc_code + ' - ' + device.dvc_name + '</option>';
-                });
-            }
-            document.getElementById('select_device').innerHTML = options;
-        })
-        .catch(error => {
-            console.error('Error loading devices:', error);
-        });
+// Removed week/device loaders per request
+
+function updateDeviceColorsPms() {
+    const deviceId = document.getElementById('select_device_pms').value;
+    if (deviceId) {
+        const params = new URLSearchParams({ id_dvc: deviceId });
+        fetch(window.location.origin + '/cdummy/inventory/get_device_colors?' + params)
+            .then(response => response.json())
+            .then(data => {
+                // Update preview with available colors
+                updatePmsPreview();
+            })
+            .catch(error => {
+                console.error('Error loading colors:', error);
+            });
+    }
 }
 
-// Update color options based on selected device
 function updateDeviceColors() {
     var deviceId = document.getElementById('select_device').value;
     if (deviceId) {
@@ -1327,24 +1323,184 @@ function updateDeviceColors() {
     }
 }
 
-function saveOnPms() {
-    var formData = {
-        id_week: document.getElementById('select_week').value,
-        id_dvc: document.getElementById('select_device').value,
-        dvc_size: document.getElementById('select_size').value,
-        dvc_col: document.getElementById('select_color').value,
-        dvc_qc: document.getElementById('select_qc').value,
-        on_pms: document.getElementById('input_on_pms').value
-    };
+// Removed device color updater per request
+
+function updatePmsPreview() {
+    const input = document.getElementById('massive_pms_input').value;
+    const preview = document.getElementById('preview_pms_data');
     
-    // Validate form
-    if (!formData.id_week || !formData.id_dvc || !formData.dvc_size || 
-        formData.dvc_col === '' || !formData.dvc_qc || !formData.on_pms) {
-        showToast('Please fill all required fields', 'error');
+    if (!input.trim()) {
+        preview.innerHTML = '';
+        preview.style.display = 'none';
         return;
     }
     
-    fetch(window.location.origin + '/cdummy/inventory/save_on_pms', {
+    const lines = input.split('\n').filter(line => line.trim());
+    let previewHTML = '<div style="margin-bottom: 10px;"><strong>Preview Data:</strong></div>';
+    
+    const processedData = [];
+    const dataCount = {};
+    
+    lines.forEach((line, index) => {
+        const parts = line.split('\t').map(part => part.trim());
+        
+        if (parts.length >= 4) {
+            const kodeAlat = parts[0] || '';
+            const ukuran = parts[1] || '';
+            const warna = parts[2] || '';
+            const status = parts[3] || '';
+            const stock = parts.length >= 5 ? parts[4] : '1';
+            
+            // Create unique key for counting duplicates
+            const key = `${kodeAlat}|${ukuran}|${warna}|${status}`;
+            dataCount[key] = (dataCount[key] || 0) + 1;
+            
+            processedData.push({
+                kodeAlat,
+                ukuran,
+                warna,
+                status,
+                stock: stock === '' ? '1' : stock,
+                originalStock: stock
+            });
+        }
+    });
+    
+    // Calculate final stock for duplicates
+    const finalData = [];
+    processedData.forEach(item => {
+        const key = `${item.kodeAlat}|${item.ukuran}|${item.warna}|${item.status}`;
+        const count = dataCount[key];
+        
+        if (count > 1) {
+            // If there are duplicates, use the count as stock
+            item.finalStock = count;
+        } else {
+            // If no duplicates, use original stock or 1
+            item.finalStock = item.originalStock === '' ? 1 : parseInt(item.originalStock) || 1;
+        }
+        
+        finalData.push(item);
+    });
+    
+    // Remove duplicates for display
+    const uniqueData = [];
+    const seen = new Set();
+    
+    finalData.forEach(item => {
+        const key = `${item.kodeAlat}|${item.ukuran}|${item.warna}|${item.status}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueData.push(item);
+        }
+    });
+    
+    if (uniqueData.length === 0) {
+        previewHTML += '<div style="color: red;">Format data tidak valid. Pastikan minimal 4 kolom dipisahkan dengan Tab.</div>';
+    } else {
+        previewHTML += '<table style="width: 100%; border-collapse: collapse; font-size: 11px;">';
+        previewHTML += '<tr style="background: #e9ecef;"><th style="border: 1px solid #ddd; padding: 4px;">Kode</th><th style="border: 1px solid #ddd; padding: 4px;">Ukuran</th><th style="border: 1px solid #ddd; padding: 4px;">Warna</th><th style="border: 1px solid #ddd; padding: 4px;">Status</th><th style="border: 1px solid #ddd; padding: 4px;">Stock</th></tr>';
+        
+        uniqueData.forEach(item => {
+            previewHTML += `<tr>
+                <td style="border: 1px solid #ddd; padding: 4px;">${item.kodeAlat}</td>
+                <td style="border: 1px solid #ddd; padding: 4px;">${item.ukuran}</td>
+                <td style="border: 1px solid #ddd; padding: 4px;">${item.warna}</td>
+                <td style="border: 1px solid #ddd; padding: 4px;">${item.status}</td>
+                <td style="border: 1px solid #ddd; padding: 4px;">${item.finalStock}</td>
+            </tr>`;
+        });
+        
+        previewHTML += '</table>';
+        previewHTML += `<div style="margin-top: 10px; color: #666;">Total data: ${uniqueData.length}</div>`;
+    }
+    
+    preview.innerHTML = previewHTML;
+    preview.style.display = 'block';
+}
+
+function saveMassiveOnPms() {
+    const input = document.getElementById('massive_pms_input').value;
+    if (!input.trim()) {
+        showToast('Input masih kosong', 'error');
+        return;
+    }
+    
+    // Process input data
+    const lines = input.split('\n').filter(line => line.trim());
+    const processedData = [];
+    const dataCount = {};
+    
+    lines.forEach(line => {
+        const parts = line.split('\t').map(part => part.trim());
+        
+        if (parts.length >= 4) {
+            const kodeAlat = parts[0] || '';
+            const ukuran = parts[1] || '';
+            const warna = parts[2] || '';
+            const status = parts[3] || '';
+            const stock = parts.length >= 5 ? parts[4] : '';
+            
+            // Create unique key for counting duplicates
+            const key = `${kodeAlat}|${ukuran}|${warna}|${status}`;
+            dataCount[key] = (dataCount[key] || 0) + 1;
+            
+            processedData.push({
+                kodeAlat,
+                ukuran,
+                warna,
+                status,
+                originalStock: stock
+            });
+        }
+    });
+    
+    // Calculate final stock for duplicates and create unique data
+    const uniqueData = [];
+    const seen = new Set();
+    
+    processedData.forEach(item => {
+        const key = `${item.kodeAlat}|${item.ukuran}|${item.warna}|${item.status}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            
+            const count = dataCount[key];
+            let finalStock;
+            
+            if (count > 1) {
+                // If there are duplicates, use the count as stock
+                finalStock = count;
+            } else {
+                // If no duplicates, use original stock or 1
+                finalStock = item.originalStock === '' ? 1 : parseInt(item.originalStock) || 1;
+            }
+            
+            uniqueData.push({
+                kodeAlat: item.kodeAlat,
+                ukuran: item.ukuran,
+                warna: item.warna,
+                status: item.status,
+                stock: finalStock
+            });
+        }
+    });
+    
+    if (uniqueData.length === 0) {
+        showToast('No valid data found. Please check the format.', 'error');
+        return;
+    }
+    
+    // Show confirmation
+    const confirmMessage = `Yakin simpan ${uniqueData.length} data ke On PMS?`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Send data to server
+    const formData = { data: uniqueData };
+    
+    fetch(window.location.origin + '/cdummy/inventory/save_massive_on_pms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -1352,26 +1508,15 @@ function saveOnPms() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showToast('On PMS data saved successfully', 'success');
-            
-            // Hide modal
-            const modal = document.getElementById('inputPmsModal');
-            if (modal) {
-                if (typeof window.$ !== "undefined" && window.$().modal) {
-                    window.$('#inputPmsModal').modal('hide');
-                } else {
-                    modal.style.display = 'none';
-                }
-            }
-            
-            // Reset form
-            document.getElementById('pmsInputForm').reset();
+            showToast('On PMS data saved successfully!', 'success');
+            closeInputPmsModal();
             showData(); // Refresh the table
         } else {
             showToast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
         }
     })
     .catch(error => {
+        console.error('Error saving data:', error);
         showToast('Failed to save data', 'error');
     });
 }
@@ -1389,16 +1534,13 @@ function setupAutoSearch() {
     const searchInput = document.getElementById("device_search");
     
     if (searchInput) {
-        // Remove existing event listeners to avoid duplicate
         searchInput.removeEventListener("input", handleAutoSearch);
         
-        // Add event listener for auto search
         searchInput.addEventListener("input", handleAutoSearch);
         
-        // Keep enter key functionality
+        // Keep entr key functionality
         searchInput.addEventListener("keyup", function(event) {
             if (event.key === 'Enter') {
-                // Clear timeout and search immediately
                 if (searchTimeout) {
                     clearTimeout(searchTimeout);
                 }

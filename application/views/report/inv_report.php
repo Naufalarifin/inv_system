@@ -134,85 +134,27 @@
 
 
 
-<!-- Input On PMS Modal -->
-<div class="modal fade" id="inputPmsModal" tabindex="-1" role="dialog" aria-labelledby="inputPmsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="inputPmsModalLabel">Input On PMS</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="pmsInputForm">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="select_week">Select Week Period:</label>
-                                <select class="form-control" id="select_week" name="select_week" required>
-                                    <option value="">-- Select Week --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="select_device">Select Device:</label>
-                                <select class="form-control" id="select_device" name="select_device" required>
-                                    <option value="">-- Select Device --</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="select_size">Size:</label>
-                                <select class="form-control" id="select_size" name="select_size" required>
-                                    <option value="">-- Select Size --</option>
-                                    <option value="xs">XS</option>
-                                    <option value="s">S</option>
-                                    <option value="m">M</option>
-                                    <option value="l">L</option>
-                                    <option value="xl">XL</option>
-                                    <option value="xxl">XXL</option>
-                                    <option value="3xl">3XL</option>
-                                    <option value="all">ALL</option>
-                                    <option value="cus">CUS</option>
-                                    <option value="-">-</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="select_color">Color:</label>
-                                <select class="form-control" id="select_color" name="select_color" required>
-                                    <option value="">-- Select Color --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="select_qc">Quality Control:</label>
-                                <select class="form-control" id="select_qc" name="select_qc" required>
-                                    <option value="">-- Select QC --</option>
-                                    <option value="LN">LN</option>
-                                    <option value="DN">DN</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="input_on_pms">On PMS Quantity:</label>
-                        <input type="number" class="form-control" id="input_on_pms" name="input_on_pms" min="0" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveOnPms()">Save</button>
-            </div>
+<!-- Input On PMS Modal (Custom like Filter) -->
+<div id="modal_input_pms" class="modal-container">
+    <div class="modal-header">
+        <h3 class="modal-title">Input On PMS - Massive Input</h3>
+        <button class="btn-close" onclick="closeInputPmsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label class="input-form-label">Massive Input Data</label>
+            <textarea id="massive_pms_input" class="input massive-textarea" 
+                placeholder="Format: KODE_ALAT\tUKURAN\tWARNA\tSTATUS\tSTOCK (optional)&#10;Contoh:&#10;ABC123\tM\tMerah\tDN\t2&#10;XYZ789\tL\tBiru\tLN" 
+                style="min-height: 160px; font-family: monospace; font-size: 14px;"></textarea>
         </div>
+
+        <div class="form-group">
+            <div id="preview_pms_data" style="display:none; border: 1px solid #ddd; padding: 10px; background: #f9f9f9; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; border-radius: 4px;"></div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeInputPmsModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveMassiveOnPms()"><i class="ki-filled ki-check !text-base"></i>Save On PMS</button>
     </div>
 </div>
 
