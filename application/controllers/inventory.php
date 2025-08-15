@@ -6,7 +6,7 @@ class Inventory extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->database();
-        $this->load->model(array('data_model', 'config_model', 'inventory_model','report_model'));
+        $this->load->model(array('config_model', 'inventory_model','report_model'));
         $this->load->helper('url');
         // Remove session_start() - CodeIgniter handles sessions automatically
     }
@@ -514,10 +514,8 @@ class Inventory extends CI_Controller {
             }
             if ($id_week !== null && $id_week !== '') {
                 $filters['id_week'] = $id_week;
-            } else if ($current_week && !$year && !$month && !$week && !$no_default_week) {
-                // Default to current week if no specific filters are provided
-                $filters['id_week'] = $current_week['id_week'];
             }
+            // No default week - show all data when no filters are specified
             
             $data['data'] = $this->report_model->getInventoryReportData($config['tech'], $config['type'], $filters);
             
@@ -672,7 +670,6 @@ class Inventory extends CI_Controller {
         try {
             $weeks = $this->report_model->getWeekPeriods();
             $this->_json_response(true, 'Week periods loaded', array('weeks' => $weeks));
-            
         } catch (Exception $e) {
             $this->_handle_error($e, 'Error loading week periods', true);
         }
@@ -685,10 +682,8 @@ class Inventory extends CI_Controller {
         try {
             $tech = $this->input->get('tech');
             $type = $this->input->get('type');
-            
             $devices = $this->report_model->getDevicesForReport($tech, $type);
             $this->_json_response(true, 'Devices loaded', array('devices' => $devices));
-            
         } catch (Exception $e) {
             $this->_handle_error($e, 'Error loading devices', true);
         }
@@ -851,6 +846,176 @@ class Inventory extends CI_Controller {
         }
         
         return $decoded;
+    }
+    
+    /**
+     * Save massive on pms data
+     */
+    public function save_massive_on_pms() {
+        try {
+            $input_data = $this->_get_json_input();
+            if (!$input_data) {
+                return $this->_json_response(false, 'Invalid JSON input or empty data');
+            }
+            
+            $id_week = isset($input_data['id_week']) ? intval($input_data['id_week']) : 0;
+            $id_dvc = isset($input_data['id_dvc']) ? intval($input_data['id_dvc']) : 0;
+            $data = isset($input_data['data']) ? $input_data['data'] : array();
+
+            // Allow frontend to omit id_week and id_dvc. Derive them here.
+            if (!$id_week) {
+                $current_week = $this->report_model->getCurrentWeekPeriod();
+                if ($current_week && isset($current_week['id_week'])) {
+                    $id_week = intval($current_week['id_week']);
+                }
+            }
+
+            // If id_dvc not provided, try to resolve from first item's kodeAlat via inv_dvc.dvc_code
+            if (!$id_dvc && !empty($data)) {
+                $first = $data[0];
+                $kode = isset($first['kodeAlat']) ? trim($first['kodeAlat']) : '';
+                if ($kode !== '') {
+                    $this->db->select('id_dvc, dvc_code, dvc_name, dvc_tech, dvc_type');
+                    $this->db->from('inv_dvc');
+                    $this->db->where('status', '0');
+                    $this->db->where('dvc_code', $kode);
+                    $dvc_q = $this->db->get();
+                    if ($dvc_q->num_rows() > 0) {
+                        $row = $dvc_q->row_array();
+                        $id_dvc = intval($row['id_dvc']);
+                    }
+                }
+            }
+
+            if (!$id_week || !$id_dvc || empty($data)) {
+                return $this->_json_response(false, 'Week and Device could not be resolved or data is empty');
+            }
+            
+            // Validate week exists
+            $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
+            $this->db->from('inv_week');
+            $this->db->where('id_week', $id_week);
+            $week_query = $this->db->get();
+            
+            if ($week_query->num_rows() == 0) {
+                return $this->_json_response(false, 'Week period not found');
+            }
+            
+            $week_data = $week_query->row_array();
+            
+            // Optional device info (we now resolve per row when needed)
+            $device_data = null;
+
+            // Ensure all base combinations for this week exist (like Generate Data but only for this week)
+            $this->report_model->generateInventoryReportForWeek($id_week, $week_data);
+            
+            // Process each data item
+            $success_count = 0;
+            $error_count = 0;
+            $errors = array();
+            
+            foreach ($data as $item) {
+                $kodeAlat = isset($item['kodeAlat']) ? trim($item['kodeAlat']) : '';
+                $ukuran = isset($item['ukuran']) ? strtoupper(trim($item['ukuran'])) : '';
+                $warna = isset($item['warna']) ? trim($item['warna']) : '';
+                $status = isset($item['status']) ? strtoupper(trim($item['status'])) : '';
+                $stock = isset($item['stock']) ? intval($item['stock']) : 1;
+                
+                // Resolve id_dvc for this row if not provided globally
+                $effective_id_dvc = $id_dvc;
+                if (!$effective_id_dvc && $kodeAlat !== '') {
+                    $this->db->select('id_dvc');
+                    $this->db->from('inv_dvc');
+                    $this->db->where('status', '0');
+                    $this->db->where('dvc_code', $kodeAlat);
+                    $dvc_row = $this->db->get()->row_array();
+                    if ($dvc_row) {
+                        $effective_id_dvc = intval($dvc_row['id_dvc']);
+                    }
+                }
+
+                // Validate required fields
+                if (empty($kodeAlat) || empty($ukuran) || empty($status)) {
+                    $error_count++;
+                    $errors[] = "Invalid data: Kode Alat, Ukuran, and Status are required";
+                    continue;
+                }
+                if (!$effective_id_dvc) {
+                    $error_count++;
+                    $errors[] = "Device not found for code '$kodeAlat'";
+                    continue;
+                }
+                
+                // Validate status (DN or LN)
+                if (!in_array($status, array('DN', 'LN'))) {
+                    $error_count++;
+                    $errors[] = "Invalid status '$status' for item '$kodeAlat'. Status must be DN or LN.";
+                    continue;
+                }
+                
+                // Validate stock
+                if ($stock < 1) {
+                    $stock = 1;
+                }
+                
+                // Check if inv_report record exists, if not create it
+                $this->db->select('id_pms, on_pms');
+                $this->db->from('inv_report');
+                $this->db->where('id_week', $id_week);
+                $this->db->where('id_dvc', $effective_id_dvc);
+                $this->db->where('dvc_size', $ukuran);
+                $this->db->where('dvc_col', $warna);
+                $this->db->where('dvc_qc', $status);
+                $report_query = $this->db->get();
+                
+                if ($report_query->num_rows() > 0) {
+                    // Update existing record
+                    $report_data = $report_query->row_array();
+                    $this->db->where('id_pms', $report_data['id_pms']);
+                    $update_result = $this->db->update('inv_report', array('on_pms' => $stock));
+                    
+                    if ($update_result) {
+                        $success_count++;
+                    } else {
+                        $error_count++;
+                        $errors[] = "Failed to update on_pms for item '$kodeAlat'";
+                    }
+                } else {
+                    // Create new record - first generate the base data
+                    $this->report_model->upsertInvReport($id_week, $effective_id_dvc, $ukuran, $warna, $status, $week_data);
+                    
+                    // Now update the on_pms value
+                    $this->db->where('id_week', $id_week);
+                    $this->db->where('id_dvc', $effective_id_dvc);
+                    $this->db->where('dvc_size', $ukuran);
+                    $this->db->where('dvc_col', $warna);
+                    $this->db->where('dvc_qc', $status);
+                    $update_result = $this->db->update('inv_report', array('on_pms' => $stock));
+                    
+                    if ($update_result) {
+                        $success_count++;
+                    } else {
+                        $error_count++;
+                        $errors[] = "Failed to create/update on_pms for item '$kodeAlat'";
+                    }
+                }
+            }
+            
+            $message = "Processed $success_count items successfully";
+            if ($error_count > 0) {
+                $message .= ", $error_count items failed";
+            }
+            
+            return $this->_json_response($error_count == 0, $message, array(
+                'success_count' => $success_count,
+                'error_count' => $error_count,
+                'errors' => $errors
+            ));
+            
+        } catch (Exception $e) {
+            log_message('error', 'Save massive on pms error: ' . $e->getMessage());
+            return $this->_json_response(false, 'Error: ' . $e->getMessage());
+        }
     }
 
     private function _output_json($data) {
