@@ -1127,6 +1127,41 @@ $(document).ready(function() {
 // Global variables for inv_report
 var selectedTech = 'ecbs';
 var selectedType = 'app';
+var viewMode = 'summary'; // 'summary' | 'detail'
+
+function setVisibilityForMode() {
+    var isSummary = viewMode === 'summary';
+    var lbl = document.getElementById('mode_toggle_label');
+    if (lbl) lbl.textContent = isSummary ? 'Summary' : 'Detail';
+    // Tech group always visible; type group only in detail
+    var typeGroup = document.getElementById('group_type');
+    if (typeGroup) typeGroup.style.display = isSummary ? 'none' : 'inline-flex';
+    // Containers
+    var sum = document.getElementById('show_summary_report');
+    var det = document.getElementById('show_data_report');
+    if (sum) sum.style.display = isSummary ? 'block' : 'none';
+    if (det) det.style.display = isSummary ? 'none' : 'block';
+}
+
+function toggleViewMode() {
+    viewMode = (viewMode === 'summary') ? 'detail' : 'summary';
+    setVisibilityForMode();
+    if (viewMode === 'detail') {
+        // Keep existing behavior
+        showData();
+    } else {
+        // In summary, show wrapper according to selected tech
+        updateSummaryTech();
+    }
+}
+
+function updateSummaryTech() {
+    var showEcbs = selectedTech === 'ecbs';
+    var ecbsWrap = document.getElementById('summary_ecbs_wrapper');
+    var ecctWrap = document.getElementById('summary_ecct_wrapper');
+    if (ecbsWrap) ecbsWrap.style.display = showEcbs ? 'block' : 'none';
+    if (ecctWrap) ecctWrap.style.display = showEcbs ? 'none' : 'block';
+}
 
 function selectTech_report(tech) {
     selectedTech = tech;
@@ -1135,7 +1170,11 @@ function selectTech_report(tech) {
     document.getElementById('btn_ecbs').className = tech === 'ecbs' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
     document.getElementById('btn_ecct').className = tech === 'ecct' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
     
-    showData();
+    if (viewMode === 'detail') {
+        showData();
+    } else {
+        updateSummaryTech();
+    }
 }
 
 function selectType_report(type) {
@@ -1145,7 +1184,9 @@ function selectType_report(type) {
     document.getElementById('btn_app').className = type === 'app' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
     document.getElementById('btn_osc').className = type === 'osc' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-light';
     
-    showData();
+    if (viewMode === 'detail') {
+        showData();
+    }
 }
 
 function showData() {
@@ -1597,10 +1638,9 @@ document.addEventListener('DOMContentLoaded', function() {
         deviceSelect.addEventListener('change', updateDeviceColors);
     }
     
-    // Load default data for inv_report
-    if (document.getElementById('show_data_report')) {
-        showData();
-    }
+    // Initialize view mode visibility (default Summary)
+    setVisibilityForMode();
+    updateSummaryTech();
 });
 
 // (handlers consolidated above)

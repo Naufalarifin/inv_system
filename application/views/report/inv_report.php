@@ -3,9 +3,17 @@
     <div class="card min-w-full">
         <div class="card-header flex items-center justify-between">
             <div id="toolbar_left" class="flex items-center gap-2">
-                <!-- Generate Data Button -->
-                <button class="btn btn-sm btn-success" id="btn_generate" onclick="proceedWithGeneration()" title="Generate inventory report data from database">
-                    <i class="ki-filled ki-setting !text-base"></i>Generate Data
+                <!-- Summary / Detail Toggle Button -->
+                <button class="btn btn-sm btn-outline-primary" id="btn_mode_toggle" onclick="toggleViewMode()" title="Toggle Summary / Detail">
+                    <span class="two-arrows-icon" aria-hidden="true" style="display:inline-flex;align-items:center;margin-right:6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 8H16" stroke="#007bff" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M14 6L16 8L14 10" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20 16H8" stroke="#007bff" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M10 14L8 16L10 18" stroke="#007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span id="mode_toggle_label">Summary</span>
                 </button>
                 
                 <!-- Input On PMS Button -->
@@ -14,13 +22,13 @@
                 </button>
                 
                 <!-- ECBS/ECCT Group -->
-                <div class="btn-group">
+                <div class="btn-group" id="group_tech">
                     <button class="btn btn-sm btn-primary" id="btn_ecbs" onclick="selectTech_report('ecbs')">ECBS</button>
                     <button class="btn btn-sm btn-light" id="btn_ecct" onclick="selectTech_report('ecct')">ECCT</button>
                 </div>
                 
                 <!-- APP/OSC Group -->
-                <div class="btn-group">
+                <div class="btn-group" id="group_type" style="display:none;">
                     <button class="btn btn-sm btn-primary" id="btn_app" onclick="selectType_report('app')">APP</button>
                     <button class="btn btn-sm btn-light" id="btn_osc" onclick="selectType_report('osc')">OSC</button>
                 </div>
@@ -37,7 +45,15 @@
                 </a>
             </div>
         </div>
-        <div id="show_data_report"></div>
+        <div id="show_summary_report" style="display:block;">
+            <div id="summary_ecbs_wrapper" style="display:block;">
+                <?php $this->load->view('report/report/summary_ecbs'); ?>
+            </div>
+            <div id="summary_ecct_wrapper" style="display:none;">
+                <?php $this->load->view('report/report/summary_ecct'); ?>
+            </div>
+        </div>
+        <div id="show_data_report" style="display:none;"></div>
     </div>
 </div>
 
@@ -177,6 +193,7 @@
 .btn-primary { background: #007bff; color: white; }
 .btn-success { background: #28a745; color: white; }
 .btn-light { background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; }
+.btn-outline-primary { background: #ffffff; color: #007bff; border: 1px solid #007bff; }
 .compact-table { font-size: 13px !important; }
 .compact-table th, .compact-table td { padding: 8px 4px !important; line-height: 1.4 !important; }
 .compact-table th { font-size: 14px !important; background-color: #f8f9fa; }
