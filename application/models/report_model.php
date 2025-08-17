@@ -844,6 +844,117 @@ class Report_model extends CI_Model {
     public function getAvailableWeeks() { return $this->getDistinctFromInvWeek('period_w', 'ASC', 'week'); }
 
     /**
+     * Get ECBS summary data for summary_ecbs view
+     * Returns data similar to inventory_model but for summary display
+     */
+    public function getSummaryEcbsData() {
+        try {
+            // Get all ECBS devices
+            $this->db->select('id_dvc, dvc_name, dvc_code, dvc_priority');
+            $this->db->from('inv_dvc');
+            $this->db->where('dvc_tech', 'ecbs');
+            $this->db->where('dvc_type', 'APP');  // Only APP devices
+            $this->db->where('status', '0');
+            $this->db->order_by('dvc_priority', 'ASC');
+            
+            $devices_query = $this->db->get();
+            $result_data = array();
+            
+            if ($devices_query && $devices_query->num_rows() > 0) {
+                foreach ($devices_query->result_array() as $device) {
+                    // Check if this is VOH device
+                    $is_voh = (stripos($device['dvc_name'], 'Vest Outer Hoodie') !== false || stripos($device['dvc_code'], 'VOH') === 0);
+                    
+                    if ($is_voh) {
+                        // VOH devices - create 7 color variants
+                        $voh_colors = array('Black', 'Navy', 'Maroon', 'Army', 'Dark Gray', 'Grey', 'Custom');
+                        
+                        foreach ($voh_colors as $color) {
+                            $device_data = $device;
+                            $device_data['warna'] = $color;
+                            $sizes = array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'CUS');
+                            $total = 0;
+                            
+                            foreach ($sizes as $size) {
+                                $count_sql = "SELECT COUNT(*) as count FROM inv_act WHERE id_dvc = ? AND dvc_size = ? AND dvc_col = ? AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')";
+                                $count_query = $this->db->query($count_sql, array($device['id_dvc'], $size, $color));
+                                $count = $count_query ? $count_query->row()->count : 0;
+                                $device_data['size_' . strtolower($size)] = $count;
+                                $total += $count;
+                            }
+                            
+                            $device_data['subtotal'] = $total;
+                            $result_data[] = $device_data;
+                        }
+                    } else {
+                        // Non-VOH devices - single row per device
+                        $device_data = $device;
+                        $device_data['warna'] = 'Black'; // Default color for non-VOH ECBS
+                        $sizes = array('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'ALL', 'CUS');
+                        $total = 0;
+                        
+                        foreach ($sizes as $size) {
+                            $count_sql = "SELECT COUNT(*) as count FROM inv_act WHERE id_dvc = ? AND dvc_size = ? AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')";
+                            $count_query = $this->db->query($count_sql, array($device['id_dvc'], $size));
+                            $count = $count_query ? $count_query->row()->count : 0;
+                            $device_data['size_' . strtolower($size)] = $count;
+                            $total += $count;
+                        }
+                        
+                        $device_data['subtotal'] = $total;
+                        $result_data[] = $device_data;
+                    }
+                }
+            }
+            
+            return $result_data;
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error in getSummaryEcbsData: ' . $e->getMessage());
+            return array();
+        }
+    }
+
+    /**
+     * Get ECBS OSC summary data for summary_ecbs view (right table)
+     * Returns OSC data for the right side table
+     */
+    public function getSummaryEcbsOscData() {
+        try {
+            // Get all ECBS OSC devices
+            $this->db->select('id_dvc, dvc_name, dvc_code, dvc_priority');
+            $this->db->from('inv_dvc');
+            $this->db->where('dvc_tech', 'ecbs');
+            $this->db->where('dvc_type', 'OSC');  // Only OSC devices
+            $this->db->where('status', '0');
+            $this->db->order_by('dvc_priority', 'ASC');
+            
+            $devices_query = $this->db->get();
+            $result_data = array();
+            
+            if ($devices_query && $devices_query->num_rows() > 0) {
+                foreach ($devices_query->result_array() as $device) {
+                    $device_data = $device;
+                    
+                    // OSC devices don't have sizes, just count total stock
+                    $count_sql = "SELECT COUNT(*) as count FROM inv_act WHERE id_dvc = ? AND (inv_out IS NULL OR inv_out = '' OR inv_out = '0000-00-00 00:00:00')";
+                    $count_query = $this->db->query($count_sql, array($device['id_dvc']));
+                    $count = $count_query ? $count_query->row()->count : 0;
+                    
+                    $device_data['subtotal'] = $count;
+                    $result_data[] = $device_data;
+                }
+            }
+            
+            return $result_data;
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error in getSummaryEcbsOscData: ' . $e->getMessage());
+            return array();
+        }
+    }
+
+    /**
      * Generic distinct fetcher for inv_week
      */
     private function getDistinctFromInvWeek($column, $orderDirection = 'ASC', $alias = null) {
@@ -854,6 +965,160 @@ class Report_model extends CI_Model {
             ->order_by($column . ' ' . $orderDirection)
             ->get()
             ->result_array();
+    }
+
+    /**
+     * Get ECBS Report Data for different report types (needs, order, on_pms, over)
+     * @param string $report_type - 'needs', 'order', 'on_pms', 'over'
+     * @return array
+     */
+    public function getSummaryEcbsReportData($report_type = 'needs') {
+        try {
+            // Validate report type
+            $valid_types = array('needs', 'order', 'on_pms', 'over');
+            if (!in_array($report_type, $valid_types)) {
+                log_message('error', 'Invalid report type: ' . $report_type);
+                return array();
+            }
+
+            // Get ECBS devices
+            $this->db->select('id_dvc, dvc_name, dvc_code, dvc_priority');
+            $this->db->from('inv_dvc');
+            $this->db->where('dvc_tech', 'ecbs');
+            $this->db->where('status', '0');
+            $this->db->order_by('dvc_priority', 'ASC');
+            
+            $devices_query = $this->db->get();
+            $result_data = array();
+            
+            if ($devices_query && $devices_query->num_rows() > 0) {
+                foreach ($devices_query->result_array() as $device) {
+                    $device_data = $device;
+                    
+                    // Get report data for this device
+                    $this->db->select('dvc_size, dvc_col, `' . $report_type . '` as qty');
+                    $this->db->from('inv_report');
+                    $this->db->where('id_dvc', $device['id_dvc']);
+                    $this->db->where('`' . $report_type . '` >', 0); // Only get items with quantity > 0
+                    
+                    $report_query = $this->db->get();
+                    
+                    if ($report_query && $report_query->num_rows() > 0) {
+                        // Initialize size counters
+                        $size_xs = 0; $size_s = 0; $size_m = 0; $size_l = 0;
+                        $size_xl = 0; $size_xxl = 0; $size_3xl = 0; $size_all = 0; $size_cus = 0;
+                        $subtotal = 0;
+                        
+                        foreach ($report_query->result_array() as $report_item) {
+                            $qty = (int)$report_item['qty'];
+                            $size = strtolower(trim($report_item['dvc_size']));
+                            $color = trim($report_item['dvc_col']);
+                            
+                            // Count by size
+                            switch ($size) {
+                                case 'xs': $size_xs += $qty; break;
+                                case 's': $size_s += $qty; break;
+                                case 'm': $size_m += $qty; break;
+                                case 'l': $size_l += $qty; break;
+                                case 'xl': $size_xl += $qty; break;
+                                case 'xxl': $size_xxl += $qty; break;
+                                case '3xl': $size_3xl += $qty; break;
+                                case 'all': $size_all += $qty; break;
+                                case 'cus': $size_cus += $qty; break;
+                                default: $size_cus += $qty; break; // Default to custom
+                            }
+                            
+                            $subtotal += $qty;
+                        }
+                        
+                        // Add size data to device
+                        $device_data['size_xs'] = $size_xs;
+                        $device_data['size_s'] = $size_s;
+                        $device_data['size_m'] = $size_m;
+                        $device_data['size_l'] = $size_l;
+                        $device_data['size_xl'] = $size_xl;
+                        $device_data['size_xxl'] = $size_xxl;
+                        $device_data['size_3xl'] = $size_3xl;
+                        $device_data['size_all'] = $size_all;
+                        $device_data['size_cus'] = $size_cus;
+                        $device_data['subtotal'] = $subtotal;
+                        $device_data['warna'] = isset($color) ? $color : 'Default';
+                        
+                        $result_data[] = $device_data;
+                    } else {
+                        // Device exists but no report data, add with zeros
+                        $device_data['size_xs'] = 0; $device_data['size_s'] = 0; $device_data['size_m'] = 0;
+                        $device_data['size_l'] = 0; $device_data['size_xl'] = 0; $device_data['size_xxl'] = 0;
+                        $device_data['size_3xl'] = 0; $device_data['size_all'] = 0; $device_data['size_cus'] = 0;
+                        $device_data['subtotal'] = 0;
+                        $device_data['warna'] = 'Default';
+                        
+                        $result_data[] = $device_data;
+                    }
+                }
+            }
+            
+            return $result_data;
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error in getSummaryEcbsReportData: ' . $e->getMessage());
+            return array();
+        }
+    }
+
+    /**
+     * Get ECBS OSC Report Data for different report types
+     * @param string $report_type - 'needs', 'order', 'on_pms', 'over'
+     * @return array
+     */
+    public function getSummaryEcbsOscReportData($report_type = 'needs') {
+        try {
+            // Validate report type
+            $valid_types = array('needs', 'order', 'on_pms', 'over');
+            if (!in_array($report_type, $valid_types)) {
+                log_message('error', 'Invalid report type: ' . $report_type);
+                return array();
+            }
+
+            // Get ECBS OSC devices
+            $this->db->select('id_dvc, dvc_name, dvc_code, dvc_priority');
+            $this->db->from('inv_dvc');
+            $this->db->where('dvc_tech', 'ecbs');
+            $this->db->where('dvc_type', 'OSC');
+            $this->db->where('status', '0');
+            $this->db->order_by('dvc_priority', 'ASC');
+            
+            $devices_query = $this->db->get();
+            $result_data = array();
+            
+            if ($devices_query && $devices_query->num_rows() > 0) {
+                foreach ($devices_query->result_array() as $device) {
+                    $device_data = $device;
+                    
+                    // Get report data for this OSC device
+                    $this->db->select('SUM(`' . $report_type . '`) as total_qty');
+                    $this->db->from('inv_report');
+                    $this->db->where('id_dvc', $device['id_dvc']);
+                    $this->db->where('`' . $report_type . '` >', 0);
+                    
+                    $report_query = $this->db->get();
+                    $total_qty = 0;
+                    
+                    if ($report_query && $report_query->num_rows() > 0) {
+                        $total_qty = (int)$report_query->row()->total_qty;
+                    }
+                    
+                    $device_data['subtotal'] = $total_qty;
+                    $result_data[] = $device_data;
+                }
+            }
+            
+            return $result_data;
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error in getSummaryEcbsOscReportData: ' . $e->getMessage());
+            return array();
+        }
     }
 }
 ?>
