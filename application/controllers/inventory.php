@@ -36,11 +36,30 @@ class Inventory extends CI_Controller {
         $data['available_years'] = $this->report_model->getAvailableYears();
         $data['available_months'] = $this->report_model->getAvailableMonths();
         $data['available_weeks'] = $this->report_model->getAvailableWeeks();
+        // Default filters (no persistence in URL)
         $data['current_filters'] = array('device_search' => '', 'year' => '', 'month' => '', 'week' => '', 'id_week' => '');
         $this->load->view('inventory/banner', $data);
         $this->load->view('report/inv_report', $data);
         $this->load->view('report/javascript_report', $data);
         $this->load_bot($data);
+    }
+
+    // Lightweight endpoint to re-render only the summary wrapper (no full page reload)
+    public function inv_report_summary() {
+        $tech = $this->input->get('tech') ?: 'ecbs';
+        $data['current_week'] = $this->report_model->getCurrentWeekPeriod();
+        $data['current_filters'] = array(
+            'device_search' => $this->input->get('device_search') ?: '',
+            'year' => $this->input->get('year') ?: '',
+            'month' => $this->input->get('month') ?: '',
+            'week' => $this->input->get('week') ?: '',
+            'id_week' => $this->input->get('id_week') ?: ''
+        );
+        if ($tech === 'ecct') {
+            $this->load->view('report/report/summary_ecct', $data);
+        } else {
+            $this->load->view('report/report/summary_ecbs', $data);
+        }
     }
     
     public function massive_input() {

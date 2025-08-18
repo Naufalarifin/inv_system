@@ -972,7 +972,7 @@ class Report_model extends CI_Model {
      * @param string $report_type - 'needs', 'order', 'on_pms', 'over'
      * @return array
      */
-    public function getSummaryEcbsReportData($report_type = 'needs') {
+    public function getSummaryEcbsReportData($report_type = 'needs', $filters = array()) {
         try {
             // Validate report type
             $valid_types = array('needs', 'order', 'on_pms', 'over');
@@ -998,6 +998,10 @@ class Report_model extends CI_Model {
                     // Get report data for this device
                     $this->db->select('dvc_size, dvc_col, `' . $report_type . '` as qty');
                     $this->db->from('inv_report');
+                    // Apply filters on period
+                    if (isset($filters['id_week']) && $filters['id_week']) {
+                        $this->db->where('id_week', $filters['id_week']);
+                    }
                     $this->db->where('id_dvc', $device['id_dvc']);
                     $this->db->where('`' . $report_type . '` >', 0); // Only get items with quantity > 0
                     
@@ -1071,7 +1075,7 @@ class Report_model extends CI_Model {
      * @param string $report_type - 'needs', 'order', 'on_pms', 'over'
      * @return array
      */
-    public function getSummaryEcbsOscReportData($report_type = 'needs') {
+    public function getSummaryEcbsOscReportData($report_type = 'needs', $filters = array()) {
         try {
             // Validate report type
             $valid_types = array('needs', 'order', 'on_pms', 'over');
@@ -1098,6 +1102,9 @@ class Report_model extends CI_Model {
                     // Sum report metric for this device (no sizes/colors for OSC/ACC summary)
                     $this->db->select('SUM(`' . $report_type . '`) as total_qty');
                     $this->db->from('inv_report');
+                    if (isset($filters['id_week']) && $filters['id_week']) {
+                        $this->db->where('id_week', $filters['id_week']);
+                    }
                     $this->db->where('id_dvc', $device['id_dvc']);
                     $this->db->where('`' . $report_type . '` >', 0);
                     
