@@ -1565,7 +1565,39 @@ function saveMassiveOnPms() {
 // Apply filters function
 function applyFilters() {
     closeModal('modal_filter_report');
-    showData();
+    if (viewMode === 'detail') {
+        showData();
+        return;
+    }
+    // Summary mode: load only the active summary wrapper without changing URL
+    var params = [];
+    var deviceSearch = document.getElementById('device_search') ? document.getElementById('device_search').value : '';
+    var year = document.getElementById('filter_year') ? document.getElementById('filter_year').value : '';
+    var month = document.getElementById('filter_month') ? document.getElementById('filter_month').value : '';
+    var week = document.getElementById('filter_week') ? document.getElementById('filter_week').value : '';
+    params.push('tech=' + encodeURIComponent(selectedTech));
+    if (deviceSearch) params.push('device_search=' + encodeURIComponent(deviceSearch));
+    if (year) params.push('year=' + encodeURIComponent(year));
+    if (month) params.push('month=' + encodeURIComponent(month));
+    if (week) params.push('week=' + encodeURIComponent(week));
+    var query = params.length ? ('?' + params.join('&')) : '';
+    var link = window.location.origin + '/cdummy/inventory/inv_report_summary' + query;
+    var targetId = selectedTech === 'ecbs' ? 'summary_ecbs_wrapper' : 'summary_ecct_wrapper';
+    var container = document.getElementById(targetId);
+    if (container) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;">Loading...</div>';
+        if (typeof window.$ !== 'undefined') {
+            window.$('#' + targetId).load(link);
+        } else {
+            fetch(link).then(function(r){return r.text()}).then(function(html){ container.innerHTML = html; });
+        }
+    }
+}
+
+// Helper to read URL query params
+function getQueryParam(name) {
+    var urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
 }
 
 // Auto search functionality

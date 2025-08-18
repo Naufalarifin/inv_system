@@ -2,11 +2,22 @@
 // Load model
 $this->load->model('report_model');
 
-// Build filters (prioritize selected filters; fallback to current week)
+// Build filters from current_filters passed by controller (year/month/week or id_week)
 $filters = array();
 if (isset($current_filters['id_week']) && $current_filters['id_week']) {
     $filters['id_week'] = $current_filters['id_week'];
-} elseif (isset($current_week['id_week']) && $current_week['id_week']) {
+}
+if (isset($current_filters['year']) && $current_filters['year'] !== '') {
+    $filters['year'] = $current_filters['year'];
+}
+if (isset($current_filters['month']) && $current_filters['month'] !== '') {
+    $filters['month'] = $current_filters['month'];
+}
+if (isset($current_filters['week']) && $current_filters['week'] !== '') {
+    $filters['week'] = $current_filters['week'];
+}
+// Fallback to current week when no period filters supplied
+if (empty($filters) && isset($current_week['id_week']) && $current_week['id_week']) {
     $filters['id_week'] = $current_week['id_week'];
 }
 
@@ -98,15 +109,13 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                         $totL = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
                         $sizesOrder = array('XS','S','M','L','XL','XXL','3XL','ALL','CUS','-');
                         foreach ($appLeft as $g) {
-                            // Filter sizes that are all zeros (stock, on_pms, needs, order, over)
+                            // Build size rows (include even all-zero rows)
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
                                 $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock);
-                                if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; }
                                 $filtered[$sz] = array('stock'=>$stock,'on_pms'=>$onp,'needs'=>$need,'order'=>$order,'over'=>$over,'pct'=>$pct);
                             }
-                            if (empty($filtered)) { continue; }
                             uksort($filtered, function($a,$b) use($sizesOrder){ $ia=array_search(strtoupper($a),$sizesOrder); $ia=($ia===false?999:$ia); $ib=array_search(strtoupper($b),$sizesOrder); $ib=($ib===false?999:$ib); return $ia-$ib; });
                             $rowspan = count($filtered);
                             $first = true;
@@ -123,11 +132,12 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                                         <td align="left" rowspan="<?php echo $rowspan; ?>"><?php echo htmlspecialchars($g['dvc_name']); ?></td>
                                     <?php } ?>
                                     <td align="center"><?php echo htmlspecialchars($sz); ?></td>
-                                    <td align="center"><?php echo $vals['stock']; ?></td>
-                                    <td align="center"><?php echo $vals['on_pms']; ?></td>
-                                    <td align="center"><?php echo $vals['needs']; ?></td>
-                                    <td align="center"><?php echo $vals['order']; ?></td>
-                                    <td align="center"><?php echo $vals['over']; ?></td>
+                                    <?php $isAllZero = ($vals['stock']==0 && $vals['on_pms']==0 && $vals['needs']==0 && $vals['order']==0 && $vals['over']==0); ?>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['stock']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['on_pms']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['needs']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['order']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['over']; ?></td>
                                     <?php $pct_style = ($vals['pct'] < 50) ? 'background-color:#d32f2f;color:#fff;font-weight:bold;' : ''; ?>
                                     <td align="center" style="<?php echo $pct_style; ?>"><?php echo $vals['pct']; ?>%</td>
                                 </tr>
@@ -144,7 +154,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
     <div class="table-separator"></div>
 
     <div class="table-right">
-        <div class="table-title">APPAREL (lanjutan)</div>
+        <div class="table-title">APPAREL</div>
         <div class="card-table">
             <div class="table-responsive">
                 <table class="table table-border align-middle text-gray-700 text-s compact-table">
@@ -166,15 +176,13 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                         $totR = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
                         $sizesOrder = array('XS','S','M','L','XL','XXL','3XL','ALL','CUS','-');
                         foreach ($appRight as $g) {
-                            // Filter sizes that are all zeros
+                            // Build size rows (include even all-zero rows)
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
                                 $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock);
-                                if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; }
                                 $filtered[$sz] = array('stock'=>$stock,'on_pms'=>$onp,'needs'=>$need,'order'=>$order,'over'=>$over,'pct'=>$pct);
                             }
-                            if (empty($filtered)) { continue; }
                             uksort($filtered, function($a,$b) use($sizesOrder){ $ia=array_search(strtoupper($a),$sizesOrder); $ia=($ia===false?999:$ia); $ib=array_search(strtoupper($b),$sizesOrder); $ib=($ib===false?999:$ib); return $ia-$ib; });
                             $rowspan = count($filtered);
                             $first = true;
@@ -191,11 +199,12 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                                         <td align="left" rowspan="<?php echo $rowspan; ?>"><?php echo htmlspecialchars($g['dvc_name']); ?></td>
                                     <?php } ?>
                                     <td align="center"><?php echo htmlspecialchars($sz); ?></td>
-                                    <td align="center"><?php echo $vals['stock']; ?></td>
-                                    <td align="center"><?php echo $vals['on_pms']; ?></td>
-                                    <td align="center"><?php echo $vals['needs']; ?></td>
-                                    <td align="center"><?php echo $vals['order']; ?></td>
-                                    <td align="center"><?php echo $vals['over']; ?></td>
+                                    <?php $isAllZero = ($vals['stock']==0 && $vals['on_pms']==0 && $vals['needs']==0 && $vals['order']==0 && $vals['over']==0); ?>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['stock']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['on_pms']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['needs']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['order']; ?></td>
+                                    <td align="center"><?php echo $isAllZero ? '' : $vals['over']; ?></td>
                                     <?php $pct_style = ($vals['pct'] < 50) ? 'background-color:#d32f2f;color:#fff;font-weight:bold;' : ''; ?>
                                     <td align="center" style="<?php echo $pct_style; ?>"><?php echo $vals['pct']; ?>%</td>
                                 </tr>
@@ -207,11 +216,11 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                     <tfoot>
                         <tr style="background-color:#00bfff;color:#fff;font-weight:bold;">
                             <td align="center" colspan="3">TOTAL</td>
-                            <td align="center"><?php echo $sumLN['stock'] + $sumDN['stock']; ?></td>
-                            <td align="center"><?php echo $sumLN['on_pms'] + $sumDN['on_pms']; ?></td>
-                            <td align="center"><?php echo $sumLN['needs'] + $sumDN['needs']; ?></td>
-                            <td align="center"><?php echo $sumLN['order'] + $sumDN['order']; ?></td>
-                            <td align="center"><?php echo $sumLN['over'] + $sumDN['over']; ?></td>
+                            <td align="center"><?php echo $totL['stock'] + $totR['stock']; ?></td>
+                            <td align="center"><?php echo $totL['on_pms'] + $totR['on_pms']; ?></td>
+                            <td align="center"><?php echo $totL['needs'] + $totR['needs']; ?></td>
+                            <td align="center"><?php echo $totL['order'] + $totR['order']; ?></td>
+                            <td align="center"><?php echo $totL['over'] + $totR['over']; ?></td>
                             <td align="center">100%</td>
                         </tr>
                     </tfoot>
@@ -258,17 +267,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                         </tr>
                         <?php } ?>
                     </tbody>
-                    <tfoot>
-                        <tr style="background-color:#00bfff;color:#fff;font-weight:bold;">
-                            <td align="center" colspan="2">TOTAL</td>
-                            <td align="center"><?php echo $sumLN['stock'] + $sumDN['stock']; ?></td>
-                            <td align="center"><?php echo $sumLN['on_pms'] + $sumDN['on_pms']; ?></td>
-                            <td align="center"><?php echo $sumLN['needs'] + $sumDN['needs']; ?></td>
-                            <td align="center"><?php echo $sumLN['order'] + $sumDN['order']; ?></td>
-                            <td align="center"><?php echo $sumLN['over'] + $sumDN['over']; ?></td>
-                            <td align="center">100%</td>
-                        </tr>
-                    </tfoot>
+                    <!-- No TOTAL on the left (LN) as requested -->
                 </table>
             </div>
         </div>
@@ -310,20 +309,20 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                         <?php } ?>
                     </tbody>
                     <tfoot>
-                        <?php $totAll = array(
-                            'stock' => $totL['stock'] + $totR['stock'],
-                            'on_pms' => $totL['on_pms'] + $totR['on_pms'],
-                            'needs' => $totL['needs'] + $totR['needs'],
-                            'order' => $totL['order'] + $totR['order'],
-                            'over'  => $totL['over']  + $totR['over']
+                        <?php $totalOSC = array(
+                            'stock' => $sumLN['stock'] + $sumDN['stock'],
+                            'on_pms' => $sumLN['on_pms'] + $sumDN['on_pms'],
+                            'needs' => $sumLN['needs'] + $sumDN['needs'],
+                            'order' => $sumLN['order'] + $sumDN['order'],
+                            'over'  => $sumLN['over']  + $sumDN['over']
                         ); ?>
                         <tr style="background-color:#00bfff;color:#fff;font-weight:bold;">
                             <td align="center" colspan="3">TOTAL</td>
-                            <td align="center"><?php echo $totAll['stock']; ?></td>
-                            <td align="center"><?php echo $totAll['on_pms']; ?></td>
-                            <td align="center"><?php echo $totAll['needs']; ?></td>
-                            <td align="center"><?php echo $totAll['order']; ?></td>
-                            <td align="center"><?php echo $totAll['over']; ?></td>
+                            <td align="center"><?php echo $totalOSC['stock']; ?></td>
+                            <td align="center"><?php echo $totalOSC['on_pms']; ?></td>
+                            <td align="center"><?php echo $totalOSC['needs']; ?></td>
+                            <td align="center"><?php echo $totalOSC['order']; ?></td>
+                            <td align="center"><?php echo $totalOSC['over']; ?></td>
                             <td align="center">100%</td>
                         </tr>
                     </tfoot>
@@ -338,16 +337,38 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
 
 <style>
 /* Scope all styles under the ECCT wrapper to avoid affecting other views */
-#summary_ecct_table.ecct-summary-wrapper { padding: 10px; border: 1px dashed #dee2e6; border-radius: 6px; background: #ffffff; max-height: 65vh; overflow: auto; }
-#summary_ecct_table .compact-table { font-size: 13px !important; }
-#summary_ecct_table .compact-table th, 
-#summary_ecct_table .compact-table td { padding: 6px 6px !important; line-height: 1.4 !important; }
-#summary_ecct_table .compact-table th { font-size: 14px !important; background-color: #f8f9fa; }
+#summary_ecct_table.ecct-summary-wrapper { padding: 8px; border: 1px dashed #dee2e6; border-radius: 6px; background: #ffffff; max-height: none; overflow: visible; }
+#summary_ecct_table .compact-table {
+    font-size: 10px !important;
+    table-layout: fixed;
+}
+#summary_ecct_table .compact-table th,
+#summary_ecct_table .compact-table td {
+    padding: 0.1px 2px !important;
+    line-height: 1.1 !important;
+    text-align: center;
+    white-space: nowrap;
+}
+#summary_ecct_table .compact-table td:nth-child(2),
+#summary_ecct_table .compact-table th:nth-child(2) {
+    white-space: normal;           /* allow wrapping for long names */
+    word-break: break-word;        /* break long words if needed */
+    overflow-wrap: anywhere;       /* handle very long tokens */
+}
+#summary_ecct_table .compact-table th {
+    font-size: 11px !important;
+    background-color: #f8f9fa;
+    text-align: center;
+}
+#summary_ecct_table .compact-table tfoot td {
+    font-size: 10px !important;   /* match body text size */
+    text-transform: none;         /* keep consistent casing */
+}
 #summary_ecct_table .tables-container { display: flex; gap: 0; align-items: flex-start; width: 100%; }
 #summary_ecct_table .table-left { flex: 1; min-width: 0; }
 #summary_ecct_table .table-right { flex: 1; min-width: 0; }
 #summary_ecct_table .table-separator { width: 3px; background: linear-gradient(to bottom, #3498db, #2980b9, #3498db); margin: 0 12px; border-radius: 2px; box-shadow: 0 0 8px rgba(52,152,219,.3); }
-#summary_ecct_table .table-title { font-size: 16px; font-weight: 700; color: #2c3e50; margin-bottom: 10px; padding: 8px 12px; background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; border-radius: 8px 8px 0 0; text-align: center; }
+#summary_ecct_table .table-title { font-size: 14px; font-weight: 700; color: #2c3e50; margin-bottom: 8px; padding: 6px 10px; background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; border-radius: 8px 8px 0 0; text-align: center; }
 #summary_ecct_table .card-table { border-right: 2px solid #e0e0e0; border-left: 2px solid #e0e0e0; border-bottom: 2px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; background: #fff; }
 @media (max-width: 1200px) { 
   #summary_ecct_table .tables-container { flex-direction: column; gap: 16px; }

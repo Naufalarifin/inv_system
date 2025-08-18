@@ -2,6 +2,13 @@
 // Load model
 $this->load->model('report_model');
 
+// Build filters from current_filters to allow week/year/month selection
+$filters = array();
+if (isset($current_filters['id_week']) && $current_filters['id_week']) { $filters['id_week'] = $current_filters['id_week']; }
+if (isset($current_filters['year']) && $current_filters['year'] !== '') { $filters['year'] = $current_filters['year']; }
+if (isset($current_filters['month']) && $current_filters['month'] !== '') { $filters['month'] = $current_filters['month']; }
+if (isset($current_filters['week']) && $current_filters['week'] !== '') { $filters['week'] = $current_filters['week']; }
+
 // Daftar warna untuk 7 baris VOH (tetap hardcoded untuk tampilan)
 $voh_colors = array(
     array('name' => 'Black', 'hex' => '#000000'),
@@ -15,18 +22,18 @@ $voh_colors = array(
 $sizes = array('size_xs','size_s','size_m','size_l','size_xl','size_xxl','size_3xl','size_all','size_cus');
 $voh_count = count($voh_colors);
 
-// Load data for each section
-$model_data_needs_app = $this->report_model->getSummaryEcbsReportData('needs');
-$model_data_needs_osc = $this->report_model->getSummaryEcbsOscReportData('needs');
+// Load data for each section with filters applied
+$model_data_needs_app = $this->report_model->getSummaryEcbsReportData('needs', $filters);
+$model_data_needs_osc = $this->report_model->getSummaryEcbsOscReportData('needs', $filters);
 
-$model_data_onpms_app = $this->report_model->getSummaryEcbsReportData('on_pms');
-$model_data_onpms_osc = $this->report_model->getSummaryEcbsOscReportData('on_pms');
+$model_data_onpms_app = $this->report_model->getSummaryEcbsReportData('on_pms', $filters);
+$model_data_onpms_osc = $this->report_model->getSummaryEcbsOscReportData('on_pms', $filters);
 
-$model_data_order_app = $this->report_model->getSummaryEcbsReportData('order');
-$model_data_order_osc = $this->report_model->getSummaryEcbsOscReportData('order');
+$model_data_order_app = $this->report_model->getSummaryEcbsReportData('order', $filters);
+$model_data_order_osc = $this->report_model->getSummaryEcbsOscReportData('order', $filters);
 
-$model_data_over_app = $this->report_model->getSummaryEcbsReportData('over');
-$model_data_over_osc = $this->report_model->getSummaryEcbsOscReportData('over');
+$model_data_over_app = $this->report_model->getSummaryEcbsReportData('over', $filters);
+$model_data_over_osc = $this->report_model->getSummaryEcbsOscReportData('over', $filters);
 
 // Calculate totals for each section
 function calculateTotals($data) {
