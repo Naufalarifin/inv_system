@@ -911,7 +911,7 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                 </table>
             </div>
         </div>
-    </div>
+</div>
 
     <!-- Vertical Separator -->
     <div class="table-separator"></div>
