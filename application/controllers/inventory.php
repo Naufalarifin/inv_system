@@ -971,8 +971,23 @@ class Inventory extends CI_Controller {
                 if ($report_query->num_rows() > 0) {
                     // Update existing record
                     $report_data = $report_query->row_array();
+                    
+                    // Calculate order and over based on the new on_pms value
+                    $current_stock = intval(isset($report_data['stock']) ? $report_data['stock'] : 0);
+                    $current_needs = $this->report_model->calculateNeeds($week_data, $effective_id_dvc, $ukuran, $warna, $status);
+                    
+                    // Calculate order and over using helper methods
+                    $order = $this->report_model->calculateOrder($current_needs, $stock, $current_stock);
+                    $over = $this->report_model->calculateOver($current_needs, $stock, $current_stock);
+                    
+                    $update_data = array(
+                        'on_pms' => $stock,
+                        'order' => $order,
+                        'over' => $over
+                    );
+                    
                     $this->db->where('id_pms', $report_data['id_pms']);
-                    $update_result = $this->db->update('inv_report', array('on_pms' => $stock));
+                    $update_result = $this->db->update('inv_report', $update_data);
                     
                     if ($update_result) {
                         $success_count++;
@@ -984,19 +999,43 @@ class Inventory extends CI_Controller {
                     // Create new record - first generate the base data
                     $this->report_model->upsertInvReport($id_week, $effective_id_dvc, $ukuran, $warna, $status, $week_data);
                     
-                    // Now update the on_pms value
+                    // Get the generated record to calculate order and over
+                    $this->db->select('id_pms, stock');
+                    $this->db->from('inv_report');
                     $this->db->where('id_week', $id_week);
                     $this->db->where('id_dvc', $effective_id_dvc);
                     $this->db->where('dvc_size', $ukuran);
                     $this->db->where('dvc_col', $warna);
                     $this->db->where('dvc_qc', $status);
-                    $update_result = $this->db->update('inv_report', array('on_pms' => $stock));
+                    $new_record = $this->db->get()->row_array();
                     
-                    if ($update_result) {
-                        $success_count++;
+                    if ($new_record) {
+                        // Calculate order and over
+                        $current_stock = intval(isset($new_record['stock']) ? $new_record['stock'] : 0);
+                        $current_needs = $this->report_model->calculateNeeds($week_data, $effective_id_dvc, $ukuran, $warna, $status);
+                        
+                        // Calculate order and over using helper methods
+                        $order = $this->report_model->calculateOrder($current_needs, $stock, $current_stock);
+                        $over = $this->report_model->calculateOver($current_needs, $stock, $current_stock);
+                        
+                        $update_data = array(
+                            'on_pms' => $stock,
+                            'order' => $order,
+                            'over' => $over
+                        );
+                        
+                        $this->db->where('id_pms', $new_record['id_pms']);
+                        $update_result = $this->db->update('inv_report', $update_data);
+                        
+                        if ($update_result) {
+                            $success_count++;
+                        } else {
+                            $error_count++;
+                            $errors[] = "Failed to create/update on_pms for item '$kodeAlat'";
+                        }
                     } else {
                         $error_count++;
-                        $errors[] = "Failed to create/update on_pms for item '$kodeAlat'";
+                        $errors[] = "Failed to create base record for item '$kodeAlat'";
                     }
                 }
             }

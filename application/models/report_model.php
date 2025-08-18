@@ -469,24 +469,41 @@ class Report_model extends CI_Model {
 
 
     public function getInventoryReportData($tech, $type, $filters = array()) {
+        // Aggregate by week + device code + size + color + qc, then compute order/over from the sums
         $this->db->select('
-            ir.id_pms, ir.id_week, ir.id_dvc, ir.dvc_size, ir.dvc_col, ir.dvc_qc,
-            ir.stock, ir.on_pms, ir.needs, ir.order, ir.over,
-            iw.date_start, iw.date_finish, iw.period_y, iw.period_m, iw.period_w,
-            id.dvc_code, id.dvc_name, id.dvc_tech, id.dvc_type
-        ');
+            MIN(ir.id_pms) AS id_pms,
+            ir.id_week,
+            id.dvc_code,
+            MIN(id.dvc_name) AS dvc_name,
+            MIN(id.dvc_tech) AS dvc_tech,
+            MIN(id.dvc_type) AS dvc_type,
+            ir.dvc_size,
+            ir.dvc_col,
+            ir.dvc_qc,
+            SUM(ir.stock) AS stock,
+            SUM(ir.on_pms) AS on_pms,
+            SUM(ir.needs) AS needs,
+            iw.date_start, iw.date_finish, iw.period_y, iw.period_m, iw.period_w', false);
+        // Computed fields: order and over from aggregated sums
+        $this->db->select('GREATEST(0, (SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock))) AS `order`,
+                           (CASE WHEN (SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock)) < 0
+                                 THEN ABS(SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock))
+                                 ELSE 0 END) AS `over`', false);
+
         $this->db->from('inv_report ir');
         $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
         $this->db->join('inv_dvc id', 'ir.id_dvc = id.id_dvc', 'left');
+
+        // Filters for tech/type and active devices
         $this->db->group_start();
         if ($tech !== null) $this->db->where('id.dvc_tech', $tech);
         if ($type !== null) $this->db->where('id.dvc_type', $type);
         $this->db->group_end();
         $this->db->where('id.status', '0');
-        
-        // Apply filters
+
+        // Apply optional filters
         $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
-        
+
         if (isset($filters['device_search']) && $filters['device_search']) {
             $search_term = $this->db->escape_like_str($filters['device_search']);
             $this->db->group_start()
@@ -494,13 +511,26 @@ class Report_model extends CI_Model {
                      ->or_like('id.dvc_code', $search_term)
                      ->group_end();
         }
-        
+
         $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
         $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
         $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
-        
-        $this->db->order_by('iw.period_y DESC, iw.period_m DESC, iw.period_w ASC, id.dvc_priority ASC, ir.dvc_size ASC, ir.dvc_col ASC, ir.dvc_qc ASC');
-        
+
+        // Group by week + device code + size + color + qc and week period columns
+        $this->db->group_by('ir.id_week');
+        $this->db->group_by('id.dvc_code');
+        $this->db->group_by('ir.dvc_size');
+        $this->db->group_by('ir.dvc_col');
+        $this->db->group_by('ir.dvc_qc');
+        $this->db->group_by('iw.date_start');
+        $this->db->group_by('iw.date_finish');
+        $this->db->group_by('iw.period_y');
+        $this->db->group_by('iw.period_m');
+        $this->db->group_by('iw.period_w');
+
+        // Order
+        $this->db->order_by('iw.period_y DESC, iw.period_m DESC, iw.period_w ASC, id.dvc_code ASC, ir.dvc_size ASC, ir.dvc_col ASC, ir.dvc_qc ASC');
+
         $query = $this->db->get();
         return $query->result_array();
     }
@@ -760,7 +790,7 @@ class Report_model extends CI_Model {
         return intval($result['stock_count']);
     }
 
-    private function calculateNeeds($week, $id_dvc, $size, $color, $qc) {
+    public function calculateNeeds($week, $id_dvc, $size, $color, $qc) {
         // Only apply needs to current and future weeks; past weeks get 0
         if (!$this->isWeekActiveOrFuture($week)) {
             return 0;
@@ -805,6 +835,21 @@ class Report_model extends CI_Model {
         } else {
             $this->db->where('dvc_col', $color);
         }
+    }
+
+    /**
+     * Calculate order value: needs - on_pms - stock (minimum 0)
+     */
+    public function calculateOrder($needs, $on_pms, $stock) {
+        return max(0, $needs - $on_pms - $stock);
+    }
+
+    /**
+     * Calculate over value: if (needs - on_pms - stock) < 0, take positive value, else 0
+     */
+    public function calculateOver($needs, $on_pms, $stock) {
+        $calculation = $needs - $on_pms - $stock;
+        return ($calculation < 0) ? abs($calculation) : 0;
     }
     
 
