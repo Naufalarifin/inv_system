@@ -36,7 +36,7 @@
             <div id="toolbar_right" class="flex items-center gap-2">
                 <!-- Search, Filter, dan Export di kanan -->
                 <div class="input-group input-sm">
-                    <input class="input input-sm" placeholder="Search Device Name..." type="text" id="device_search" />
+                    <input class="input input-sm" placeholder="Search Device Name..." type="text" id="device_search" value="<?php echo isset($current_filters['device_search']) ? htmlspecialchars($current_filters['device_search']) : ''; ?>" />
                     <span class="btn btn-light btn-sm" onclick="openModal_report('modal_filter_report')">Filter</span>
                     <span class="btn btn-primary btn-sm" onclick="applyFilters()">Search</span>
                 </div>
@@ -47,10 +47,10 @@
         </div>
         <div id="show_summary_report" style="display:block;">
             <div id="summary_ecbs_wrapper" style="display:block;">
-                <?php $this->load->view('report/report/summary_ecbs'); ?>
+                <?php $this->load->view('report/report/summary_ecbs', array('current_week' => isset($current_week)?$current_week:null, 'current_filters' => isset($current_filters)?$current_filters:array())); ?>
             </div>
             <div id="summary_ecct_wrapper" style="display:none;">
-                <?php $this->load->view('report/report/summary_ecct'); ?>
+                <?php $this->load->view('report/report/summary_ecct', array('current_week' => isset($current_week)?$current_week:null, 'current_filters' => isset($current_filters)?$current_filters:array())); ?>
             </div>
         </div>
         <div id="show_data_report" style="display:none;"></div>
@@ -75,7 +75,7 @@
                 <?php if (isset($available_years) && is_array($available_years)): ?>
                     <?php foreach ($available_years as $year_data): ?>
                         <?php if (!isset($current_week['period_y']) || $year_data['year'] != $current_week['period_y']): ?>
-                            <option value="<?php echo $year_data['year']; ?>" <?php echo (isset($current_filters['year']) && $current_filters['year'] == $year_data['year']) ? 'selected' : ''; ?>>
+                            <option value="<?php echo $year_data['year']; ?>" <?php echo (!empty($current_filters['year']) && $current_filters['year'] == $year_data['year']) ? 'selected' : ''; ?>>
                                 <?php echo $year_data['year']; ?>
                             </option>
                         <?php endif; ?>
@@ -96,7 +96,7 @@
                 <?php if (isset($available_months) && is_array($available_months)): ?>
                     <?php foreach ($available_months as $month_data): ?>
                         <?php if (!isset($current_week['period_m']) || $month_data['month'] != $current_week['period_m']): ?>
-                            <option value="<?php echo $month_data['month']; ?>" <?php echo (isset($current_filters['month']) && $current_filters['month'] == $month_data['month']) ? 'selected' : ''; ?>>
+                            <option value="<?php echo $month_data['month']; ?>" <?php echo (!empty($current_filters['month']) && $current_filters['month'] == $month_data['month']) ? 'selected' : ''; ?>>
                                 <?php echo $month_data['month']; ?>
                             </option>
                         <?php endif; ?>
@@ -117,7 +117,7 @@
                 <?php if (isset($available_weeks) && is_array($available_weeks)): ?>
                     <?php foreach ($available_weeks as $week_data): ?>
                         <?php if (!isset($current_week['period_w']) || $week_data['week'] != $current_week['period_w']): ?>
-                            <option value="<?php echo $week_data['week']; ?>" <?php echo (isset($current_filters['week']) && $current_filters['week'] == $week_data['week']) ? 'selected' : ''; ?>>
+                            <option value="<?php echo $week_data['week']; ?>" <?php echo (!empty($current_filters['week']) && $current_filters['week'] == $week_data['week']) ? 'selected' : ''; ?>>
                                 Week <?php echo $week_data['week']; ?>
                             </option>
                         <?php endif; ?>
