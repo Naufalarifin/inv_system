@@ -424,7 +424,12 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) {
+                        ?>
+                        <tr>
+                            
+                        </tr>
+                        <?php } ?>
                         <?php
                         } ?>
                     </tbody>
@@ -632,7 +637,12 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) {
+                        ?>
+                        <tr>
+                            
+                        </tr>
+                        <?php } ?>
                         <?php
                         } ?>
                     </tbody>
@@ -840,7 +850,12 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) {
+                        ?>
+                        <tr>
+                            
+                        </tr>
+                        <?php } ?>
                         <?php
                         } ?>
                     </tbody>
@@ -1048,7 +1063,12 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) {
+                        ?>
+                        <tr>
+                            
+                        </tr>
+                        <?php } ?>
                         <?php
                         } ?>
                     </tbody>
