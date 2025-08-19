@@ -264,7 +264,6 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                     <thead>
                         <tr>
                             <th align="center">No</th>
-                            <th align="center">Oscillator</th>
                             <th align="center">Kode</th>
                             <th align="center">Subtotal</th>
                             <th align="center">%</th>
@@ -280,7 +279,6 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         ?>
                         <tr>
                             <td align="center"><?php echo $osc_row_no++; ?></td>
-                            <td align="left"><?php echo htmlspecialchars($osc_item['dvc_name']); ?></td>
                             <td align="center"><?php echo htmlspecialchars($osc_item['dvc_code']); ?></td>
                             <td align="center"><strong><?php echo $subtotal; ?></strong></td>
                             <td align="center"><?php echo $percentage; ?>%</td>
@@ -473,7 +471,6 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                     <thead>
                         <tr>
                             <th align="center">No</th>
-                            <th align="center">Oscillator</th>
                             <th align="center">Kode</th>
                             <th align="center">Subtotal</th>
                             <th align="center">%</th>
@@ -489,7 +486,6 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         ?>
                         <tr>
                             <td align="center"><?php echo $osc_row_no++; ?></td>
-                            <td align="left"><?php echo htmlspecialchars($osc_item['dvc_name']); ?></td>
                             <td align="center"><?php echo htmlspecialchars($osc_item['dvc_code']); ?></td>
                             <td align="center"><strong><?php echo $subtotal; ?></strong></td>
                             <td align="center"><?php echo $percentage; ?>%</td>

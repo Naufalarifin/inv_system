@@ -424,7 +424,7 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) { /* no rows when empty, keep tbody empty like ECCT */ } ?>
                         <?php
                         } ?>
                     </tbody>
@@ -632,7 +632,7 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) { /* no rows when empty, keep tbody empty like ECCT */ } ?>
                         <?php
                         } ?>
                     </tbody>
@@ -840,7 +840,7 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) { /* no rows when empty, keep tbody empty like ECCT */ } ?>
                         <?php
                         } ?>
                     </tbody>
@@ -1048,7 +1048,7 @@ $is_ecbs = true; // Since this is summary_ecbs.php
                         <?php
                                 }
                             }
-                            if ($row_display_no == 1) { /* keep tbody empty like ECCT */ } ?>
+                            if ($row_display_no == 1) { /* no rows when empty, keep tbody empty like ECCT */ } ?>
                         <?php
                         } ?>
                     </tbody>
