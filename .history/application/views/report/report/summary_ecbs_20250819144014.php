@@ -93,7 +93,9 @@ $grand_total_stock_osc = calculateOscTotal($model_data_stock_osc);
 $is_ecbs = true; // Since this is summary_ecbs.php
 ?>
 
- 
+<div class="filter-info" style="margin:10px 0;">
+    <strong>NEEDS</strong>
+</div>
 
 <!-- STOCK Section -->
 <div class="filter-info" style="margin:30px 0 10px 0;">
@@ -301,11 +303,6 @@ $is_ecbs = true; // Since this is summary_ecbs.php
             </div>
         </div>
     </div>
-</div>
-
-<!-- NEEDS Section -->
-<div class="filter-info" style="margin:30px 0 10px 0;">
-    <strong>NEEDS</strong>
 </div>
 
 <div class="tables-container">

@@ -961,7 +961,7 @@ class Report_model extends CI_Model {
     public function getSummaryEcbsReportData($report_type = 'needs', $filters = array()) {
         try {
             // Validate report type
-            $valid_types = array('stock', 'needs', 'order', 'on_pms', 'over');
+            $valid_types = array('needs', 'order', 'on_pms', 'over');
             if (!in_array($report_type, $valid_types)) {
                 log_message('error', 'Invalid report type: ' . $report_type);
                 return array();
@@ -973,14 +973,6 @@ class Report_model extends CI_Model {
             $this->db->where('dvc_tech', 'ecbs');
             $this->db->where('dvc_type', 'APP');
             $this->db->where('status', '0');
-            // Apply device search filter
-            if (isset($filters['device_search']) && $filters['device_search']) {
-                $search_term = $this->db->escape_like_str($filters['device_search']);
-                $this->db->group_start()
-                         ->like('dvc_name', $search_term)
-                         ->or_like('dvc_code', $search_term)
-                         ->group_end();
-            }
             $this->db->order_by('dvc_priority', 'ASC');
             
             $devices_query = $this->db->get();
@@ -991,16 +983,14 @@ class Report_model extends CI_Model {
                     $device_data = $device;
                     
                     // Get report data for this device
-                    $this->db->select('ir.dvc_size, ir.dvc_col, ir.`' . $report_type . '` as qty');
-                    $this->db->from('inv_report ir');
-                    $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
-                    // Apply filters on period (consistent with detail)
-                    $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
-                    $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
-                    $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
-                    $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
-                    $this->db->where('ir.id_dvc', $device['id_dvc']);
-                    $this->db->where('ir.`' . $report_type . '` >', 0); // Only get items with quantity > 0
+                    $this->db->select('dvc_size, dvc_col, `' . $report_type . '` as qty');
+                    $this->db->from('inv_report');
+                    // Apply filters on period
+                    if (isset($filters['id_week']) && $filters['id_week']) {
+                        $this->db->where('id_week', $filters['id_week']);
+                    }
+                    $this->db->where('id_dvc', $device['id_dvc']);
+                    $this->db->where('`' . $report_type . '` >', 0); // Only get items with quantity > 0
                     
                     $report_query = $this->db->get();
                     
@@ -1075,7 +1065,7 @@ class Report_model extends CI_Model {
     public function getSummaryEcbsOscReportData($report_type = 'needs', $filters = array()) {
         try {
             // Validate report type
-            $valid_types = array('stock', 'needs', 'order', 'on_pms', 'over');
+            $valid_types = array('needs', 'order', 'on_pms', 'over');
             if (!in_array($report_type, $valid_types)) {
                 log_message('error', 'Invalid report type: ' . $report_type);
                 return array();
@@ -1087,14 +1077,6 @@ class Report_model extends CI_Model {
             $this->db->where('dvc_tech', 'ecbs');
             $this->db->where_in('dvc_type', array('OSC', 'ACC'));
             $this->db->where('status', '0');
-            // Apply device search filter
-            if (isset($filters['device_search']) && $filters['device_search']) {
-                $search_term = $this->db->escape_like_str($filters['device_search']);
-                $this->db->group_start()
-                         ->like('dvc_name', $search_term)
-                         ->or_like('dvc_code', $search_term)
-                         ->group_end();
-            }
             $this->db->order_by('dvc_priority', 'ASC');
             
             $devices_query = $this->db->get();
@@ -1105,16 +1087,13 @@ class Report_model extends CI_Model {
                     $device_data = $device;
                     
                     // Sum report metric for this device (no sizes/colors for OSC/ACC summary)
-                    $this->db->select('SUM(ir.`' . $report_type . '`) as total_qty');
-                    $this->db->from('inv_report ir');
-                    $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
-                    // Apply filters on period (consistent with detail)
-                    $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
-                    $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
-                    $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
-                    $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
-                    $this->db->where('ir.id_dvc', $device['id_dvc']);
-                    $this->db->where('ir.`' . $report_type . '` >', 0);
+                    $this->db->select('SUM(`' . $report_type . '`) as total_qty');
+                    $this->db->from('inv_report');
+                    if (isset($filters['id_week']) && $filters['id_week']) {
+                        $this->db->where('id_week', $filters['id_week']);
+                    }
+                    $this->db->where('id_dvc', $device['id_dvc']);
+                    $this->db->where('`' . $report_type . '` >', 0);
                     
                     $report_query = $this->db->get();
                     $total_qty = 0;
