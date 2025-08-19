@@ -1141,6 +1141,11 @@ function setVisibilityForMode() {
     var det = document.getElementById('show_data_report');
     if (sum) sum.style.display = isSummary ? 'block' : 'none';
     if (det) det.style.display = isSummary ? 'none' : 'block';
+    // Toolbar controls (right side)
+    var summaryControls = document.getElementById('summary_controls');
+    var detailControls = document.getElementById('detail_controls');
+    if (summaryControls) summaryControls.style.display = isSummary ? 'inline-flex' : 'none';
+    if (detailControls) detailControls.style.display = isSummary ? 'none' : 'inline-flex';
 }
 
 function toggleViewMode() {
@@ -1193,7 +1198,7 @@ function showData() {
     var link = window.location.origin + '/cdummy/inventory/inv_report_data/report_' + selectedTech + '_' + selectedType + '_show';
     
     // Add current search parameters
-    var deviceSearch = document.getElementById('device_search') ? document.getElementById('device_search').value : '';
+    var deviceSearch = (viewMode === 'detail' && document.getElementById('device_search')) ? document.getElementById('device_search').value : '';
     var year = document.getElementById('filter_year') ? document.getElementById('filter_year').value : '';
     var month = document.getElementById('filter_month') ? document.getElementById('filter_month').value : '';
     var week = document.getElementById('filter_week') ? document.getElementById('filter_week').value : '';
@@ -1299,7 +1304,22 @@ function proceedWithGeneration() {
 
 function showInputPmsModal() {
     // Use the same custom modal system as Filter
-    openModal_report('modal_input_pms');
+    // Before opening, check current week's status to warn if on_pms already filled
+    fetch(window.location.origin + '/cdummy/inventory/check_on_pms_status')
+        .then(r => r.json())
+        .then(res => {
+            if (res && res.success && res.has_report) {
+                if (res.has_on_pms) {
+                    showToast('On PMS untuk minggu ini sudah diinput (' + res.count_on_pms + ' baris). Menginput ulang akan meng-overwrite nilai On PMS.', 'warning');
+                } else {
+                    showToast('Report minggu ini sudah tergenerate. Silakan input On PMS.', 'success');
+                }
+            }
+        })
+        .catch(() => {})
+        .finally(() => {
+            openModal_report('modal_input_pms');
+        });
     
     // Add event listener for preview
     const textarea = document.getElementById('massive_pms_input');
@@ -1379,62 +1399,38 @@ function updatePmsPreview() {
     const lines = input.split('\n').filter(line => line.trim());
     let previewHTML = '<div style="margin-bottom: 10px;"><strong>Preview Data:</strong></div>';
     
-    const processedData = [];
-    const dataCount = {};
+    // Aggregate quantities per key (kode|ukuran|warna|status)
+    const sumByKey = {};
+    const metaByKey = {};
     
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
         const parts = line.split('\t').map(part => part.trim());
-        
         if (parts.length >= 4) {
             const kodeAlat = parts[0] || '';
             const ukuran = parts[1] || '';
             const warna = parts[2] || '';
             const status = parts[3] || '';
-            const stock = parts.length >= 5 ? parts[4] : '1';
-            
-            // Create unique key for counting duplicates
+            let qty = 1;
+            if (parts.length >= 5 && parts[4] !== '') {
+                qty = parseInt(parts[4], 10);
+                if (!isFinite(qty) || qty <= 0) qty = 1;
+            }
             const key = `${kodeAlat}|${ukuran}|${warna}|${status}`;
-            dataCount[key] = (dataCount[key] || 0) + 1;
-            
-            processedData.push({
-                kodeAlat,
-                ukuran,
-                warna,
-                status,
-                stock: stock === '' ? '1' : stock,
-                originalStock: stock
-            });
+            sumByKey[key] = (sumByKey[key] || 0) + qty;
+            if (!metaByKey[key]) {
+                metaByKey[key] = { kodeAlat, ukuran, warna, status };
+            }
         }
     });
     
-    // Calculate final stock for duplicates
-    const finalData = [];
-    processedData.forEach(item => {
-        const key = `${item.kodeAlat}|${item.ukuran}|${item.warna}|${item.status}`;
-        const count = dataCount[key];
-        
-        if (count > 1) {
-            // If there are duplicates, use the count as stock
-            item.finalStock = count;
-        } else {
-            // If no duplicates, use original stock or 1
-            item.finalStock = item.originalStock === '' ? 1 : parseInt(item.originalStock) || 1;
-        }
-        
-        finalData.push(item);
-    });
-    
-    // Remove duplicates for display
-    const uniqueData = [];
-    const seen = new Set();
-    
-    finalData.forEach(item => {
-        const key = `${item.kodeAlat}|${item.ukuran}|${item.warna}|${item.status}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniqueData.push(item);
-        }
-    });
+    // Build unique data rows for preview
+    const uniqueData = Object.keys(sumByKey).map(key => ({
+        kodeAlat: metaByKey[key].kodeAlat,
+        ukuran: metaByKey[key].ukuran,
+        warna: metaByKey[key].warna,
+        status: metaByKey[key].status,
+        finalStock: sumByKey[key]
+    }));
     
     if (uniqueData.length === 0) {
         previewHTML += '<div style="color: red;">Format data tidak valid. Pastikan minimal 4 kolom dipisahkan dengan Tab.</div>';
@@ -1467,64 +1463,36 @@ function saveMassiveOnPms() {
         return;
     }
     
-    // Process input data
+    // Process input data - aggregate quantities per key
     const lines = input.split('\n').filter(line => line.trim());
-    const processedData = [];
-    const dataCount = {};
+    const sumByKey = {};
+    const metaByKey = {};
     
     lines.forEach(line => {
         const parts = line.split('\t').map(part => part.trim());
-        
         if (parts.length >= 4) {
             const kodeAlat = parts[0] || '';
             const ukuran = parts[1] || '';
             const warna = parts[2] || '';
             const status = parts[3] || '';
-            const stock = parts.length >= 5 ? parts[4] : '';
-            
-            // Create unique key for counting duplicates
-            const key = `${kodeAlat}|${ukuran}|${warna}|${status}`;
-            dataCount[key] = (dataCount[key] || 0) + 1;
-            
-            processedData.push({
-                kodeAlat,
-                ukuran,
-                warna,
-                status,
-                originalStock: stock
-            });
-        }
-    });
-    
-    // Calculate final stock for duplicates and create unique data
-    const uniqueData = [];
-    const seen = new Set();
-    
-    processedData.forEach(item => {
-        const key = `${item.kodeAlat}|${item.ukuran}|${item.warna}|${item.status}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            
-            const count = dataCount[key];
-            let finalStock;
-            
-            if (count > 1) {
-                // If there are duplicates, use the count as stock
-                finalStock = count;
-            } else {
-                // If no duplicates, use original stock or 1
-                finalStock = item.originalStock === '' ? 1 : parseInt(item.originalStock) || 1;
+            let qty = 1;
+            if (parts.length >= 5 && parts[4] !== '') {
+                qty = parseInt(parts[4], 10);
+                if (!isFinite(qty) || qty <= 0) qty = 1;
             }
-            
-            uniqueData.push({
-                kodeAlat: item.kodeAlat,
-                ukuran: item.ukuran,
-                warna: item.warna,
-                status: item.status,
-                stock: finalStock
-            });
+            const key = `${kodeAlat}|${ukuran}|${warna}|${status}`;
+            sumByKey[key] = (sumByKey[key] || 0) + qty;
+            if (!metaByKey[key]) metaByKey[key] = { kodeAlat, ukuran, warna, status };
         }
     });
+    
+    const uniqueData = Object.keys(sumByKey).map(key => ({
+        kodeAlat: metaByKey[key].kodeAlat,
+        ukuran: metaByKey[key].ukuran,
+        warna: metaByKey[key].warna,
+        status: metaByKey[key].status,
+        stock: sumByKey[key]
+    }));
     
     if (uniqueData.length === 0) {
         showToast('No valid data found. Please check the format.', 'error');
@@ -1551,7 +1519,30 @@ function saveMassiveOnPms() {
         if (data.success) {
             showToast('On PMS data saved successfully!', 'success');
             closeInputPmsModal();
-            showData(); // Refresh the table
+            // Refresh detail view if active, else refresh summary wrapper only (no full reload)
+            if (viewMode === 'detail') {
+                showData();
+            } else {
+                // Refresh both summary wrappers (ECBS and ECCT) so user can switch tab tanpa reload
+                ['ecbs','ecct'].forEach(function(tech){
+                    var params = [];
+                    params.push('tech=' + encodeURIComponent(tech));
+                    var query = '?' + params.join('&');
+                    var link = window.location.origin + '/cdummy/inventory/inv_report_summary' + query;
+                    var targetId = tech === 'ecbs' ? 'summary_ecbs_wrapper' : 'summary_ecct_wrapper';
+                    var container = document.getElementById(targetId);
+                    if (container) {
+                        // Only show loader in the currently visible wrapper
+                        var showLoader = (tech === selectedTech);
+                        if (showLoader) container.innerHTML = '<div style="text-align:center;padding:16px;">Updating...</div>';
+                        if (typeof window.$ !== 'undefined') {
+                            window.$('#' + targetId).load(link);
+                        } else {
+                            fetch(link).then(function(r){return r.text()}).then(function(html){ container.innerHTML = html; });
+                        }
+                    }
+                });
+            }
         } else {
             showToast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
         }
@@ -1564,6 +1555,34 @@ function saveMassiveOnPms() {
 
 // Apply filters function
 function applyFilters() {
+    closeModal('modal_filter_report');
+    if (viewMode === 'detail') {
+        showData();
+        return;
+    }
+    // Summary mode: load only the active summary wrapper without changing URL
+    var params = [];
+    var deviceSearch = (viewMode === 'detail' && document.getElementById('device_search')) ? document.getElementById('device_search').value : '';
+    var year = document.getElementById('filter_year') ? document.getElementById('filter_year').value : '';
+    var month = document.getElementById('filter_month') ? document.getElementById('filter_month').value : '';
+    var week = document.getElementById('filter_week') ? document.getElementById('filter_week').value : '';
+    params.push('tech=' + encodeURIComponent(selectedTech));
+    if (deviceSearch) params.push('device_search=' + encodeURIComponent(deviceSearch));
+    if (year) params.push('year=' + encodeURIComponent(year));
+    if (month) params.push('month=' + encodeURIComponent(month));
+    if (week) params.push('week=' + encodeURIComponent(week));
+    var query = params.length ? ('?' + params.join('&')) : '';
+    var link = window.location.origin + '/cdummy/inventory/inv_report_summary' + query;
+    var targetId = selectedTech === 'ecbs' ? 'summary_ecbs_wrapper' : 'summary_ecct_wrapper';
+    var container = document.getElementById(targetId);
+    if (container) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;">Loading...</div>';
+        if (typeof window.$ !== 'undefined') {
+            window.$('#' + targetId).load(link);
+        } else {
+            fetch(link).then(function(r){return r.text()}).then(function(html){ container.innerHTML = html; });
+        }
+    }
 	closeModal('modal_filter_report');
 	if (viewMode === 'detail') {
 		showData();
@@ -1612,15 +1631,10 @@ function setupAutoSearch() {
     
     if (searchInput) {
         searchInput.removeEventListener("input", handleAutoSearch);
-        
         searchInput.addEventListener("input", handleAutoSearch);
-        
-        // Keep entr key functionality
         searchInput.addEventListener("keyup", function(event) {
             if (event.key === 'Enter') {
-                if (searchTimeout) {
-                    clearTimeout(searchTimeout);
-                }
+                if (searchTimeout) { clearTimeout(searchTimeout); }
                 showData();
             }
         });

@@ -4,7 +4,7 @@ $voh_colors = array(
     array('name' => 'Navy', 'hex' => '#001f5b'),
     array('name' => 'Maroon', 'hex' => '#800000'),
     array('name' => 'Army', 'hex' => '#4b5320'),
-    array('name' => 'Dark Grey', 'hex' => '#A9A9A9'),
+    array('name' => 'Dark Gray', 'hex' => '#A9A9A9'),
     array('name' => 'Grey', 'hex' => '#808080'),
     array('name' => 'Custom', 'hex' => '#ffffff'),
 );
@@ -154,7 +154,7 @@ foreach ($regular_items as $item) {
                                          if ($is_ecbs) {
                                              $item_color = 'Black'; // ECBS + APP = Black
                                          } else {
-                                             $item_color = 'Dark Grey'; // ECCT + APP = Dark Grey
+                                             $item_color = 'Dark Gray'; // ECCT + APP = Dark Grey
                                          }
                                      }
                                      

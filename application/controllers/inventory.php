@@ -940,9 +940,9 @@ class Inventory extends CI_Controller {
                 $status = isset($item['status']) ? strtoupper(trim($item['status'])) : '';
                 $stock = isset($item['stock']) ? intval($item['stock']) : 1;
                 
-                // Resolve id_dvc for this row if not provided globally
-                $effective_id_dvc = $id_dvc;
-                if (!$effective_id_dvc && $kodeAlat !== '') {
+                // Resolve id_dvc per-row using device code (prefer exact code mapping per item)
+                $effective_id_dvc = null;
+                if ($kodeAlat !== '') {
                     $this->db->select('id_dvc');
                     $this->db->from('inv_dvc');
                     $this->db->where('status', '0');
@@ -952,6 +952,8 @@ class Inventory extends CI_Controller {
                         $effective_id_dvc = intval($dvc_row['id_dvc']);
                     }
                 }
+                // Fallback to globally provided id_dvc if per-row resolution fails
+                if (!$effective_id_dvc && $id_dvc) { $effective_id_dvc = $id_dvc; }
 
                 // Validate required fields
                 if (empty($kodeAlat) || empty($ukuran) || empty($status)) {
@@ -977,13 +979,32 @@ class Inventory extends CI_Controller {
                     $stock = 1;
                 }
                 
-                // Check if inv_report record exists, if not create it
+                // Normalize color by device profile to avoid Grey/Gray mismatch
+                $warna = $this->report_model->normalizeColorForDevice($effective_id_dvc, $warna);
+                // ECCT APP often stores only 'Dark Gray' and ignores other variants for reporting
+                // Ensure empty color for OSC is handled as empty string
+                if ($status === 'LN' || $status === 'DN') {
+                    // leave as-is, qc good
+                }
+
+                // Check if inv_report record exists, if not create it (tolerant color matching)
                 $this->db->select('id_pms, on_pms');
                 $this->db->from('inv_report');
                 $this->db->where('id_week', $id_week);
                 $this->db->where('id_dvc', $effective_id_dvc);
                 $this->db->where('dvc_size', $ukuran);
-                $this->db->where('dvc_col', $warna);
+                $this->db->group_start();
+                $syns = $this->report_model->getColorSynonyms($warna);
+                if (!empty($syns)) {
+                    $first = true;
+                    foreach ($syns as $col) {
+                        if ($first) { $this->db->where('dvc_col', $col); $first = false; }
+                        else { $this->db->or_where('dvc_col', $col); }
+                    }
+                } else {
+                    $this->db->where('dvc_col', $warna);
+                }
+                $this->db->group_end();
                 $this->db->where('dvc_qc', $status);
                 $report_query = $this->db->get();
                 
@@ -1015,18 +1036,56 @@ class Inventory extends CI_Controller {
                         $errors[] = "Failed to update on_pms for item '$kodeAlat'";
                     }
                 } else {
-                    // Create new record - first generate the base data
+                    // Create new record - ensure base exists even if all metrics are zero
                     $this->report_model->upsertInvReport($id_week, $effective_id_dvc, $ukuran, $warna, $status, $week_data);
                     
-                    // Get the generated record to calculate order and over
+                    // Ensure base record exists (fallback insert when upsert skipped due to all-zero metrics)
                     $this->db->select('id_pms, stock');
                     $this->db->from('inv_report');
                     $this->db->where('id_week', $id_week);
                     $this->db->where('id_dvc', $effective_id_dvc);
                     $this->db->where('dvc_size', $ukuran);
-                    $this->db->where('dvc_col', $warna);
+                    $this->db->group_start();
+                    $syns2 = $this->report_model->getColorSynonyms($warna);
+                    if (!empty($syns2)) {
+                        $first2 = true;
+                        foreach ($syns2 as $col2) {
+                            if ($first2) { $this->db->where('dvc_col', $col2); $first2 = false; }
+                            else { $this->db->or_where('dvc_col', $col2); }
+                        }
+                    } else {
+                        $this->db->where('dvc_col', $warna);
+                    }
+                    $this->db->group_end();
                     $this->db->where('dvc_qc', $status);
                     $new_record = $this->db->get()->row_array();
+                    
+                    if (!$new_record) {
+                        // Compute base metrics then insert base row
+                        $base_stock = $this->report_model->calculateStock($week_data, $effective_id_dvc, $ukuran, $warna, $status);
+                        $base_needs = $this->report_model->calculateNeeds($week_data, $effective_id_dvc, $ukuran, $warna, $status);
+                        $this->db->insert('inv_report', array(
+                            'id_week' => $id_week,
+                            'id_dvc' => $effective_id_dvc,
+                            'dvc_size' => $ukuran,
+                            'dvc_col' => $warna,
+                            'dvc_qc' => $status,
+                            'stock' => $base_stock,
+                            'on_pms' => 0,
+                            'needs' => $base_needs,
+                            'order' => 0,
+                            'over' => 0
+                        ));
+                        // Re-fetch after insert
+                        $this->db->select('id_pms, stock');
+                        $this->db->from('inv_report');
+                        $this->db->where('id_week', $id_week);
+                        $this->db->where('id_dvc', $effective_id_dvc);
+                        $this->db->where('dvc_size', $ukuran);
+                        $this->db->where('dvc_col', $warna);
+                        $this->db->where('dvc_qc', $status);
+                        $new_record = $this->db->get()->row_array();
+                    }
                     
                     if ($new_record) {
                         // Calculate order and over
@@ -1072,6 +1131,37 @@ class Inventory extends CI_Controller {
             
         } catch (Exception $e) {
             log_message('error', 'Save massive on pms error: ' . $e->getMessage());
+            return $this->_json_response(false, 'Error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Lightweight endpoint to check current week's inv_report/on_pms status
+     */
+    public function check_on_pms_status() {
+        try {
+            $current_week = $this->report_model->getCurrentWeekPeriod();
+            if (!$current_week || !isset($current_week['id_week'])) {
+                return $this->_json_response(false, 'No current week found');
+            }
+            $id_week = intval($current_week['id_week']);
+
+            $this->db->select('COUNT(*) AS cnt_rows, SUM(CASE WHEN on_pms > 0 THEN 1 ELSE 0 END) AS cnt_onpms', false);
+            $this->db->from('inv_report');
+            $this->db->where('id_week', $id_week);
+            $row = $this->db->get()->row_array();
+
+            $has_report = intval($row['cnt_rows']) > 0;
+            $has_on_pms = intval($row['cnt_onpms']) > 0;
+
+            return $this->_json_response(true, 'OK', array(
+                'id_week' => $id_week,
+                'has_report' => $has_report,
+                'has_on_pms' => $has_on_pms,
+                'count_rows' => intval($row['cnt_rows']),
+                'count_on_pms' => intval($row['cnt_onpms'])
+            ));
+        } catch (Exception $e) {
             return $this->_json_response(false, 'Error: ' . $e->getMessage());
         }
     }

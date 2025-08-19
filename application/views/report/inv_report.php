@@ -34,8 +34,11 @@
                 </div>
             </div>
             <div id="toolbar_right" class="flex items-center gap-2">
-                <!-- Search, Filter, dan Export di kanan -->
-                <div class="input-group input-sm">
+                <!-- Controls (summary vs detail) -->
+                <div id="summary_controls" class="input-group input-sm" style="display:inline-flex;">
+                    <span class="btn btn-light btn-sm" onclick="openModal_report('modal_filter_report')">Filter</span>
+                </div>
+                <div id="detail_controls" class="input-group input-sm" style="display:none;">
                     <input class="input input-sm" placeholder="Search Device Name..." type="text" id="device_search" value="<?php echo isset($current_filters['device_search']) ? htmlspecialchars($current_filters['device_search']) : ''; ?>" />
                     <span class="btn btn-light btn-sm" onclick="openModal_report('modal_filter_report')">Filter</span>
                     <span class="btn btn-primary btn-sm" onclick="applyFilters()">Search</span>
