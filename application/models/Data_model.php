@@ -118,7 +118,7 @@ class Data_model extends CI_Model {
             'Grey' => 'Grey',
             'Gray' => 'Grey',
             'Dark Gray' => 'Dark Gray',
-            'Dark Grey' => 'Dark Gray',
+            'Dark Gray' => 'Dark Gray',
             'Custom' => 'Custom',
             '-' => 'Custom',
             '' => 'Custom',

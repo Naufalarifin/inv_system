@@ -477,6 +477,7 @@ class Report_model extends CI_Model {
             MIN(id.dvc_name) AS dvc_name,
             MIN(id.dvc_tech) AS dvc_tech,
             MIN(id.dvc_type) AS dvc_type,
+            MIN(id.dvc_priority) AS dvc_priority,
             ir.dvc_size,
             ir.dvc_col,
             ir.dvc_qc,
@@ -519,6 +520,7 @@ class Report_model extends CI_Model {
         // Group by week + device code + size + color + qc and week period columns
         $this->db->group_by('ir.id_week');
         $this->db->group_by('id.dvc_code');
+        $this->db->group_by('id.dvc_priority');
         $this->db->group_by('ir.dvc_size');
         $this->db->group_by('ir.dvc_col');
         $this->db->group_by('ir.dvc_qc');
@@ -528,8 +530,8 @@ class Report_model extends CI_Model {
         $this->db->group_by('iw.period_m');
         $this->db->group_by('iw.period_w');
 
-        // Order
-        $this->db->order_by('iw.period_y DESC, iw.period_m DESC, iw.period_w ASC, id.dvc_code ASC, ir.dvc_size ASC, ir.dvc_col ASC, ir.dvc_qc ASC');
+        // Order - prioritize by dvc_priority ASC, then by other criteria
+        $this->db->order_by('id.dvc_priority ASC, iw.period_y DESC, iw.period_m DESC, iw.period_w ASC, id.dvc_code ASC, ir.dvc_size ASC, ir.dvc_col ASC, ir.dvc_qc ASC');
 
         $query = $this->db->get();
         return $query->result_array();
@@ -564,10 +566,10 @@ class Report_model extends CI_Model {
         // Determine colors based on device code and type
         if (stripos($device['dvc_code'], 'VOH') === 0) {
             // VOH devices have multiple colors
-            $colors = array('Dark Grey', 'Black', 'Grey', 'Navy', 'Army', 'Maroon', 'Custom');
+            $colors = array('Dark Gray', 'Black', 'Grey', 'Navy', 'Army', 'Maroon', 'Custom');
         } elseif ($device['dvc_tech'] == 'ecct' && $device['dvc_type'] == 'APP') {
             // ECCT APP devices
-            $colors = array('Dark Grey');
+            $colors = array('Dark Gray');
         } elseif ($device['dvc_tech'] == 'ecbs' && $device['dvc_type'] == 'APP') {
             // ECBS APP devices
             $colors = array('Black');
@@ -629,6 +631,11 @@ class Report_model extends CI_Model {
         $needs = $this->calculateNeeds($week_data, $id_dvc, $size, $color, $qc);
 
         if ($existing->num_rows() == 0) {
+            // For weekly generation, we still skip truly all-zero rows.
+            // However, stock calculation should already reflect items present by end-of-week.
+            if (intval($stock) === 0 && intval($needs) === 0) {
+                return false;
+            }
             return $this->db->insert('inv_report', array(
                 'id_week' => $id_week,
                 'id_dvc' => $id_dvc,
@@ -648,6 +655,7 @@ class Report_model extends CI_Model {
         $this->db->where('dvc_size', $size);
         $this->db->where('dvc_col', $color);
         $this->db->where('dvc_qc', $qc);
+        // Update existing; if both zero, set to zeros but keep record (to preserve history). Optional: you can delete instead.
         return $this->db->update('inv_report', array('stock' => $stock, 'needs' => $needs));
     }
 
@@ -767,26 +775,27 @@ class Report_model extends CI_Model {
         }
     }
 
-    private function calculateStock($week, $id_dvc, $size, $color, $qc) {
+    public function calculateStock($week, $id_dvc, $size, $color, $qc) {
+        // Count inventory IN as of the end of the current week, minus those that have OUT before or on the week finish day.
+        // Rules:
+        // - inv_in DATE <= date_finish (end of day)
+        // - inv_out is NULL (still in) OR inv_out DATE > date_finish (after the end day)
         $this->db->select('COUNT(*) as stock_count');
         $this->db->from('inv_act');
         $this->db->where('id_dvc', $id_dvc);
         // Apply uniform size/color filters
         $this->applySizeColorFilters($size, $color);
-        
         $this->db->where('dvc_qc', $qc);
-        
-        // inv_in must be within the week period [date_start, date_finish] (use < finish+1day to include full day)
-        $finish_plus_one = date('Y-m-d', strtotime($week['date_finish'] . ' +1 day'));
-        $this->db->where('inv_in >=', $week['date_start']);
+
+        $finish_day = date('Y-m-d', strtotime($week['date_finish']));
+        $finish_plus_one = date('Y-m-d', strtotime($finish_day . ' +1 day'));
+
         $this->db->where('inv_in <', $finish_plus_one);
-        
-        // inv_out must NOT be within the week period (or be null)
-        $this->db->where('(inv_out IS NULL OR inv_out < "' . $week['date_start'] . '" OR inv_out >= "' . $finish_plus_one . '")');
-        
+        // inv_out not yet happened by end-of-week: NULL or strictly after finish day (>= finish+1 day)
+        $this->db->where('(inv_out IS NULL OR inv_out >= "' . $finish_plus_one . '")');
+
         $query = $this->db->get();
         $result = $query->row_array();
-        
         return intval($result['stock_count']);
     }
 
@@ -833,8 +842,54 @@ class Report_model extends CI_Model {
             $this->db->or_where('dvc_col', '');
             $this->db->group_end();
         } else {
-            $this->db->where('dvc_col', $color);
+            // Apply tolerant color matching for Gray/Grey synonyms
+            $synonyms = $this->getColorSynonyms($color);
+            if (count($synonyms) > 1) {
+                $this->db->group_start();
+                foreach ($synonyms as $idx => $col) {
+                    if ($idx === 0) { $this->db->where('dvc_col', $col); }
+                    else { $this->db->or_where('dvc_col', $col); }
+                }
+                $this->db->group_end();
+            } else {
+                $this->db->where('dvc_col', $color);
+            }
         }
+    }
+
+    // Return tolerated synonyms for common Gray/Grey variants (case-insensitive)
+    public function getColorSynonyms($color) {
+        $c = trim(strtolower($color));
+        $c = preg_replace('/\s+/', ' ', $c);
+        if ($c === 'gray' || $c === 'grey') { return array('Grey', 'Gray'); }
+        if ($c === 'dark gray' || $c === 'dark grey' || $c === 'darkgray' || $c === 'darkgrey') {
+            return array('Dark Grey', 'Dark Gray');
+        }
+        return array($color);
+    }
+
+    // Normalize provided color to canonical form for the device (handles ECCT vs VOH differences)
+    public function normalizeColorForDevice($id_dvc, $color) {
+        $normalized = trim($color);
+        $this->db->select('dvc_code, dvc_tech, dvc_type');
+        $this->db->from('inv_dvc');
+        $this->db->where('id_dvc', $id_dvc);
+        $this->db->limit(1);
+        $row = $this->db->get()->row_array();
+        $lc = strtolower(preg_replace('/\s+/', ' ', $normalized));
+        if (!$row) { return $normalized; }
+        $isEcctApp = (strtolower($row['dvc_tech']) === 'ecct' && strtoupper($row['dvc_type']) === 'APP');
+        $isVoh = (stripos($row['dvc_code'], 'VOH') === 0);
+        if ($isEcctApp) {
+            if ($lc === 'dark grey' || $lc === 'darkgray' || $lc === 'dark grey ') { return 'Dark Gray'; }
+            if ($lc === 'grey' || $lc === 'gray') { return 'Dark Gray'; }
+        }
+        if ($isVoh) {
+            if ($lc === 'gray') { return 'Grey'; }
+            if ($lc === 'dark gray') { return 'Dark Grey'; }
+        }
+        // Default: title-case
+        return trim(ucwords($lc));
     }
 
     /**
@@ -855,12 +910,14 @@ class Report_model extends CI_Model {
 
 
     public function getCurrentWeekPeriod() {
+        // Compare by DATE so DATETIME values with time still match the calendar day
         $today = date('Y-m-d');
         
         $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
         $this->db->from('inv_week');
-        $this->db->where('date_start <=', $today);
-        $this->db->where('date_finish >=', $today);
+        // DATE() ensures comparison ignores time components
+        $this->db->where('DATE(date_start) <=', $today);
+        $this->db->where('DATE(date_finish) >=', $today);
         $this->db->limit(1);
         
         $query = $this->db->get();
@@ -869,9 +926,10 @@ class Report_model extends CI_Model {
             return $query->row_array();
         }
         
+        // Fallback: last finished week before today
         $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
         $this->db->from('inv_week');
-        $this->db->where('date_finish <=', $today);
+        $this->db->where('DATE(date_finish) <=', $today);
         $this->db->order_by('date_finish DESC');
         $this->db->limit(1);
         

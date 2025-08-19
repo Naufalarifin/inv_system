@@ -36,9 +36,10 @@ foreach ($rows as $r) {
     if (strtoupper($r['dvc_type']) !== 'APP') continue;
     $code = $r['dvc_code'];
     $name = $r['dvc_name'];
+    $priority = isset($r['dvc_priority']) ? (int)$r['dvc_priority'] : 999;
     $size = strtoupper(trim($r['dvc_size'])) ?: '-';
     if (!isset($appIndex[$code])) {
-        $appIndex[$code] = array('dvc_code' => $code, 'dvc_name' => $name, 'sizes' => array());
+        $appIndex[$code] = array('dvc_code' => $code, 'dvc_name' => $name, 'dvc_priority' => $priority, 'sizes' => array());
     }
     if (!isset($appIndex[$code]['sizes'][$size])) {
         $appIndex[$code]['sizes'][$size] = array('stock' => 0, 'on_pms' => 0, 'needs' => 0);
@@ -48,7 +49,13 @@ foreach ($rows as $r) {
     $appIndex[$code]['sizes'][$size]['needs'] += (int)$r['needs'];
 }
 $appItems = array_values($appIndex);
-usort($appItems, function($a, $b) { return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']); });
+// Sort by dvc_priority ASC first, then by name
+usort($appItems, function($a, $b) { 
+    if ($a['dvc_priority'] != $b['dvc_priority']) {
+        return $a['dvc_priority'] - $b['dvc_priority'];
+    }
+    return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']); 
+});
 $splitIndex = (count($appItems) > 0) ? (int)ceil(count($appItems) / 2) : 0;
 $appLeft  = array_slice($appItems, 0, $splitIndex);
 $appRight = array_slice($appItems, $splitIndex);
@@ -65,8 +72,9 @@ foreach ($rows as $r) {
         $dest =& $oscLN; // default LN when not DN
     }
     $code = $r['dvc_code'];
+    $priority = isset($r['dvc_priority']) ? (int)$r['dvc_priority'] : 999;
     if (!isset($dest[$code])) {
-        $dest[$code] = array('dvc_code' => $code, 'dvc_name' => $r['dvc_name'], 'stock' => 0, 'on_pms' => 0, 'needs' => 0);
+        $dest[$code] = array('dvc_code' => $code, 'dvc_name' => $r['dvc_name'], 'dvc_priority' => $priority, 'stock' => 0, 'on_pms' => 0, 'needs' => 0);
     }
     $dest[$code]['stock'] += (int)$r['stock'];
     $dest[$code]['on_pms'] += (int)$r['on_pms'];
@@ -74,6 +82,9 @@ foreach ($rows as $r) {
 }
 // PHP 5 compatible comparator (no closures with external scope required)
 function ecct_osc_sort_cmp($a, $b) {
+    if ($a['dvc_priority'] != $b['dvc_priority']) {
+        return $a['dvc_priority'] - $b['dvc_priority'];
+    }
     return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']);
 }
 $oscLNItems = array_values($oscLN); usort($oscLNItems, 'ecct_osc_sort_cmp');
@@ -109,13 +120,15 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                         $totL = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
                         $sizesOrder = array('XS','S','M','L','XL','XXL','3XL','ALL','CUS','-');
                         foreach ($appLeft as $g) {
-                            // Build size rows (include even all-zero rows)
+                            // Build size rows and skip sizes where all metrics are zero
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
                                 $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock);
+                                if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; }
                                 $filtered[$sz] = array('stock'=>$stock,'on_pms'=>$onp,'needs'=>$need,'order'=>$order,'over'=>$over,'pct'=>$pct);
                             }
+                            if (empty($filtered)) { continue; }
                             uksort($filtered, function($a,$b) use($sizesOrder){ $ia=array_search(strtoupper($a),$sizesOrder); $ia=($ia===false?999:$ia); $ib=array_search(strtoupper($b),$sizesOrder); $ib=($ib===false?999:$ib); return $ia-$ib; });
                             $rowspan = count($filtered);
                             $first = true;
@@ -129,7 +142,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                                 <tr>
                                     <?php if ($first) { $first=false; ?>
                                         <td align="center" rowspan="<?php echo $rowspan; ?>"><?php echo $no++; ?></td>
-                                        <td align="left" rowspan="<?php echo $rowspan; ?>"><?php echo htmlspecialchars($g['dvc_name']); ?></td>
+                                        <td align="left" rowspan="<?php echo $rowspan; ?>"><?php echo htmlspecialchars($g['dvc_code']); ?></td>
                                     <?php } ?>
                                     <td align="center"><?php echo htmlspecialchars($sz); ?></td>
                                     <?php $isAllZero = ($vals['stock']==0 && $vals['on_pms']==0 && $vals['needs']==0 && $vals['order']==0 && $vals['over']==0); ?>
@@ -176,13 +189,15 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                         $totR = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
                         $sizesOrder = array('XS','S','M','L','XL','XXL','3XL','ALL','CUS','-');
                         foreach ($appRight as $g) {
-                            // Build size rows (include even all-zero rows)
+                            // Build size rows and skip sizes where all metrics are zero
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
                                 $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock);
+                                if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; }
                                 $filtered[$sz] = array('stock'=>$stock,'on_pms'=>$onp,'needs'=>$need,'order'=>$order,'over'=>$over,'pct'=>$pct);
                             }
+                            if (empty($filtered)) { continue; }
                             uksort($filtered, function($a,$b) use($sizesOrder){ $ia=array_search(strtoupper($a),$sizesOrder); $ia=($ia===false?999:$ia); $ib=array_search(strtoupper($b),$sizesOrder); $ib=($ib===false?999:$ib); return $ia-$ib; });
                             $rowspan = count($filtered);
                             $first = true;
@@ -196,7 +211,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                                 <tr>
                                     <?php if ($first) { $first=false; ?>
                                         <td align="center" rowspan="<?php echo $rowspan; ?>"><?php echo $no++; ?></td>
-                                        <td align="left" rowspan="<?php echo $rowspan; ?>"><?php echo htmlspecialchars($g['dvc_name']); ?></td>
+                                        <td align="left" rowspan="<?php echo $rowspan; ?>"><?php echo htmlspecialchars($g['dvc_code']); ?></td>
                                     <?php } ?>
                                     <td align="center"><?php echo htmlspecialchars($sz); ?></td>
                                     <?php $isAllZero = ($vals['stock']==0 && $vals['on_pms']==0 && $vals['needs']==0 && $vals['order']==0 && $vals['over']==0); ?>
@@ -253,10 +268,10 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                     </thead>
                     <tbody>
                         <?php $noLN = 1; $sumLN = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
-                        foreach ($oscLNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock); $sumLN['stock']+=$stock; $sumLN['on_pms']+=$onp; $sumLN['needs']+=$need; $sumLN['order']+=$order; $sumLN['over']+=$over; ?>
+                        foreach ($oscLNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock); if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; } $sumLN['stock']+=$stock; $sumLN['on_pms']+=$onp; $sumLN['needs']+=$need; $sumLN['order']+=$order; $sumLN['over']+=$over; ?>
                         <tr>
                             <td align="center"><?php echo $noLN++; ?></td>
-                            <td align="left"><?php echo htmlspecialchars($g['dvc_name']); ?></td>
+                            <td align="left"><?php echo htmlspecialchars($g['dvc_code']); ?></td>
                             <td align="center"><?php echo $stock; ?></td>
                             <td align="center"><?php echo $onp; ?></td>
                             <td align="center"><?php echo $need; ?></td>
@@ -294,10 +309,10 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                     </thead>
                     <tbody>
                         <?php $noDN = 1; $sumDN = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
-                        foreach ($oscDNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock); $sumDN['stock']+=$stock; $sumDN['on_pms']+=$onp; $sumDN['needs']+=$need; $sumDN['order']+=$order; $sumDN['over']+=$over; ?>
+                        foreach ($oscDNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock); if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; } $sumDN['stock']+=$stock; $sumDN['on_pms']+=$onp; $sumDN['needs']+=$need; $sumDN['order']+=$order; $sumDN['over']+=$over; ?>
                         <tr>
                             <td align="center"><?php echo $noDN++; ?></td>
-                            <td align="left"><?php echo htmlspecialchars($g['dvc_name']); ?></td>
+                            <td align="left"><?php echo htmlspecialchars($g['dvc_code']); ?></td>
                             <td align="center"><?php echo $stock; ?></td>
                             <td align="center"><?php echo $onp; ?></td>
                             <td align="center"><?php echo $need; ?></td>
@@ -339,30 +354,30 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
 /* Scope all styles under the ECCT wrapper to avoid affecting other views */
 #summary_ecct_table.ecct-summary-wrapper { padding: 8px; border: 1px dashed #dee2e6; border-radius: 6px; background: #ffffff; max-height: none; overflow: visible; }
 #summary_ecct_table .compact-table {
-    font-size: 10px !important;
+    font-size: 12px !important;
     table-layout: fixed;
 }
 #summary_ecct_table .compact-table th,
 #summary_ecct_table .compact-table td {
-    padding: 0.1px 2px !important;
+    padding: 2px 2px !important;
     line-height: 1.1 !important;
     text-align: center;
     white-space: nowrap;
 }
 #summary_ecct_table .compact-table td:nth-child(2),
 #summary_ecct_table .compact-table th:nth-child(2) {
-    white-space: normal;           /* allow wrapping for long names */
-    word-break: break-word;        /* break long words if needed */
-    overflow-wrap: anywhere;       /* handle very long tokens */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 #summary_ecct_table .compact-table th {
-    font-size: 11px !important;
+    font-size: 15px !important;
     background-color: #f8f9fa;
     text-align: center;
 }
 #summary_ecct_table .compact-table tfoot td {
-    font-size: 10px !important;   /* match body text size */
-    text-transform: none;         /* keep consistent casing */
+    font-size: 10px !important;
+    text-transform: none;
 }
 #summary_ecct_table .tables-container { display: flex; gap: 0; align-items: flex-start; width: 100%; }
 #summary_ecct_table .table-left { flex: 1; min-width: 0; }
