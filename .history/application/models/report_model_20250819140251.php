@@ -137,20 +137,20 @@ class Report_model extends CI_Model {
                 throw new Exception('Periode untuk tahun ' . $year . ' bulan ' . $month . ' sudah ada. Silakan pilih tahun/bulan lain atau gunakan data yang sudah ada.');
             }
 
-            $week=$this->report_model->get_week_periods($year, $month);
+            $week = $this->get_week_periods($year, $month);
 
             foreach($week as $data){
                 $insert_result = $this->db->insert('inv_week', $data);
                 if ($insert_result) {
                     $data['id_week'] = $this->db->insert_id();
-                    log_message('info', "Created week $week_number: " . $data['date_start'] . " to " . $data['date_finish']);
+                    log_message('info', 'Created week ' . $data['period_w'] . ': ' . $data['date_start'] . ' to ' . $data['date_finish']);
                 } else {
-                    log_message('error', "Failed to insert week $week_number");
+                    log_message('error', 'Failed to insert week ' . $data['period_w']);
                 }
             }
             
             
-            log_message('info', "Generated x periods for year: $year, month: $month");
+            log_message('info', 'Generated ' . count($week) . " periods for year: $year, month: $month");
             return $week;
             
         } catch (Exception $e) {
@@ -159,52 +159,59 @@ class Report_model extends CI_Model {
         }
     }
 
-    // Build week periods for given year/month using simple +1 day loop (PHP 5 compatible)
+    /**
+     * Build week periods for a given period (year/month) based on office rules:
+     * - Period runs from 26 of previous month to 25 of the given month
+     * - Weeks are grouped Saturday–Friday; first/last week may be partial to fit the period
+     * Returns an array of associative arrays ready for insert into inv_week
+     */
     public function get_week_periods($year, $month) {
         $year = intval($year);
         $month = intval($month);
 
-        // Previous month/year
-        if ($month == 1) {
-            $prev_month = 12;
-            $prev_year = $year - 1;
-        } else {
-            $prev_month = $month - 1;
-            $prev_year = $year;
-        }
+        // Determine previous month/year explicitly for PHP 5 style
+        $prev_month = $month == 1 ? 12 : ($month - 1);
+        $prev_year = $month == 1 ? ($year - 1) : $year;
 
-        // Period range: 26 prev month to 25 current month (Y-m-d strings)
-        $period_start_dt = new DateTime($prev_year . '-' . $prev_month . '-26');
-        $period_end_dt = new DateTime($year . '-' . $month . '-25');
-        $period_start = $period_start_dt->format('Y-m-d');
-        $period_end = $period_end_dt->format('Y-m-d');
+        // Period start (26 prev month) and end (25 current month)
+        $period_start_ts = mktime(0, 0, 0, $prev_month, 26, $prev_year);
+        $period_end_ts   = mktime(0, 0, 0, $month, 25, $year);
 
-        $today = $period_start;
-        $limit = 50; // safety
-        $i = 0;
-        $week = array();
-        $arr = 0;
+        $weeks = array();
+        $weekNumber = 1;
 
-        while ($i < $limit && $today <= $period_end) {
-            if (date('D', strtotime($today)) == 'Fri' || $today == $period_end) {
-                $week[] = array(
-                    'date_start' => $period_start,
-                    'date_finish' => $today,
-                    'period_y' => $year,
-                    'period_m' => $month,
-                    'period_w' => $arr + 1
-                );
-
-                // next segment starts the day after today
-                $period_start = date('Y-m-d', strtotime($today . ' +1 day'));
-                $arr++;
+        $current_start_ts = $period_start_ts;
+        while ($current_start_ts <= $period_end_ts) {
+            // End of week is Friday (w = 5 for Friday in PHP's date('w'))
+            // Day of week: 0=Sun..6=Sat
+            $dow = intval(date('w', $current_start_ts));
+            // Distance to Friday using explicit mapping for readability
+            if ($dow == 0) { $days_to_friday = 5; }
+            else if ($dow == 1) { $days_to_friday = 4; }
+            else if ($dow == 2) { $days_to_friday = 3; }
+            else if ($dow == 3) { $days_to_friday = 2; }
+            else if ($dow == 4) { $days_to_friday = 1; }
+            else if ($dow == 5) { $days_to_friday = 0; }
+            else { $days_to_friday = 6; } // Saturday
+            $current_end_ts = $current_start_ts + ($days_to_friday * 86400);
+            if ($current_end_ts > $period_end_ts) {
+                $current_end_ts = $period_end_ts;
             }
 
-            $today = date('Y-m-d', strtotime($today . ' +1 day'));
-            $i++;
+            $weeks[] = array(
+                'period_y' => $year,
+                'period_m' => $month,
+                'period_w' => $weekNumber,
+                'date_start' => date('Y-m-d', $current_start_ts),
+                'date_finish' => date('Y-m-d', $current_end_ts)
+            );
+
+            // Next week starts the day after current_end_ts
+            $current_start_ts = $current_end_ts + 86400;
+            $weekNumber++;
         }
 
-        return $week;
+        return $weeks;
     }
 
     /**
@@ -456,26 +463,11 @@ class Report_model extends CI_Model {
 
     public function getInventoryReportData($tech, $type, $filters = array()) {
         $this->db->select('
-            MIN(ir.id_pms) AS id_pms,
-            ir.id_week,
-            id.dvc_code,
-            MIN(id.dvc_name) AS dvc_name,
-            MIN(id.dvc_tech) AS dvc_tech,
-            MIN(id.dvc_type) AS dvc_type,
-            MIN(id.dvc_priority) AS dvc_priority,
-            ir.dvc_size,
-            ir.dvc_col,
-            ir.dvc_qc,
-            SUM(ir.stock) AS stock,
-            SUM(ir.on_pms) AS on_pms,
-            SUM(ir.needs) AS needs,
-            iw.date_start, iw.date_finish, iw.period_y, iw.period_m, iw.period_w', false);
-        // Computed fields: order and over from aggregated sums
-        $this->db->select('GREATEST(0, (SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock))) AS `order`,
-                           (CASE WHEN (SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock)) < 0
-                                 THEN ABS(SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock))
-                                 ELSE 0 END) AS `over`', false);
-
+            ir.id_pms, ir.id_week, ir.id_dvc, ir.dvc_size, ir.dvc_col, ir.dvc_qc,
+            ir.stock, ir.on_pms, ir.needs, ir.order, ir.over,
+            iw.date_start, iw.date_finish, iw.period_y, iw.period_m, iw.period_w,
+            id.dvc_code, id.dvc_name, id.dvc_tech, id.dvc_type
+        ');
         $this->db->from('inv_report ir');
         $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
         $this->db->join('inv_dvc id', 'ir.id_dvc = id.id_dvc', 'left');
@@ -499,22 +491,9 @@ class Report_model extends CI_Model {
         $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
         $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
         $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
-
-        // Group by week + device code + size + color + qc and week period columns
-        $this->db->group_by('ir.id_week');
-        $this->db->group_by('id.dvc_code');
-        $this->db->group_by('id.dvc_priority');
-        $this->db->group_by('ir.dvc_size');
-        $this->db->group_by('ir.dvc_col');
-        $this->db->group_by('ir.dvc_qc');
-        $this->db->group_by('iw.date_start');
-        $this->db->group_by('iw.date_finish');
-        $this->db->group_by('iw.period_y');
-        $this->db->group_by('iw.period_m');
-        $this->db->group_by('iw.period_w');
-
-        // Order - prioritize by dvc_priority ASC, then by other criteria
-        $this->db->order_by('id.dvc_priority ASC, iw.period_y DESC, iw.period_m DESC, iw.period_w ASC, id.dvc_code ASC, ir.dvc_size ASC, ir.dvc_col ASC, ir.dvc_qc ASC');
+        
+        $this->db->order_by('iw.period_y DESC, iw.period_m DESC, iw.period_w ASC, id.dvc_priority ASC, ir.dvc_size ASC, ir.dvc_col ASC, ir.dvc_qc ASC');
+        
         $query = $this->db->get();
         return $query->result_array();
     }
@@ -548,10 +527,10 @@ class Report_model extends CI_Model {
         // Determine colors based on device code and type
         if (stripos($device['dvc_code'], 'VOH') === 0) {
             // VOH devices have multiple colors
-            $colors = array('Dark Gray', 'Black', 'Grey', 'Navy', 'Army', 'Maroon', 'Custom');
+            $colors = array('Dark Grey', 'Black', 'Grey', 'Navy', 'Army', 'Maroon', 'Custom');
         } elseif ($device['dvc_tech'] == 'ecct' && $device['dvc_type'] == 'APP') {
-            // ECCT APP devices
-            $colors = array('Dark Gray');
+            // ECCT   devices
+            $colors = array('Dark Grey');
         } elseif ($device['dvc_tech'] == 'ecbs' && $device['dvc_type'] == 'APP') {
             // ECBS APP devices
             $colors = array('Black');
@@ -613,11 +592,6 @@ class Report_model extends CI_Model {
         $needs = $this->calculateNeeds($week_data, $id_dvc, $size, $color, $qc);
 
         if ($existing->num_rows() == 0) {
-            // For weekly generation, we still skip truly all-zero rows.
-            // However, stock calculation should already reflect items present by end-of-week.
-            if (intval($stock) === 0 && intval($needs) === 0) {
-                return false;
-            }
             return $this->db->insert('inv_report', array(
                 'id_week' => $id_week,
                 'id_dvc' => $id_dvc,
@@ -637,7 +611,6 @@ class Report_model extends CI_Model {
         $this->db->where('dvc_size', $size);
         $this->db->where('dvc_col', $color);
         $this->db->where('dvc_qc', $qc);
-        // Update existing; if both zero, set to zeros but keep record (to preserve history). Optional: you can delete instead.
         return $this->db->update('inv_report', array('stock' => $stock, 'needs' => $needs));
     }
 
@@ -757,27 +730,26 @@ class Report_model extends CI_Model {
         }
     }
 
-    public function calculateStock($week, $id_dvc, $size, $color, $qc) {
-        // Count inventory IN as of the end of the current week, minus those that have OUT before or on the week finish day.
-        // Rules:
-        // - inv_in DATE <= date_finish (end of day)
-        // - inv_out is NULL (still in) OR inv_out DATE > date_finish (after the end day)
+    private function calculateStock($week, $id_dvc, $size, $color, $qc) {
         $this->db->select('COUNT(*) as stock_count');
         $this->db->from('inv_act');
         $this->db->where('id_dvc', $id_dvc);
         // Apply uniform size/color filters
         $this->applySizeColorFilters($size, $color);
+        
         $this->db->where('dvc_qc', $qc);
-
-        $finish_day = date('Y-m-d', strtotime($week['date_finish']));
-        $finish_plus_one = date('Y-m-d', strtotime($finish_day . ' +1 day'));
-
+        
+        // inv_in must be within the week period [date_start, date_finish] (use < finish+1day to include full day)
+        $finish_plus_one = date('Y-m-d', strtotime($week['date_finish'] . ' +1 day'));
+        $this->db->where('inv_in >=', $week['date_start']);
         $this->db->where('inv_in <', $finish_plus_one);
-        // inv_out not yet happened by end-of-week: NULL or strictly after finish day (>= finish+1 day)
-        $this->db->where('(inv_out IS NULL OR inv_out >= "' . $finish_plus_one . '")');
-
+        
+        // inv_out must NOT be within the week period (or be null)
+        $this->db->where('(inv_out IS NULL OR inv_out < "' . $week['date_start'] . '" OR inv_out >= "' . $finish_plus_one . '")');
+        
         $query = $this->db->get();
         $result = $query->row_array();
+        
         return intval($result['stock_count']);
     }
 
@@ -806,6 +778,21 @@ class Report_model extends CI_Model {
         return 0;
     }
 
+    /**
+     * Calculate order value: needs - on_pms - stock (minimum 0)
+     */
+    public function calculateOrder($needs, $on_pms, $stock) {
+        return max(0, intval($needs) - intval($on_pms) - intval($stock));
+    }
+
+    /**
+     * Calculate over value: positive remainder when needs - on_pms - stock < 0, otherwise 0
+     */
+    public function calculateOver($needs, $on_pms, $stock) {
+        $calculation = intval($needs) - intval($on_pms) - intval($stock);
+        return ($calculation < 0) ? abs($calculation) : 0;
+    }
+
     private function isWeekActiveOrFuture($week) { return isset($week['date_finish']) && $week['date_finish'] >= date('Y-m-d'); }
 
     private function applySizeColorFilters($size, $color) {
@@ -824,82 +811,19 @@ class Report_model extends CI_Model {
             $this->db->or_where('dvc_col', '');
             $this->db->group_end();
         } else {
-            // Apply tolerant color matching for Gray/Grey synonyms
-            $synonyms = $this->getColorSynonyms($color);
-            if (count($synonyms) > 1) {
-                $this->db->group_start();
-                foreach ($synonyms as $idx => $col) {
-                    if ($idx === 0) { $this->db->where('dvc_col', $col); }
-                    else { $this->db->or_where('dvc_col', $col); }
-                }
-                $this->db->group_end();
-            } else {
-                $this->db->where('dvc_col', $color);
-            }
+            $this->db->where('dvc_col', $color);
         }
-    }
-
-    // Return tolerated synonyms for common Gray/Grey variants (case-insensitive)
-    public function getColorSynonyms($color) {
-        $c = trim(strtolower($color));
-        $c = preg_replace('/\s+/', ' ', $c);
-        if ($c === 'gray' || $c === 'grey') { return array('Grey', 'Gray'); }
-        if ($c === 'dark gray' || $c === 'dark grey' || $c === 'darkgray' || $c === 'darkgrey') {
-            return array('Dark Grey', 'Dark Gray');
-        }
-        return array($color);
-    }
-
-    // Normalize provided color to canonical form for the device (handles ECCT vs VOH differences)
-    public function normalizeColorForDevice($id_dvc, $color) {
-        $normalized = trim($color);
-        $this->db->select('dvc_code, dvc_tech, dvc_type');
-        $this->db->from('inv_dvc');
-        $this->db->where('id_dvc', $id_dvc);
-        $this->db->limit(1);
-        $row = $this->db->get()->row_array();
-        $lc = strtolower(preg_replace('/\s+/', ' ', $normalized));
-        if (!$row) { return $normalized; }
-        $isEcctApp = (strtolower($row['dvc_tech']) === 'ecct' && strtoupper($row['dvc_type']) === 'APP');
-        $isVoh = (stripos($row['dvc_code'], 'VOH') === 0);
-        if ($isEcctApp) {
-            if ($lc === 'dark grey' || $lc === 'darkgray' || $lc === 'dark grey ') { return 'Dark Gray'; }
-            if ($lc === 'grey' || $lc === 'gray') { return 'Dark Gray'; }
-        }
-        if ($isVoh) {
-            if ($lc === 'gray') { return 'Grey'; }
-            if ($lc === 'dark gray') { return 'Dark Grey'; }
-        }
-        // Default: title-case
-        return trim(ucwords($lc));
-    }
-
-    /**
-     * Calculate order value: needs - on_pms - stock (minimum 0)
-     */
-    public function calculateOrder($needs, $on_pms, $stock) {
-        return max(0, $needs - $on_pms - $stock);
-    }
-
-    /**
-     * Calculate over value: if (needs - on_pms - stock) < 0, take positive value, else 0
-     */
-    public function calculateOver($needs, $on_pms, $stock) {
-        $calculation = $needs - $on_pms - $stock;
-        return ($calculation < 0) ? abs($calculation) : 0;
     }
     
 
 
     public function getCurrentWeekPeriod() {
-        // Compare by DATE so DATETIME values with time still match the calendar day
         $today = date('Y-m-d');
         
         $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
         $this->db->from('inv_week');
-        // DATE() ensures comparison ignores time components
-        $this->db->where('DATE(date_start) <=', $today);
-        $this->db->where('DATE(date_finish) >=', $today);
+        $this->db->where('date_start <=', $today);
+        $this->db->where('date_finish >=', $today);
         $this->db->limit(1);
         
         $query = $this->db->get();
@@ -908,10 +832,9 @@ class Report_model extends CI_Model {
             return $query->row_array();
         }
         
-        // Fallback: last finished week before today
         $this->db->select('id_week, date_start, date_finish, period_y, period_m, period_w');
         $this->db->from('inv_week');
-        $this->db->where('DATE(date_finish) <=', $today);
+        $this->db->where('date_finish <=', $today);
         $this->db->order_by('date_finish DESC');
         $this->db->limit(1);
         
@@ -1060,7 +983,7 @@ class Report_model extends CI_Model {
     public function getSummaryEcbsReportData($report_type = 'needs', $filters = array()) {
         try {
             // Validate report type
-            $valid_types = array('stock', 'needs', 'order', 'on_pms', 'over');
+            $valid_types = array('needs', 'order', 'on_pms', 'over');
             if (!in_array($report_type, $valid_types)) {
                 log_message('error', 'Invalid report type: ' . $report_type);
                 return array();
@@ -1072,14 +995,6 @@ class Report_model extends CI_Model {
             $this->db->where('dvc_tech', 'ecbs');
             $this->db->where('dvc_type', 'APP');
             $this->db->where('status', '0');
-            // Apply device search filter
-            if (isset($filters['device_search']) && $filters['device_search']) {
-                $search_term = $this->db->escape_like_str($filters['device_search']);
-                $this->db->group_start()
-                         ->like('dvc_name', $search_term)
-                         ->or_like('dvc_code', $search_term)
-                         ->group_end();
-            }
             $this->db->order_by('dvc_priority', 'ASC');
             
             $devices_query = $this->db->get();
@@ -1090,16 +1005,14 @@ class Report_model extends CI_Model {
                     $device_data = $device;
                     
                     // Get report data for this device
-                    $this->db->select('ir.dvc_size, ir.dvc_col, ir.`' . $report_type . '` as qty');
-                    $this->db->from('inv_report ir');
-                    $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
-                    // Apply filters on period (consistent with detail)
-                    $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
-                    $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
-                    $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
-                    $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
-                    $this->db->where('ir.id_dvc', $device['id_dvc']);
-                    $this->db->where('ir.`' . $report_type . '` >', 0); // Only get items with quantity > 0
+                    $this->db->select('dvc_size, dvc_col, `' . $report_type . '` as qty');
+                    $this->db->from('inv_report');
+                    // Apply filters on period
+                    if (isset($filters['id_week']) && $filters['id_week']) {
+                        $this->db->where('id_week', $filters['id_week']);
+                    }
+                    $this->db->where('id_dvc', $device['id_dvc']);
+                    $this->db->where('`' . $report_type . '` >', 0); // Only get items with quantity > 0
                     
                     $report_query = $this->db->get();
                     
@@ -1174,7 +1087,7 @@ class Report_model extends CI_Model {
     public function getSummaryEcbsOscReportData($report_type = 'needs', $filters = array()) {
         try {
             // Validate report type
-            $valid_types = array('stock', 'needs', 'order', 'on_pms', 'over');
+            $valid_types = array('needs', 'order', 'on_pms', 'over');
             if (!in_array($report_type, $valid_types)) {
                 log_message('error', 'Invalid report type: ' . $report_type);
                 return array();
@@ -1186,14 +1099,6 @@ class Report_model extends CI_Model {
             $this->db->where('dvc_tech', 'ecbs');
             $this->db->where_in('dvc_type', array('OSC', 'ACC'));
             $this->db->where('status', '0');
-            // Apply device search filter
-            if (isset($filters['device_search']) && $filters['device_search']) {
-                $search_term = $this->db->escape_like_str($filters['device_search']);
-                $this->db->group_start()
-                         ->like('dvc_name', $search_term)
-                         ->or_like('dvc_code', $search_term)
-                         ->group_end();
-            }
             $this->db->order_by('dvc_priority', 'ASC');
             
             $devices_query = $this->db->get();
@@ -1204,16 +1109,13 @@ class Report_model extends CI_Model {
                     $device_data = $device;
                     
                     // Sum report metric for this device (no sizes/colors for OSC/ACC summary)
-                    $this->db->select('SUM(ir.`' . $report_type . '`) as total_qty');
-                    $this->db->from('inv_report ir');
-                    $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
-                    // Apply filters on period (consistent with detail)
-                    $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
-                    $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
-                    $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
-                    $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
-                    $this->db->where('ir.id_dvc', $device['id_dvc']);
-                    $this->db->where('ir.`' . $report_type . '` >', 0);
+                    $this->db->select('SUM(`' . $report_type . '`) as total_qty');
+                    $this->db->from('inv_report');
+                    if (isset($filters['id_week']) && $filters['id_week']) {
+                        $this->db->where('id_week', $filters['id_week']);
+                    }
+                    $this->db->where('id_dvc', $device['id_dvc']);
+                    $this->db->where('`' . $report_type . '` >', 0);
                     
                     $report_query = $this->db->get();
                     $total_qty = 0;

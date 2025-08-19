@@ -16,6 +16,7 @@
             <option value="2023">2023</option>
             <option value="2024">2024</option>
             <option value="2025">2025</option>
+            <option value="2026">2026</option>
           </select>
           <select class="select select-bulan" id="month_filter" style="display:none;">
             <option value="1">Januari</option>
@@ -43,6 +44,8 @@
               <div class="cs-option" data-value="2023">2023</div>
               <div class="cs-option" data-value="2024">2024</div>
               <div class="cs-option active" data-value="2025">2025</div>
+              <div class="cs-option" data-value="2026">2026</div>
+
             </div>
           </div>
           <div class="cs-select" id="cs_month">

@@ -79,47 +79,9 @@ class Test extends CI_Controller {
     }
 
     public function test_report_model() {
-        $year = 2025;
-        $month = 9;
-            
-        // Calculate the period start (26th of previous month)
-            if ($month == 1) {
-                $prev_month = 12;
-                $prev_year = $year - 1;
-            } else {
-                $prev_month = $month - 1;
-                $prev_year = $year;
-            }
+        $this->load->model("report_model");
 
-        $period_start = new DateTime($prev_year."-".$prev_month."-26");
-        $period_end = new DateTime($year."-".$month."-25");
-        $period_start = $period_start->format('Y-m-d');
-        $period_end = $period_end->format('Y-m-d');
-            
-
-            $today=$period_start;
-
-           $limit=50;$i=0;
-           $week=array();
-           $arr=0;
-           while($i<$limit && $today<=$period_end){
-            if(date("D", strtotime($today))=="Fri" || $today==$period_end){
-                $week[] = array(
-                    'date_start' => $period_start,
-                    'date_finish' => $today,
-                    'period_y' => $year,
-                    'period_m' => $month,
-                    'period_w' => $arr+1
-                );
-
-                $period_start = date('Y-m-d', strtotime($today.' +1 day'));
-                $arr++;
-            }
-            
-            $today = date('Y-m-d', strtotime($today.' +1 day'));
-            $i++;
-            
-           }
+        $week=$this->report_model->get_week_periods("2025", "9");
 
         echo "<pre>";
            print_r($week);

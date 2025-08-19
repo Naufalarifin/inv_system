@@ -1583,6 +1583,38 @@ function applyFilters() {
             fetch(link).then(function(r){return r.text()}).then(function(html){ container.innerHTML = html; });
         }
     }
+	closeModal('modal_filter_report');
+	if (viewMode === 'detail') {
+		showData();
+		return;
+	}
+	// Summary mode: refresh BOTH summaries so they stay in sync with active filters
+	var deviceSearch = document.getElementById('device_search') ? document.getElementById('device_search').value : '';
+	var year = document.getElementById('filter_year') ? document.getElementById('filter_year').value : '';
+	var month = document.getElementById('filter_month') ? document.getElementById('filter_month').value : '';
+	var week = document.getElementById('filter_week') ? document.getElementById('filter_week').value : '';
+	var common = [];
+	if (deviceSearch) common.push('device_search=' + encodeURIComponent(deviceSearch));
+	if (year) common.push('year=' + encodeURIComponent(year));
+	if (month) common.push('month=' + encodeURIComponent(month));
+	if (week) common.push('week=' + encodeURIComponent(week));
+	var base = window.location.origin + '/cdummy/inventory/inv_report_summary';
+	var qEcbs = '?tech=ecbs' + (common.length ? '&' + common.join('&') : '');
+	var qEcct = '?tech=ecct' + (common.length ? '&' + common.join('&') : '');
+	var linkEcbs = base + qEcbs;
+	var linkEcct = base + qEcct;
+	var wrapEcbs = document.getElementById('summary_ecbs_wrapper');
+	var wrapEcct = document.getElementById('summary_ecct_wrapper');
+	if (wrapEcbs) {
+		wrapEcbs.innerHTML = '<div style="text-align:center;padding:16px;">Loading...</div>';
+		if (typeof window.$ !== 'undefined') { window.$('#summary_ecbs_wrapper').load(linkEcbs); }
+		else { fetch(linkEcbs).then(function(r){return r.text()}).then(function(html){ wrapEcbs.innerHTML = html; }); }
+	}
+	if (wrapEcct) {
+		wrapEcct.innerHTML = '<div style="text-align:center;padding:16px;">Loading...</div>';
+		if (typeof window.$ !== 'undefined') { window.$('#summary_ecct_wrapper').load(linkEcct); }
+		else { fetch(linkEcct).then(function(r){return r.text()}).then(function(html){ wrapEcct.innerHTML = html; }); }
+	}
 }
 
 // Helper to read URL query params
@@ -1659,6 +1691,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize view mode visibility (default Summary)
     setVisibilityForMode();
     updateSummaryTech();
+    
+    // Auto-apply current filters to load both summaries without needing Search
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
 });
 
 // (handlers consolidated above)
