@@ -1340,6 +1340,9 @@ function closeInputPmsModal() {
         preview.innerHTML = '';
         preview.style.display = 'none';
     }
+    // Remove any confirmation section if present
+    const existing = document.getElementById('pms_confirmation');
+    if (existing) existing.remove();
 }
 
 // Removed week/device loaders per request
@@ -1387,6 +1390,10 @@ function updateDeviceColors() {
 // Removed device color updater per request
 
 function updatePmsPreview() {
+    // If a confirmation is shown, hide it when user edits input
+    const confirmEl = document.getElementById('pms_confirmation');
+    if (confirmEl) confirmEl.remove();
+
     const input = document.getElementById('massive_pms_input').value;
     const preview = document.getElementById('preview_pms_data');
     
@@ -1498,17 +1505,23 @@ function saveMassiveOnPms() {
         showToast('No valid data found. Please check the format.', 'error');
         return;
     }
-    
-    // Show confirmation
-    const confirmMessage = `Yakin simpan ${uniqueData.length} data ke On PMS?`;
-    
-    if (!confirm(confirmMessage)) {
-        return;
-    }
-    
+
+    // Render confirmation UI under modal footer (match edit week style)
+    renderConfirmation('#modal_input_pms .modal-footer', 'pms_confirmation',
+        `Apakah Anda yakin ingin menyimpan ${uniqueData.length} baris On PMS?`,
+        () => confirmSaveOnPms(uniqueData),
+        () => cancelSaveOnPms()
+    );
+}
+
+function confirmSaveOnPms(uniqueData) {
+    const section = document.getElementById('pms_confirmation');
+    if (section) section.remove();
     // Send data to server
     const formData = { data: uniqueData };
-    
+    const saveBtn = document.querySelector('#modal_input_pms .btn-primary');
+    const originalHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) { saveBtn.innerHTML = 'Saving...'; saveBtn.disabled = true; }
     fetch(window.location.origin + '/cdummy/inventory/save_massive_on_pms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1519,11 +1532,9 @@ function saveMassiveOnPms() {
         if (data.success) {
             showToast('On PMS data saved successfully!', 'success');
             closeInputPmsModal();
-            // Refresh detail view if active, else refresh summary wrapper only (no full reload)
             if (viewMode === 'detail') {
                 showData();
             } else {
-                // Refresh both summary wrappers (ECBS and ECCT) so user can switch tab tanpa reload
                 ['ecbs','ecct'].forEach(function(tech){
                     var params = [];
                     params.push('tech=' + encodeURIComponent(tech));
@@ -1532,7 +1543,6 @@ function saveMassiveOnPms() {
                     var targetId = tech === 'ecbs' ? 'summary_ecbs_wrapper' : 'summary_ecct_wrapper';
                     var container = document.getElementById(targetId);
                     if (container) {
-                        // Only show loader in the currently visible wrapper
                         var showLoader = (tech === selectedTech);
                         if (showLoader) container.innerHTML = '<div style="text-align:center;padding:16px;">Updating...</div>';
                         if (typeof window.$ !== 'undefined') {
@@ -1550,7 +1560,15 @@ function saveMassiveOnPms() {
     .catch(error => {
         console.error('Error saving data:', error);
         showToast('Failed to save data', 'error');
+    })
+    .finally(() => {
+        if (saveBtn) { saveBtn.innerHTML = originalHtml; saveBtn.disabled = false; }
     });
+}
+
+function cancelSaveOnPms() {
+    const section = document.getElementById('pms_confirmation');
+    if (section) section.remove();
 }
 
 // Apply filters function
@@ -1701,6 +1719,16 @@ document.addEventListener('DOMContentLoaded', function() {
 // (handlers consolidated above)
     
     function selectTech_needs(tech) {
+        try {
+            var btnOsc = document.getElementById('btn_osc');
+            var btnApp = document.getElementById('btn_app');
+            if (btnOsc && btnOsc.className.indexOf('btn-primary') !== -1) {
+                selectedType = 'osc';
+            } else if (btnApp && btnApp.className.indexOf('btn-primary') !== -1) {
+                selectedType = 'app';
+            }
+        } catch (e) { /* noop */ }
+        
         selectedTech = tech;
         
         // Update button states

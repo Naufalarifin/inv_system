@@ -1120,65 +1120,65 @@ class Report_model extends CI_Model {
             
             if ($devices_query && $devices_query->num_rows() > 0) {
                 foreach ($devices_query->result_array() as $device) {
-                    $device_data = $device;
-                    
-                    // Get report data for this device
+                    // Fetch rows for this device (size + color + qty)
                     $this->db->select('ir.dvc_size, ir.dvc_col, ir.`' . $report_type . '` as qty');
                     $this->db->from('inv_report ir');
                     $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
-                    // Apply filters on period (consistent with detail)
                     $this->applyOptionalFilter($filters, 'id_week', 'ir.id_week');
                     $this->applyOptionalFilter($filters, 'year', 'iw.period_y');
                     $this->applyOptionalFilter($filters, 'month', 'iw.period_m');
                     $this->applyOptionalFilter($filters, 'week', 'iw.period_w');
                     $this->db->where('ir.id_dvc', $device['id_dvc']);
-                    $this->db->where('ir.`' . $report_type . '` >', 0); // Only get items with quantity > 0
-                    
+                    $this->db->where('ir.`' . $report_type . '` >', 0);
                     $report_query = $this->db->get();
-                    
+
                     if ($report_query && $report_query->num_rows() > 0) {
-                        // Initialize size counters
-                        $size_xs = 0; $size_s = 0; $size_m = 0; $size_l = 0;
-                        $size_xl = 0; $size_xxl = 0; $size_3xl = 0; $size_all = 0; $size_cus = 0;
-                        $subtotal = 0;
-                        
+                        // Bucketize per color so VOH colors are distinct rows
+                        $colorBuckets = array();
                         foreach ($report_query->result_array() as $report_item) {
                             $qty = (int)$report_item['qty'];
-                            $size = strtolower(trim($report_item['dvc_size']));
-                            $color = trim($report_item['dvc_col']);
-                            
-                            // Count by size
-                            switch ($size) {
-                                case 'xs': $size_xs += $qty; break;
-                                case 's': $size_s += $qty; break;
-                                case 'm': $size_m += $qty; break;
-                                case 'l': $size_l += $qty; break;
-                                case 'xl': $size_xl += $qty; break;
-                                case 'xxl': $size_xxl += $qty; break;
-                                case '3xl': $size_3xl += $qty; break;
-                                case 'all': $size_all += $qty; break;
-                                case 'cus': $size_cus += $qty; break;
-                                default: $size_cus += $qty; break; // Default to custom
+                            $sizeKey = strtolower(trim($report_item['dvc_size']));
+                            $colorKey = trim($report_item['dvc_col']);
+                            if ($colorKey === '') { $colorKey = 'Default'; }
+                            if (!isset($colorBuckets[$colorKey])) {
+                                $colorBuckets[$colorKey] = array(
+                                    'size_xs' => 0, 'size_s' => 0, 'size_m' => 0, 'size_l' => 0,
+                                    'size_xl' => 0, 'size_xxl' => 0, 'size_3xl' => 0, 'size_all' => 0, 'size_cus' => 0,
+                                    'subtotal' => 0
+                                );
                             }
-                            
-                            $subtotal += $qty;
+                            switch ($sizeKey) {
+                                case 'xs': $colorBuckets[$colorKey]['size_xs'] += $qty; break;
+                                case 's': $colorBuckets[$colorKey]['size_s'] += $qty; break;
+                                case 'm': $colorBuckets[$colorKey]['size_m'] += $qty; break;
+                                case 'l': $colorBuckets[$colorKey]['size_l'] += $qty; break;
+                                case 'xl': $colorBuckets[$colorKey]['size_xl'] += $qty; break;
+                                case 'xxl': $colorBuckets[$colorKey]['size_xxl'] += $qty; break;
+                                case '3xl': $colorBuckets[$colorKey]['size_3xl'] += $qty; break;
+                                case 'all': $colorBuckets[$colorKey]['size_all'] += $qty; break;
+                                case 'cus': $colorBuckets[$colorKey]['size_cus'] += $qty; break;
+                                default: $colorBuckets[$colorKey]['size_cus'] += $qty; break;
+                            }
+                            $colorBuckets[$colorKey]['subtotal'] += $qty;
                         }
-                        
-                        // Add size data to device
-                        $device_data['size_xs'] = $size_xs;
-                        $device_data['size_s'] = $size_s;
-                        $device_data['size_m'] = $size_m;
-                        $device_data['size_l'] = $size_l;
-                        $device_data['size_xl'] = $size_xl;
-                        $device_data['size_xxl'] = $size_xxl;
-                        $device_data['size_3xl'] = $size_3xl;
-                        $device_data['size_all'] = $size_all;
-                        $device_data['size_cus'] = $size_cus;
-                        $device_data['subtotal'] = $subtotal;
-                        $device_data['warna'] = isset($color) ? $color : 'Default';
-                        
-                        $result_data[] = $device_data;
-                    } // When no report rows, skip adding this device to match ECCT empty-state behavior
+
+                        // Emit one row per color for this device
+                        foreach ($colorBuckets as $colorName => $bucket) {
+                            $row = $device;
+                            $row['warna'] = $colorName;
+                            $row['size_xs'] = $bucket['size_xs'];
+                            $row['size_s'] = $bucket['size_s'];
+                            $row['size_m'] = $bucket['size_m'];
+                            $row['size_l'] = $bucket['size_l'];
+                            $row['size_xl'] = $bucket['size_xl'];
+                            $row['size_xxl'] = $bucket['size_xxl'];
+                            $row['size_3xl'] = $bucket['size_3xl'];
+                            $row['size_all'] = $bucket['size_all'];
+                            $row['size_cus'] = $bucket['size_cus'];
+                            $row['subtotal'] = $bucket['subtotal'];
+                            $result_data[] = $row;
+                        }
+                    }
                 }
             }
             

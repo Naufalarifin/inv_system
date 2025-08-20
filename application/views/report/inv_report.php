@@ -181,6 +181,7 @@
 /* =================== REPORT STYLES =================== */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; }
 .modal-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1001; width: 400px; display: none; }
+.modal-container#modal_input_pms { width: 650px; max-width: 90vw; }
 .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
 .modal-title { margin: 0; font-size: 18px; font-weight: 600; }
 .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
@@ -209,4 +210,14 @@ td[title]:hover { background-color: #e3f2fd !important; }
 .badge-info { background: #17a2b8; color: white; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @media (max-width: 768px) { .modal-container { width: 90%; max-width: 400px; } .card-header { flex-direction: column; gap: 10px; align-items: stretch; } #toolbar_left, #toolbar_right { justify-content: center; } .btn-group { flex-wrap: wrap; justify-content: center; } }
+
+/* Confirmation area styles (match edit week) */
+.confirmation-section { background: #fff !important; border-top: 1px solid #e5e5e5 !important; padding: 12px 20px !important; }
+.confirmation-content { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; }
+.confirmation-text { font-size: 16px !important; color: #333 !important; white-space: nowrap !important; }
+.confirmation-buttons { margin-left: auto !important; display: flex !important; align-items: center !important; gap: 8px !important; }
+.confirmation-buttons .btn-confirm { background-color: #0074d9 !important; color: #ffffff !important; border: 1px solid #0074d9 !important; padding: 0 12px !important; height: 2rem !important; min-width: 100px !important; border-radius: 4px !important; text-align: center !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }
+.confirmation-buttons .btn-confirm:hover { background-color: #0056b3 !important; border-color: #0056b3 !important; }
+.confirmation-buttons .btn-cancel { background-color: #ffffff !important; color: #0074d9 !important; border: 1px solid #0074d9 !important; padding: 0 12px !important; height: 2rem !important; min-width: 100px !important; border-radius: 4px !important; text-align: center !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }
+.confirmation-buttons .btn-cancel:hover { background-color: #f8f9fa !important; }
 </style>

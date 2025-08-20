@@ -1,19 +1,9 @@
 <?php
-// Get processed data from controller (already processed by model)
-$ecct_data = $ecct_data;
 $appLeft = $ecct_data['app_left'];
 $appRight = $ecct_data['app_right'];
 $oscLNItems = $ecct_data['osc_ln'];
 $oscDNItems = $ecct_data['osc_dn'];
-
-        // Get calculation function for percentage only
-        $ecct_calc_pct = $ecct_data['calc_pct'];
-
-
-
-
-
-
+$ecct_calc_pct = $ecct_data['calc_pct'];
 ?>
 
 <div id="summary_ecct_table" class="ecct-summary-wrapper">
@@ -45,7 +35,6 @@ $oscDNItems = $ecct_data['osc_dn'];
                         $totL = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
                         $sizesOrder = array('XS','S','M','L','XL','XXL','3XL','ALL','CUS','-');
                         foreach ($appLeft as $g) {
-                            // Build size rows and skip sizes where all metrics are zero
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
@@ -114,7 +103,6 @@ $oscDNItems = $ecct_data['osc_dn'];
                         $totR = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
                         $sizesOrder = array('XS','S','M','L','XL','XXL','3XL','ALL','CUS','-');
                         foreach ($appRight as $g) {
-                            // Build size rows and skip sizes where all metrics are zero
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
@@ -168,6 +156,7 @@ $oscDNItems = $ecct_data['osc_dn'];
                                 $totalPctStyle = '';
                             } else {
                                 $totalPct = ($totL['stock'] + $totR['stock']) / $totalNeeds * 100;
+                                $totalPct = number_format($totalPct, 2);
                                 $totalPctStyle = ($totalPct < 50) ? 'background-color:#d32f2f;color:#fff;font-weight:bold;' : '';
                             }
                             ?>
@@ -217,7 +206,6 @@ $oscDNItems = $ecct_data['osc_dn'];
                         </tr>
                         <?php } ?>
                     </tbody>
-                    <!-- No TOTAL on the left (LN) as requested -->
                 </table>
             </div>
         </div>
@@ -279,6 +267,7 @@ $oscDNItems = $ecct_data['osc_dn'];
                                 $totalOSCPctStyle = '';
                             } else {
                                 $totalOSCPct = ($totalOSC['stock'] / $totalOSC['needs']) * 100;
+                                $totalOSCPct = number_format($totalOSCPct, 2);
                                 $totalOSCPctStyle = ($totalOSCPct < 50) ? 'background-color:#d32f2f;color:#fff;font-weight:bold;' : '';
                             }
                             ?>
@@ -295,7 +284,6 @@ $oscDNItems = $ecct_data['osc_dn'];
 </div>
 
 <style>
-/* Scope all styles under the ECCT wrapper to avoid affecting other views */
 #summary_ecct_table.ecct-summary-wrapper { padding: 8px; border: 1px dashed #dee2e6; border-radius: 6px; background: #ffffff; max-height: none; overflow: visible; }
 #summary_ecct_table .compact-table {
     font-size: 12px !important;
