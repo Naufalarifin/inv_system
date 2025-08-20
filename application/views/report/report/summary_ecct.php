@@ -1,94 +1,19 @@
 <?php
-// Load model
-$this->load->model('report_model');
+// Get processed data from controller (already processed by model)
+$ecct_data = $ecct_data;
+$appLeft = $ecct_data['app_left'];
+$appRight = $ecct_data['app_right'];
+$oscLNItems = $ecct_data['osc_ln'];
+$oscDNItems = $ecct_data['osc_dn'];
 
-// Build filters from current_filters passed by controller (year/month/week or id_week)
-$filters = array();
-if (isset($current_filters['id_week']) && $current_filters['id_week']) {
-    $filters['id_week'] = $current_filters['id_week'];
-}
-if (isset($current_filters['year']) && $current_filters['year'] !== '') {
-    $filters['year'] = $current_filters['year'];
-}
-if (isset($current_filters['month']) && $current_filters['month'] !== '') {
-    $filters['month'] = $current_filters['month'];
-}
-if (isset($current_filters['week']) && $current_filters['week'] !== '') {
-    $filters['week'] = $current_filters['week'];
-}
-// Fallback to current week when no period filters supplied
-if (empty($filters) && isset($current_week['id_week']) && $current_week['id_week']) {
-    $filters['id_week'] = $current_week['id_week'];
-}
+        // Get calculation function for percentage only
+        $ecct_calc_pct = $ecct_data['calc_pct'];
 
-// Get aggregated inv_report for ECCT (already grouped by week+code+size+color+qc)
-$rows = $this->report_model->getInventoryReportData('ecct', null, $filters);
 
-// Helper functions
-// Helper: use simple functions (compatible with PHP 5)
-function ecct_calc_order($needs, $on_pms, $stock) { $d = (int)$needs - (int)$on_pms - (int)$stock; return ($d >= 0) ? $d : 0; }
-function ecct_calc_over($needs, $on_pms, $stock)  { $d = (int)$needs - (int)$on_pms - (int)$stock; return ($d < 0) ? abs($d) : 0; }
-function ecct_calc_pct($needs, $stock)            { return ((int)$needs > 0) ? round(((int)$stock / (int)$needs) * 100) : 100; }
 
-// ===================== APP (merge LN+DN and colors) =====================
-$appIndex = array();
-foreach ($rows as $r) {
-    if (strtoupper($r['dvc_type']) !== 'APP') continue;
-    $code = $r['dvc_code'];
-    $name = $r['dvc_name'];
-    $priority = isset($r['dvc_priority']) ? (int)$r['dvc_priority'] : 999;
-    $size = strtoupper(trim($r['dvc_size'])) ?: '-';
-    if (!isset($appIndex[$code])) {
-        $appIndex[$code] = array('dvc_code' => $code, 'dvc_name' => $name, 'dvc_priority' => $priority, 'sizes' => array());
-    }
-    if (!isset($appIndex[$code]['sizes'][$size])) {
-        $appIndex[$code]['sizes'][$size] = array('stock' => 0, 'on_pms' => 0, 'needs' => 0);
-    }
-    $appIndex[$code]['sizes'][$size]['stock'] += (int)$r['stock'];
-    $appIndex[$code]['sizes'][$size]['on_pms'] += (int)$r['on_pms'];
-    $appIndex[$code]['sizes'][$size]['needs'] += (int)$r['needs'];
-}
-$appItems = array_values($appIndex);
-// Sort by dvc_priority ASC first, then by name
-usort($appItems, function($a, $b) { 
-    if ($a['dvc_priority'] != $b['dvc_priority']) {
-        return $a['dvc_priority'] - $b['dvc_priority'];
-    }
-    return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']); 
-});
-$splitIndex = (count($appItems) > 0) ? (int)ceil(count($appItems) / 2) : 0;
-$appLeft  = array_slice($appItems, 0, $splitIndex);
-$appRight = array_slice($appItems, $splitIndex);
 
-// ===================== OSC (split LN / DN, merge sizes/colors) =====================
-$oscLN = array();
-$oscDN = array();
-foreach ($rows as $r) {
-    if (strtoupper($r['dvc_type']) !== 'OSC') continue;
-    // Choose destination array by QC without using reference on ternary (PHP 5 compatibility)
-    if (strtoupper(trim($r['dvc_qc'])) === 'DN') {
-        $dest =& $oscDN;
-    } else {
-        $dest =& $oscLN; // default LN when not DN
-    }
-    $code = $r['dvc_code'];
-    $priority = isset($r['dvc_priority']) ? (int)$r['dvc_priority'] : 999;
-    if (!isset($dest[$code])) {
-        $dest[$code] = array('dvc_code' => $code, 'dvc_name' => $r['dvc_name'], 'dvc_priority' => $priority, 'stock' => 0, 'on_pms' => 0, 'needs' => 0);
-    }
-    $dest[$code]['stock'] += (int)$r['stock'];
-    $dest[$code]['on_pms'] += (int)$r['on_pms'];
-    $dest[$code]['needs'] += (int)$r['needs'];
-}
-// PHP 5 compatible comparator (no closures with external scope required)
-function ecct_osc_sort_cmp($a, $b) {
-    if ($a['dvc_priority'] != $b['dvc_priority']) {
-        return $a['dvc_priority'] - $b['dvc_priority'];
-    }
-    return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']);
-}
-$oscLNItems = array_values($oscLN); usort($oscLNItems, 'ecct_osc_sort_cmp');
-$oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
+
+
 ?>
 
 <div id="summary_ecct_table" class="ecct-summary-wrapper">
@@ -124,7 +49,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
-                                $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock);
+                                $order=(int)$v['order']; $over=(int)$v['over']; $pct=$ecct_calc_pct($need,$stock);
                                 if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; }
                                 $filtered[$sz] = array('stock'=>$stock,'on_pms'=>$onp,'needs'=>$need,'order'=>$order,'over'=>$over,'pct'=>$pct);
                             }
@@ -193,7 +118,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                             $filtered = array();
                             foreach ($g['sizes'] as $sz => $v) {
                                 $stock=(int)$v['stock']; $onp=(int)$v['on_pms']; $need=(int)$v['needs'];
-                                $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock);
+                                $order=(int)$v['order']; $over=(int)$v['over']; $pct=$ecct_calc_pct($need,$stock);
                                 if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; }
                                 $filtered[$sz] = array('stock'=>$stock,'on_pms'=>$onp,'needs'=>$need,'order'=>$order,'over'=>$over,'pct'=>$pct);
                             }
@@ -236,7 +161,17 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                             <td align="center"><?php echo $totL['needs'] + $totR['needs']; ?></td>
                             <td align="center"><?php echo $totL['order'] + $totR['order']; ?></td>
                             <td align="center"><?php echo $totL['over'] + $totR['over']; ?></td>
-                            <td align="center">100%</td>
+                            <?php 
+                            $totalNeeds = $totL['needs'] + $totR['needs'];
+                            if ($totalNeeds == 0) {
+                                $totalPct = 100;
+                                $totalPctStyle = '';
+                            } else {
+                                $totalPct = ($totL['stock'] + $totR['stock']) / $totalNeeds * 100;
+                                $totalPctStyle = ($totalPct < 50) ? 'background-color:#d32f2f;color:#fff;font-weight:bold;' : '';
+                            }
+                            ?>
+                            <td align="center" style="<?php echo $totalPctStyle; ?>"><?php echo $totalPct; ?>%</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -268,7 +203,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                     </thead>
                     <tbody>
                         <?php $noLN = 1; $sumLN = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
-                        foreach ($oscLNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock); if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; } $sumLN['stock']+=$stock; $sumLN['on_pms']+=$onp; $sumLN['needs']+=$need; $sumLN['order']+=$order; $sumLN['over']+=$over; ?>
+                        foreach ($oscLNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=(int)$g['order']; $over=(int)$g['over']; $pct=$ecct_calc_pct($need,$stock); if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; } $sumLN['stock']+=$stock; $sumLN['on_pms']+=$onp; $sumLN['needs']+=$need; $sumLN['order']+=$order; $sumLN['over']+=$over; ?>
                         <tr>
                             <td align="center"><?php echo $noLN++; ?></td>
                             <td align="left"><?php echo htmlspecialchars($g['dvc_code']); ?></td>
@@ -309,7 +244,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                     </thead>
                     <tbody>
                         <?php $noDN = 1; $sumDN = array('stock'=>0,'on_pms'=>0,'needs'=>0,'order'=>0,'over'=>0);
-                        foreach ($oscDNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=ecct_calc_order($need,$onp,$stock); $over=ecct_calc_over($need,$onp,$stock); $pct=ecct_calc_pct($need,$stock); if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; } $sumDN['stock']+=$stock; $sumDN['on_pms']+=$onp; $sumDN['needs']+=$need; $sumDN['order']+=$order; $sumDN['over']+=$over; ?>
+                        foreach ($oscDNItems as $g) { $stock=(int)$g['stock']; $onp=(int)$g['on_pms']; $need=(int)$g['needs']; $order=(int)$g['order']; $over=(int)$g['over']; $pct=$ecct_calc_pct($need,$stock); if ($stock==0 && $onp==0 && $need==0 && $order==0 && $over==0) { continue; } $sumDN['stock']+=$stock; $sumDN['on_pms']+=$onp; $sumDN['needs']+=$need; $sumDN['order']+=$order; $sumDN['over']+=$over; ?>
                         <tr>
                             <td align="center"><?php echo $noDN++; ?></td>
                             <td align="left"><?php echo htmlspecialchars($g['dvc_code']); ?></td>
@@ -338,7 +273,16 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
                             <td align="center"><?php echo $totalOSC['needs']; ?></td>
                             <td align="center"><?php echo $totalOSC['order']; ?></td>
                             <td align="center"><?php echo $totalOSC['over']; ?></td>
-                            <td align="center">100%</td>
+                            <?php 
+                            if ($totalOSC['needs'] == 0) {
+                                $totalOSCPct = 100;
+                                $totalOSCPctStyle = '';
+                            } else {
+                                $totalOSCPct = ($totalOSC['stock'] / $totalOSC['needs']) * 100;
+                                $totalOSCPctStyle = ($totalOSCPct < 50) ? 'background-color:#d32f2f;color:#fff;font-weight:bold;' : '';
+                            }
+                            ?>
+                            <td align="center" style="<?php echo $totalOSCPctStyle; ?>"><?php echo $totalOSCPct; ?>%</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -376,7 +320,7 @@ $oscDNItems = array_values($oscDN); usort($oscDNItems, 'ecct_osc_sort_cmp');
     text-align: center;
 }
 #summary_ecct_table .compact-table tfoot td {
-    font-size: 10px !important;
+    font-size: 12px !important;
     text-transform: none;
 }
 #summary_ecct_table .tables-container { display: flex; gap: 0; align-items: flex-start; width: 100%; }

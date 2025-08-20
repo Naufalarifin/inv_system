@@ -55,7 +55,10 @@ class Inventory extends CI_Controller {
             'week' => $this->input->get('week') ?: '',
             'id_week' => $this->input->get('id_week') ?: ''
         );
+        
         if ($tech === 'ecct') {
+            // Get processed ECCT data from model
+            $data['ecct_data'] = $this->report_model->getECCTSummaryData($data['current_filters']);
             $this->load->view('report/report/summary_ecct', $data);
         } else {
             $this->load->view('report/report/summary_ecbs', $data);
