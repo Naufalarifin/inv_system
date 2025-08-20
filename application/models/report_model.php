@@ -1269,7 +1269,7 @@ class Report_model extends CI_Model {
             $rows = $this->getInventoryReportData('ecct', null, $filters);
             
             // Helper function for percentage calculation only
-            $calc_pct = function($n,$s) { return ((int)$n > 0) ? round(((int)$s / (int)$n) * 100) : 100; };
+            $calc_pct = function($n,$s) { return ((int)$n > 0) ? round(((int)$s / (int)$n) * 100,2) : 100; };
             
             // Process APP devices (group by code+size, merge LN+DN)
             $appIndex = array();
