@@ -469,12 +469,9 @@ class Report_model extends CI_Model {
             SUM(ir.stock) AS stock,
             SUM(ir.on_pms) AS on_pms,
             SUM(ir.needs) AS needs,
+            SUM(ir.`order`) AS `order`,
+            SUM(ir.`over`) AS `over`,
             iw.date_start, iw.date_finish, iw.period_y, iw.period_m, iw.period_w', false);
-        // Computed fields: order and over from aggregated sums
-        $this->db->select('GREATEST(0, (SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock))) AS `order`,
-                           (CASE WHEN (SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock)) < 0
-                                 THEN ABS(SUM(ir.needs) - SUM(ir.on_pms) - SUM(ir.stock))
-                                 ELSE 0 END) AS `over`', false);
 
         $this->db->from('inv_report ir');
         $this->db->join('inv_week iw', 'ir.id_week = iw.id_week', 'left');
@@ -572,17 +569,34 @@ class Report_model extends CI_Model {
         $existing = $this->db->get('inv_report');
         
         if ($existing->num_rows() > 0) {
-            // Update existing record
+            $row = $existing->row_array();
+            $stock = (int)$row['stock'];
+            $needs = (int)$row['needs'];
+            $on_pms = (int)$data['on_pms'];
+            
+            // Calculate order and over
+            $order = max(0, $needs - $on_pms - $stock);
+            $over = max(0, $on_pms + $stock - $needs);
+            
+            // Update existing record with new on_pms and calculated order/over
             $this->db->where('id_week', $data['id_week']);
             $this->db->where('id_dvc', $data['id_dvc']);
             $this->db->where('dvc_size', $data['dvc_size']);
             $this->db->where('dvc_col', $data['dvc_col']);
             $this->db->where('dvc_qc', $data['dvc_qc']);
             
-            return $this->db->update('inv_report', array('on_pms' => $data['on_pms']));
+            return $this->db->update('inv_report', array(
+                'on_pms' => $data['on_pms'],
+                'order' => $order,
+                'over' => $over
+            ));
         } else {
             // This should not happen if inv_report is properly generated
             // But we can handle it by creating the record
+            $on_pms = (int)$data['on_pms'];
+            $order = max(0, 0 - $on_pms - 0); // needs=0, stock=0
+            $over = max(0, $on_pms + 0 - 0);  // needs=0, stock=0
+            
             return $this->db->insert('inv_report', array(
                 'id_week' => $data['id_week'],
                 'id_dvc' => $data['id_dvc'],
@@ -592,8 +606,8 @@ class Report_model extends CI_Model {
                 'stock' => 0,
                 'on_pms' => $data['on_pms'],
                 'needs' => 0,
-                'order' => 0,
-                'over' => 0
+                'order' => $order,
+                'over' => $over
             ));
         }
     }
@@ -618,6 +632,11 @@ class Report_model extends CI_Model {
             if (intval($stock) === 0 && intval($needs) === 0) {
                 return false;
             }
+            
+            // Calculate order and over for new record
+            $order = max(0, $needs - 0 - $stock); // on_pms = 0 for new records
+            $over = max(0, 0 + $stock - $needs);  // on_pms = 0 for new records
+            
             return $this->db->insert('inv_report', array(
                 'id_week' => $id_week,
                 'id_dvc' => $id_dvc,
@@ -627,8 +646,8 @@ class Report_model extends CI_Model {
                 'stock' => $stock,
                 'on_pms' => 0,
                 'needs' => $needs,
-                'order' => 0,
-                'over' => 0
+                'order' => $order,
+                'over' => $over
             ));
         }
 
@@ -637,8 +656,22 @@ class Report_model extends CI_Model {
         $this->db->where('dvc_size', $size);
         $this->db->where('dvc_col', $color);
         $this->db->where('dvc_qc', $qc);
-        // Update existing; if both zero, set to zeros but keep record (to preserve history). Optional: you can delete instead.
-        return $this->db->update('inv_report', array('stock' => $stock, 'needs' => $needs));
+        
+        // Get current on_pms to calculate order/over
+        $current = $existing->row_array();
+        $current_on_pms = (int)$current['on_pms'];
+        
+        // Calculate order and over
+        $order = max(0, $needs - $current_on_pms - $stock);
+        $over = max(0, $current_on_pms + $stock - $needs);
+        
+        // Update existing with stock, needs, and calculated order/over
+        return $this->db->update('inv_report', array(
+            'stock' => $stock, 
+            'needs' => $needs,
+            'order' => $order,
+            'over' => $over
+        ));
     }
 
     /**
@@ -1224,6 +1257,117 @@ class Report_model extends CI_Model {
         } catch (Exception $e) {
             log_message('error', 'Error in getSummaryEcbsOscReportData: ' . $e->getMessage());
             return array();
+        }
+    }
+
+    /**
+     * Get ECCT summary data for summary_ecct view
+     * Returns processed data for APP and OSC devices with proper grouping and filtering
+     */
+    public function getECCTSummaryData($filters = array()) {
+        try {
+            $rows = $this->getInventoryReportData('ecct', null, $filters);
+            
+            // Helper function for percentage calculation only
+            $calc_pct = function($n,$s) { return ((int)$n > 0) ? round(((int)$s / (int)$n) * 100) : 100; };
+            
+            // Process APP devices (group by code+size, merge LN+DN)
+            $appIndex = array();
+            foreach ($rows as $r) {
+                if (strtoupper($r['dvc_type']) !== 'APP') continue;
+                $code = $r['dvc_code'];
+                $size = strtoupper(trim($r['dvc_size']));
+                if (empty($size)) $size = '-';
+                
+                if (!isset($appIndex[$code])) {
+                    $appIndex[$code] = array(
+                        'dvc_code' => $code,
+                        'dvc_name' => $r['dvc_name'],
+                        'dvc_priority' => isset($r['dvc_priority']) ? (int)$r['dvc_priority'] : 999,
+                        'sizes' => array()
+                    );
+                }
+                
+                if (!isset($appIndex[$code]['sizes'][$size])) {
+                    $appIndex[$code]['sizes'][$size] = array('stock' => 0, 'on_pms' => 0, 'needs' => 0, 'order' => 0, 'over' => 0);
+                }
+                
+                $appIndex[$code]['sizes'][$size]['stock'] += (int)$r['stock'];
+                $appIndex[$code]['sizes'][$size]['on_pms'] += (int)$r['on_pms'];
+                $appIndex[$code]['sizes'][$size]['needs'] += (int)$r['needs'];
+                $appIndex[$code]['sizes'][$size]['order'] += (int)$r['order'];
+                $appIndex[$code]['sizes'][$size]['over'] += (int)$r['over'];
+            }
+            
+            // Sort APP items and split into left/right tables
+            $appItems = array_values($appIndex);
+            usort($appItems, function($a,$b) { 
+                if ($a['dvc_priority'] != $b['dvc_priority']) {
+                    return $a['dvc_priority'] - $b['dvc_priority'];
+                }
+                return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']); 
+            });
+            
+            $splitIndex = (count($appItems) > 0) ? (int)ceil(count($appItems) / 2) : 0;
+            $appLeft = array_slice($appItems, 0, $splitIndex);
+            $appRight = array_slice($appItems, $splitIndex);
+            
+            // Process OSC devices (split LN/DN by QC)
+            $oscLN = array();
+            $oscDN = array();
+            foreach ($rows as $r) {
+                if (strtoupper($r['dvc_type']) !== 'OSC') continue;
+                
+                if (strtoupper(trim($r['dvc_qc'])) === 'DN') {
+                    $dest =& $oscDN;
+                } else {
+                    $dest =& $oscLN;
+                }
+                $code = $r['dvc_code'];
+                
+                if (!isset($dest[$code])) {
+                    $dest[$code] = array(
+                        'dvc_code' => $code,
+                        'dvc_name' => $r['dvc_name'],
+                        'dvc_priority' => isset($r['dvc_priority']) ? (int)$r['dvc_priority'] : 999,
+                        'stock' => 0, 'on_pms' => 0, 'needs' => 0, 'order' => 0, 'over' => 0
+                    );
+                }
+                
+                $dest[$code]['stock'] += (int)$r['stock'];
+                $dest[$code]['on_pms'] += (int)$r['on_pms'];
+                $dest[$code]['needs'] += (int)$r['needs'];
+                $dest[$code]['order'] += (int)$r['order'];
+                $dest[$code]['over'] += (int)$r['over'];
+            }
+            
+            // Sort OSC items
+            $osc_sort = function($a,$b) { 
+                if ($a['dvc_priority'] != $b['dvc_priority']) {
+                    return $a['dvc_priority'] - $b['dvc_priority'];
+                }
+                return strcasecmp($a['dvc_name'].'|'.$a['dvc_code'], $b['dvc_name'].'|'.$b['dvc_code']);
+            };
+            
+            $oscLNItems = array_values($oscLN);
+            $oscDNItems = array_values($oscDN);
+            usort($oscLNItems, $osc_sort);
+            usort($oscDNItems, $osc_sort);
+            
+            return array(
+                'app_left' => $appLeft,
+                'app_right' => $appRight,
+                'osc_ln' => $oscLNItems,
+                'osc_dn' => $oscDNItems,
+                'calc_pct' => $calc_pct
+            );
+            
+        } catch (Exception $e) {
+            log_message('error', 'Error in getECCTSummaryData: ' . $e->getMessage());
+            return array(
+                'app_left' => array(), 'app_right' => array(), 'osc_ln' => array(), 'osc_dn' => array(),
+                'calc_pct' => function($n,$s) { return 100; }
+            );
         }
     }
 }
